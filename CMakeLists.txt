@@ -6,6 +6,7 @@ project(TS_BatchingDemo)
 
 message("Architecture: " ${CMAKE_ARCHITECTURE})
 message("BuildType: " ${CMAKE_BUILD_TYPE})
+message("Visual Studio version: ${MSVC_VERSION}")
 
 # Set output directories for all builds (Debug, Release, etc.)
 foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
@@ -16,27 +17,29 @@ foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
 endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
 
 # Add subdirectory
-add_subdirectory (TS_ENGINE)
+set(TS_ENGINE_DIR ${CMAKE_SOURCE_DIR}/../TS_ENGINE)
+set(TS_ENGINE_BINARY_DIR ${CMAKE_BINARY_DIR}/TS_ENGINE)
+add_subdirectory(${TS_ENGINE_DIR} ${TS_ENGINE_BINARY_DIR})
 
 #SOURCE_FILES
 set (SOURCE_FILES
-${CMAKE_SOURCE_DIR}/TS_ENGINE/Dependencies/src/glad/glad.c
+${TS_ENGINE_DIR}/Dependencies/src/glad/glad.c
 src/Sandbox.cpp
 )
 
 #ImGui Filter
 file(GLOB ImGuiSrc
-${CMAKE_SOURCE_DIR}/TS_ENGINE/Dependencies/include/imgui/imconfig.h
-${CMAKE_SOURCE_DIR}/TS_ENGINE/Dependencies/include/imgui/imgui.h
-${CMAKE_SOURCE_DIR}/TS_ENGINE/Dependencies/include/imgui/imgui.cpp
-${CMAKE_SOURCE_DIR}/TS_ENGINE/Dependencies/include/imgui/imgui_demo.cpp
-${CMAKE_SOURCE_DIR}/TS_ENGINE/Dependencies/include/imgui/imgui_draw.cpp
-${CMAKE_SOURCE_DIR}/TS_ENGINE/Dependencies/include/imgui/backends/imgui_impl_glfw.cpp
-${CMAKE_SOURCE_DIR}/TS_ENGINE/Dependencies/include/imgui/backends/imgui_impl_glfw.h
-${CMAKE_SOURCE_DIR}/TS_ENGINE/Dependencies/include/imgui/backends/imgui_impl_opengl3.h
-${CMAKE_SOURCE_DIR}/TS_ENGINE/Dependencies/include/imgui/backends/imgui_impl_opengl3.cpp
-${CMAKE_SOURCE_DIR}/TS_ENGINE/Dependencies/include/imgui/imgui_tables.cpp
-${CMAKE_SOURCE_DIR}/TS_ENGINE/Dependencies/include/imgui/imgui_widgets.cpp
+${TS_ENGINE_DIR}/Dependencies/include/imgui/imconfig.h
+${TS_ENGINE_DIR}/Dependencies/include/imgui/imgui.h
+${TS_ENGINE_DIR}/Dependencies/include/imgui/imgui.cpp
+${TS_ENGINE_DIR}/Dependencies/include/imgui/imgui_demo.cpp
+${TS_ENGINE_DIR}/Dependencies/include/imgui/imgui_draw.cpp
+${TS_ENGINE_DIR}/Dependencies/include/imgui/backends/imgui_impl_glfw.cpp
+${TS_ENGINE_DIR}/Dependencies/include/imgui/backends/imgui_impl_glfw.h
+${TS_ENGINE_DIR}/Dependencies/include/imgui/backends/imgui_impl_opengl3.h
+${TS_ENGINE_DIR}/Dependencies/include/imgui/backends/imgui_impl_opengl3.cpp
+${TS_ENGINE_DIR}/Dependencies/include/imgui/imgui_tables.cpp
+${TS_ENGINE_DIR}/Dependencies/include/imgui/imgui_widgets.cpp
 )
 source_group("ImGui" FILES ${ImGuiSrc})
 
@@ -58,8 +61,8 @@ source_group("Shaders" FILES ${ShadersSrc})
 
 # Add an additional library directory
 link_directories(
-${CMAKE_SOURCE_DIR}/TS_ENGINE/Dependencies/${CMAKE_ARCHITECTURE}-windows/debug/lib
-${CMAKE_SOURCE_DIR}/TS_ENGINE/Dependencies/include/assimp/build/${CMAKE_ARCHITECTURE}/lib/${CMAKE_BUILD_TYPE}
+${TS_ENGINE_DIR}/Dependencies/${CMAKE_ARCHITECTURE}-windows/debug/lib
+${TS_ENGINE_DIR}/Dependencies/include/assimp/build/${CMAKE_ARCHITECTURE}/lib/${CMAKE_BUILD_TYPE}
 )
 
 add_executable (TS_BatchingDemo 
@@ -92,5 +95,14 @@ ${CMAKE_SOURCE_DIR}/src
 target_link_libraries(TS_BatchingDemo LINK_PUBLIC TS_ENGINE
 opengl32.lib
 glfw3.lib
-assimp-vc143-mtd.lib
 )
+
+if(${MSVC_VERSION} STREQUAL "1929")
+    message("Visual Studio 2019 detected")
+	target_link_libraries(TS_BatchingDemo LINK_PUBLIC TS_ENGINE assimp-vc142-mtd.lib)
+elseif(${MSVC_VERSION} STREQUAL "2031")
+    message("Visual Studio 2022 detected")
+	target_link_libraries(TS_BatchingDemo LINK_PUBLIC TS_ENGINE assimp-vc143-mtd.lib)
+else()
+    message("Unsupported Visual Studio version")
+endif()
