@@ -8,7 +8,7 @@ timeout /t 5 >nul
 echo TS_ENGINE cloned complete.
 cd TS_ENGINE
 git pull origin main
-git checkout tags/v1.1
+git checkout v1.1
 
 REM Build Assimp
 echo Building assimp
@@ -16,10 +16,10 @@ cd Dependencies\include\assimp
 call Build_vs2022_x64.bat
 cd ..\..\..\..\
 
-REM Build BatchingDemo
-cd TS_ENGINE_BatchingDemo
+REM Build TS_ENGINE_Editor
+cd TS_ENGINE_Editor
 REM Generate Solution
-cmake -G "Visual Studio 17 2022" -T v143 -A=x64 -B=./build/x64/Debug -DCMAKE_ARCHITECTURE=x64 -DCMAKE_BUILD_TYPE=Debug 
+cmake -G "Visual Studio 17 2022" -A=x64 -B=./build/x64/Debug -DCMAKE_ARCHITECTURE=x64 -DCMAKE_BUILD_TYPE=Debug 
 REM Build Binaries
 cmake --build build/x64/Debug --config Debug
 

@@ -8,7 +8,7 @@ timeout /t 5 >nul
 echo TS_ENGINE cloned complete.
 cd TS_ENGINE
 git pull origin main
-git checkout tags/v1.1
+git checkout v1.1
 
 REM Build Assimp
 echo Building assimp
@@ -16,8 +16,8 @@ cd Dependencies\include\assimp
 call Build_vs2019_x64.bat
 cd ..\..\..\..\
 
-REM Build BatchingDemo
-cd TS_ENGINE_BatchingDemo
+REM Build TS_ENGINE_Editor
+cd TS_ENGINE_Editor
 REM Generate Solution
 cmake -G "Visual Studio 16 2019" -A=x64 -B=./build/x64/Debug -DCMAKE_ARCHITECTURE=x64 -DCMAKE_BUILD_TYPE=Debug 
 REM Build Binaries

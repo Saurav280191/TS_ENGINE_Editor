@@ -1,12 +1,12 @@
 CMAKE_MINIMUM_REQUIRED( VERSION 3.7.1)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-project(TS_BatchingDemo)
-#set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set(PROJECT_NAME "TS_ENGINE_Editor")
+project(${PROJECT_NAME})
 
 message("Architecture: " ${CMAKE_ARCHITECTURE})
 message("BuildType: " ${CMAKE_BUILD_TYPE})
-message("Visual Studio version: ${MSVC_VERSION}")
+message("MSVC_VERSION: ${MSVC_VERSION}")
 
 # Set output directories for all builds (Debug, Release, etc.)
 foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
@@ -65,7 +65,7 @@ ${TS_ENGINE_DIR}/Dependencies/${CMAKE_ARCHITECTURE}-windows/debug/lib
 ${TS_ENGINE_DIR}/Dependencies/include/assimp/build/${CMAKE_ARCHITECTURE}/lib/${CMAKE_BUILD_TYPE}
 )
 
-add_executable (TS_BatchingDemo 
+add_executable (${PROJECT_NAME} 
 ${SOURCE_FILES} # SOURCE_FILES Default Filter
 ${LayersSrc} #Layers Filter
 ${ShadersSrc} #Shaders Filter
@@ -87,22 +87,24 @@ add_compile_definitions(
     )
 
 #Include directories
-target_include_directories (TS_BatchingDemo PUBLIC 
+target_include_directories (${PROJECT_NAME} PUBLIC 
 ${CMAKE_SOURCE_DIR}/src
 )
 
 #Add libraries
-target_link_libraries(TS_BatchingDemo LINK_PUBLIC TS_ENGINE
+target_link_libraries(${PROJECT_NAME} LINK_PUBLIC TS_ENGINE
 opengl32.lib
 glfw3.lib
 )
 
-if(${MSVC_VERSION} STREQUAL "1929")
+if(MSVC_VERSION EQUAL 1929)
     message("Visual Studio 2019 detected")
-	target_link_libraries(TS_BatchingDemo LINK_PUBLIC TS_ENGINE assimp-vc142-mtd.lib)
-elseif(${MSVC_VERSION} STREQUAL "2031")
+	target_link_libraries(${PROJECT_NAME} LINK_PUBLIC TS_ENGINE assimp-vc142-mtd.lib)
+elseif(MSVC_VERSION GREATER_EQUAL 1920 AND MSVC_VERSION LESS_EQUAL 1928)
+    message("Visual Studio 2019 detected (with patch version)")
+elseif(MSVC_VERSION GREATER_EQUAL 1934 AND MSVC_VERSION LESS_EQUAL 2031)
     message("Visual Studio 2022 detected")
-	target_link_libraries(TS_BatchingDemo LINK_PUBLIC TS_ENGINE assimp-vc143-mtd.lib)
+	target_link_libraries(${PROJECT_NAME} LINK_PUBLIC TS_ENGINE assimp-vc143-mtd.lib)
 else()
     message("Unsupported Visual Studio version")
 endif()
