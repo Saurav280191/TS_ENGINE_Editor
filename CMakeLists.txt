@@ -40,13 +40,15 @@ ${TS_ENGINE_DIR}/Dependencies/include/imgui/backends/imgui_impl_opengl3.h
 ${TS_ENGINE_DIR}/Dependencies/include/imgui/backends/imgui_impl_opengl3.cpp
 ${TS_ENGINE_DIR}/Dependencies/include/imgui/imgui_tables.cpp
 ${TS_ENGINE_DIR}/Dependencies/include/imgui/imgui_widgets.cpp
+${TS_ENGINE_DIR}/Dependencies/include/ImGuizmo/ImGuizmo.h
+${TS_ENGINE_DIR}/Dependencies/include/ImGuizmo/ImGuizmo.cpp
 )
 source_group("ImGui" FILES ${ImGuiSrc})
 
 #Layers Filter
 file(GLOB LayersSrc
-src/SandboxLayer.h
-src/SandboxLayer.cpp
+src/EditorLayer.h
+src/EditorLayer.cpp
 )
 source_group("Layers" FILES ${LayersSrc})
 
