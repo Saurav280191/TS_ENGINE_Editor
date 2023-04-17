@@ -1,13 +1,13 @@
 #include <TS_ENGINE.h>
 #include <Core/EntryPoint.h>
-#include "SandboxLayer.h"
+#include "EditorLayer.h"
 
 class Sandbox : public TS_ENGINE::Application
 {
 public:
 	Sandbox()
 	{
-		PushLayer(new SandboxLayer());
+		PushLayer(new EditorLayer());
 	}
 };
 
