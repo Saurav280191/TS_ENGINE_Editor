@@ -1,5 +1,4 @@
 #include "EditorLayer.h"
-#include <Renderer/Framebuffer.h>
 //#include <imgui_demo.cpp>
 //#include <Factory.h>
 #include <Core/Log.h>
@@ -10,15 +9,19 @@
 
 #include <Core/Input.h>
 #include <Core/KeyCodes.h>
+#include <Utils/Utility.h>
+#include <Platform/OpenGL/OpenGLVertexArray.h>
 
 EditorLayer::EditorLayer() :
-	Layer("SandboxLayer"),
-	mBatchedGameObject(NULL)
+	Layer("SandboxLayer")//,
+	//mBatchedGameObject(NULL)
 {
-	mUnlockedIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\Unlocked.png");
-	mUnlockedIcon->SetVerticalFlip(false);
-	mLockedIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\Locked.png");
-	mLockedIcon->SetVerticalFlip(false);
+	//mUnlockedIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\Unlocked.png");
+	//mUnlockedIcon->SetVerticalFlip(false);
+	//mLockedIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\Locked.png");
+	//mLockedIcon->SetVerticalFlip(false);
+	mCameraIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\Camera1.png");
+	mCameraIcon->SetVerticalFlip(false);
 	//mMeshFilterIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MeshFilterIcon.png");
 	//mMeshRendererIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MeshRendererIcon.png");
 	//mMaterialIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MaterialIcon.png");
@@ -27,130 +30,470 @@ EditorLayer::EditorLayer() :
 
 void EditorLayer::OnAttach()
 {
-	mEditorCamera = CreateRef<TS_ENGINE::Camera>(TS_ENGINE::Camera::SCENECAMERA);
+	mSceneGui = CreateRef<TS_ENGINE::SceneGui>();
 
-	float aspectRatio = (float)TS_ENGINE::Application::Get().GetWindow().GetWidth() / (float)TS_ENGINE::Application::Get().GetWindow().GetHeight();
+#pragma region Shader
+	//mDefaultShader = TS_ENGINE::Shader::Create("Lit", "Lit.vert", "Lit.frag");
+	mDefaultShader = TS_ENGINE::Shader::Create("HDRLighting", "HDRLighting.vert", "HDRLighting.frag");
+	//mBatchLitShader = TS_ENGINE::Shader::Create("BatchLit", "BatchLit.vert", "BatchLit.frag");
+	//mHdrLightingShader = TS_ENGINE::Shader::Create("HDRLighting", "HDRLighting.vert", "HDRLighting.frag");
 
-	TS_ENGINE::Camera::Perspective perspective;
-	perspective.fov = 45.0f;
-	perspective.aspectRatio = aspectRatio;
-	perspective.zNear = 0.1f;
-	perspective.zFar = 1000.0f;
-	mEditorCamera->SetPerspective(perspective);
+	//Material
+	mDefaultMat = CreateRef<TS_ENGINE::Material>("DefaultMaterial", mDefaultShader);//Create default material
+	//mHdrMat = CreateRef<TS_ENGINE::Material>("HdrLighting", mHdrLightingShader);//Create HDR material
 
-	mCurrentScene = CreateRef<TS_ENGINE::Scene>("Gameplay");
-
-	mLitShader = TS_ENGINE::Shader::Create("Lit", "Lit.vert", "Lit.frag");
-	mBatchLitShader = TS_ENGINE::Shader::Create("BatchLit", "BatchLit.vert", "BatchLit.frag");
-
-	mModelLoader = CreateRef<TS_ENGINE::ModelLoader>();
-
-	for (uint32_t i = 0; i < mGridSizeX * mGridSizeY; i++)
-		SpawnNewObject();
-
-	mEditorCamera->SetPosition(105.280922f, 10.1856785f, 105.097504f);//For 50x50 Grid
-	mEditorCamera->SetEulerAngles(0.308291346f, -0.783849120f, 0.0f);
-
-	//mEditorCamera->SetPosition(65.4178528f, 1.79701405f, 65.4272217f);//For 317x317 Grid
-	//mEditorCamera->SetEulerAngles(0.0597731248f, -0.787812710f, 0.0f);
-
-	mCurrentShader = mLitShader;
+	//Activate Shader
+	mCurrentShader = mDefaultShader;
 	mCurrentShader->Bind();
-}
+#pragma endregion
 
-Vector2 GetGridPosFromIndex(size_t index, size_t width)
-{
-	size_t x = index % width;
-	size_t y = (index - x) / width;
+#pragma region Cameras
+	mEditorCamera = CreateRef<EditorCamera>("EditorCamera");
+	mEditorCamera->SetCurrentShader(mDefaultShader);
 
-	return Vector2(x, y);
-}
+	mAspectRatio = (float)TS_ENGINE::Application::Get().GetWindow().GetWidth() / (float)TS_ENGINE::Application::Get().GetWindow().GetHeight();
+	mEditorCamera->SetPerspective(TS_ENGINE::Camera::Perspective(45.0f, mAspectRatio, 0.1f, 1000.0f));
+	mEditorCamera->GetNode()->GetTransform()->SetLocalPosition(0.0f, 1.0f, 10.0f);
+	mEditorCamera->GetNode()->GetTransform()->SetLocalEulerAngles(-30.0f, 0.0f, 0.0f);
+	mEditorCamera->CreateFramebuffer(1920, 1080);//Create framebuffer for editorCamera
 
-void EditorLayer::SpawnNewObject()
-{
-	int randomIndex = 0 + (std::rand() % (6 - 0 + 1));
-	int randomColorIndex = 0 + (std::rand() % (6 - 0 + 1));
+	mSceneCamera = CreateRef<TS_ENGINE::SceneCamera>("Camera1");
+	mSceneCamera->GetNode()->GetTransform()->SetLocalEulerAngles(0.0f, 30.0f, 0.0f);
+	mSceneCamera->SetPerspective(TS_ENGINE::Camera::Perspective(45.0f, mAspectRatio, 1.0f, 20.0f));
+	mSceneCamera->GetNode()->SetName("Camera1");
+	mSceneCamera->CreateFramebuffer(800, 600);//Create framebuffer for sceneCamera
 
-	Ref<TS_ENGINE::Node> node = SpawnGameObjectNode(randomIndex, randomColorIndex);
+	//SceneCameraGuiQuad
+	mSceneCameraGui = CreateRef<TS_ENGINE::Quad>("CameraGui");
+	mSceneCameraGui->SetMaterial(mDefaultMat);
+	mSceneCameraGui->SetColor(1, 1, 1);
+	mSceneCameraGui->SetTexture(mCameraIcon);
+	mSceneCameraGui->Create();
 
-	//go->SetColor(ColorPallete[randomColorIndex]);
-	Vector2 gridPos = GetGridPosFromIndex(mNodes.size(), mGridSizeX);
-	node->GetTransform()->SetPosition(2 * gridPos.x, 0, 2 * gridPos.y);
+	mSceneCameraGui->GetNode()->AttachObject(mSceneCameraGui);
+	mSceneCameraGui->GetNode()->SetName("CameraGuiNode");
+	mSceneCameraGui->GetNode()->GetTransform()->SetLocalEulerAngles(0.0, 90.0f, 0.0f);
+	mSceneCameraGui->GetNode()->GetTransform()->SetLocalScale(-1.0f, 1.0f, 1.0f);
+#pragma endregion
 
-	mCurrentScene->GetSceneNode()->AddChild(node);
-	node->SetParentNode(mCurrentScene->GetSceneNode());
+#ifdef TS_ENGINE_EDITOR
+	mSceneCameraGui->GetNode()->HideInEditor();//Hides the node in hierarchy
+#endif
 
-	mNodes.push_back(node);
+	Ref<TS_ENGINE::GameObject> frustrumGameObject = CreateRef<TS_ENGINE::GameObject>("SceneCameraFrustrum");
+
+	mFrustrumLine = CreateRef<TS_ENGINE::Line>("FrustrumLine");
+	mFrustrumLine->SetMaterial(mDefaultMat);
+	mFrustrumLine->SetColor(1, 1, 1);
+	mFrustrumLine->DisableDepthTest();
+
+	frustrumGameObject->GetNode()->AttachObject(mFrustrumLine);
+	frustrumGameObject->GetNode()->SetName("SceneCameraFrustrumNode");
+
+#ifdef TS_ENGINE_EDITOR
+	frustrumGameObject->GetNode()->HideInEditor();//Hides the node in hierarchy
+#endif
+
+	Matrix4 projViewIMat = glm::inverse(mSceneCamera->GetProjectionViewMatrix());
+
+	std::vector<Vector4> points = {
+		projViewIMat * glm::vec4(-1, -1, -1, 1),//0
+		projViewIMat * glm::vec4(-1, -1, 1, 1),//1
+
+		projViewIMat * glm::vec4(-1, -1, 1, 1),//1
+		projViewIMat * glm::vec4(-1, 1, 1, 1),//2
+
+		projViewIMat * glm::vec4(-1, 1, 1, 1),//2
+		projViewIMat * glm::vec4(-1, 1, -1, 1),//3
+
+		projViewIMat * glm::vec4(-1, 1, -1, 1),//3
+		projViewIMat * glm::vec4(-1, -1, -1, 1),//0
+
+		projViewIMat * glm::vec4(1, -1, -1, 1),//4
+		projViewIMat * glm::vec4(1, -1, 1, 1),//5
+
+		projViewIMat * glm::vec4(1, -1, -1, 1),//4
+		projViewIMat * glm::vec4(1, 1, -1, 1),//7
+
+		projViewIMat * glm::vec4(1, 1, 1, 1),//6
+		projViewIMat * glm::vec4(1, 1, -1, 1),//7
+
+		projViewIMat * glm::vec4(1, -1, 1, 1),//5
+		projViewIMat * glm::vec4(1, 1, 1, 1),//6
+
+		projViewIMat * glm::vec4(-1, 1, -1, 1),//3
+		projViewIMat * glm::vec4(1, 1, -1, 1),//7
+
+		projViewIMat * glm::vec4(-1, -1, -1, 1),//0
+		projViewIMat * glm::vec4(1, -1, -1, 1),//4
+
+		projViewIMat * glm::vec4(-1, 1, 1, 1),//2
+		projViewIMat * glm::vec4(1, 1, 1, 1),//6
+
+		projViewIMat * glm::vec4(-1, -1, 1, 1),//1
+		projViewIMat * glm::vec4(1, -1, 1, 1),//5
+	};
+
+	std::vector<Vector3> vertices(points.size());
+	for (int i = 0; i < points.size(); i++)
+		vertices[i] = Vector3(points[i]) / points[i].w;
+
+	mFrustrumLine->Create(vertices);
+
+
+	mScene1 = CreateRef<TS_ENGINE::Scene>("Scene");
+
+	//mModelLoader = CreateRef<TS_ENGINE::ModelLoader>();
+
+	mDirectionalLight = CreateRef<TS_ENGINE::Light>();
+
+	mDirectionalLight->GetNode()->GetTransform()->SetLocalPosition(0.0f, 3.0f, 0.0f);
+	mDirectionalLight->GetNode()->GetTransform()->SetLocalEulerAngles(45.0f, 0.0f, 0.0f);
+	mDirectionalLight->GetNode()->SetName("Directional Light");
+	mDirectionalLight->GetNode()->AttachObject(mDirectionalLight);
+
+	//Add a default ground
+	Ref<TS_ENGINE::Quad> ground = CreateRef<TS_ENGINE::Quad>("Ground");
+	ground->SetTexture("raw_plank_wall_diff_4k.jpg");
+	ground->SetTextureTiling(2, 2);
+	ground->SetMaterial(mDefaultMat);
+	ground->Create();
+
+	ground->GetNode()->GetTransform()->SetLocalEulerAngles(-90.0f, 0.0f, 0.0f);
+	ground->GetNode()->GetTransform()->SetLocalScale(10.0f, 10.0f, 10.0f);
+	ground->GetNode()->AttachObject(ground);
+	ground->GetNode()->SetName(ground->GetName());
+
+	//Add default cube
+	Ref<TS_ENGINE::Cube> cube = CreateRef<TS_ENGINE::Cube>("Cube");
+	cube->SetTexture("Crate.png");
+	cube->SetColor(1.0f, 1.0f, 1.0f);
+	cube->SetMaterial(mDefaultMat);
+	cube->Create();
+	cube->GetNode()->SetName("Cube");
+	cube->GetNode()->GetTransform()->SetLocalPosition(0.0f, 0.5f, 0.0f);
+	//cube->GetNode()->GetTransform()->SetLocalScale(Vector3(0.25f));
+	//cube->GetNode()->GetTransform()->LookAt(mEditorCamera->GetNode()->GetTransform());
+	cube->GetNode()->AttachObject(cube);
+
+	Ref<TS_ENGINE::Cube> cube1 = CreateRef<TS_ENGINE::Cube>("Cube1");
+	//cube1->SetTexture("Crate.png");
+	cube1->SetColor(1, 0, 0);
+	cube1->SetMaterial(mDefaultMat);
+	cube1->Create();
+	cube1->GetNode()->SetName("Cube1");
+	cube1->GetNode()->GetTransform()->SetLocalPosition(1.0f, 1.0f, -1.0f);
+	cube1->GetNode()->GetTransform()->SetLocalScale(0.3f, 0.3f, 0.3f);
+	cube1->GetNode()->GetTransform()->SetLocalEulerAngles(30.0f, 60.0f, 10.0f);
+	cube1->GetNode()->AttachObject(cube1);
+	cube->GetNode()->AddChild(cube1->GetNode());
+
+	//ground->GetNode()->AddChild(cube->GetNode());
+
+	mSceneCamera->GetNode()->AddChild(frustrumGameObject->GetNode());
+	mSceneCamera->GetNode()->AddChild(mSceneCameraGui->GetNode());
+	mScene1->GetSceneNode()->AddChild(ground->GetNode());
+	mScene1->GetSceneNode()->AddChild(cube->GetNode());
+	mScene1->GetSceneNode()->AddChild(mSceneCamera->GetNode());
+	mScene1->Initialize(*mEditorCamera.get());
 }
 
 void EditorLayer::OnDetach()
 {
-	mCurrentScene.reset();
+	mScene1.reset();
 }
 
 void EditorLayer::OnUpdate(float deltaTime)
 {
 	TS_ENGINE::Application::Get().ResetStats();
+	mSceneCameraGui->GetNode()->LookAt(mEditorCamera->GetNode());
 
-	mEditorCamera->OnUpdate(deltaTime);
+	//Editor camera pass
+	{
+		UpdateCameraRT(mEditorCamera, deltaTime);
+		PickGameObject();
+		mEditorCamera->GetFramebuffer()->Unbind();
+	}
 
-	TS_ENGINE::RenderCommand::SetClearColor(Vector4(0.2f, 0.3f, 0.3f, 1.0f));
-	TS_ENGINE::RenderCommand::Clear();
-
-	mCurrentShader->SetMat4("u_View", mEditorCamera->GetViewMatrix());
-	mCurrentShader->SetMat4("u_Projection", mEditorCamera->GetProjectionMatrix());
-
-	mCurrentScene->Draw(mCurrentShader);
+	//Scene camera pass
+	{
+		UpdateCameraRT(mSceneCamera, deltaTime);
+		mSceneCamera->GetFramebuffer()->Unbind();
+	}
 }
 
-void EditorLayer::CreateUIForAllNodes(Ref<TS_ENGINE::Node> node)
+void EditorLayer::PickGameObject()
 {
-	static ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
-	static int selectedChildNodeIndex = -1;
-
-	for (int i = 0; i < node->GetChildCount(); i++)
+	if (TS_ENGINE::Input::IsMouseButtonPressed(TS_ENGINE::Mouse::Button0) && !mMouseClicked)
 	{
-		ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-		Ref<TS_ENGINE::Node> nodeChild = node->GetChildAt(i);
+		//Picking code
+		auto [mx, my] = ImGui::GetMousePos();
+		mx -= mViewportBounds[0].x;
+		my -= mViewportBounds[0].y;
+		glm::vec2 viewportSize = mViewportBounds[1] - mViewportBounds[0];
+		my = viewportSize.y - my;
 
-		ImGuiTreeNodeFlags node_flags = base_flags;
+		int mouseX = (int)mx;
+		int mouseY = (int)my;
 
-		if (nodeChild->GetChildCount() > 0)
+		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
 		{
-			bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)selectedChildNodeIndex, node_flags, nodeChild->GetName().c_str());
+			//Vector4 pixelColor = mEditorCamera->GetFramebuffer()->ReadPixelColor(0, mouseX, mouseY);
+			//mPickedColor = ImVec4(pixelColor.x / 255.0f, pixelColor.y / 255.0f, pixelColor.z / 255.0f, pixelColor.z / 255.0f);
+			//TS_CORE_TRACE("Pixel color = {0}", glm::to_string(pixelColor));
 
-			if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+			int entityID = mEditorCamera->GetFramebuffer()->ReadPixel(1, mouseX, mouseY);
+			TS_CORE_TRACE("EntityID = {0}", entityID);
+
+			if (entityID != -1)
 			{
-				selectedChildNodeIndex = i;
+				Ref<TS_ENGINE::Node> hoveredOnNode = mScene1->GetNodeByEntityID(entityID);
 
-				mSelectedNode = nodeChild;
-				//AddLog(LogCategory::info, TS_ENGINE::Utility::GetConcatCStrs("Clicked on: ", nodeChild->GetName()));
+				if (hoveredOnNode == mSceneCameraGui->GetNode())//Don't select mSceneCameraGui
+					hoveredOnNode = mSceneCamera->GetNode();//Select it's parent node
+
+				if (hoveredOnNode != nullptr)
+					mSceneGui->SetSelectedNode(hoveredOnNode);
 			}
-
-			//HandleNodeDragDrop(mSelectedNode, nodeChild);
-
-			if (node_open)
+			else
 			{
-				CreateUIForAllNodes(nodeChild);
-				ImGui::TreePop();
+				if (!ImGuizmo::IsOver())
+					mSceneGui->SetSelectedNode(nullptr);//Deselect
 			}
 		}
-		else//Tree Leaves
-		{
-			node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-			ImGui::TreeNodeEx((void*)(intptr_t)selectedChildNodeIndex, node_flags, nodeChild->GetName().c_str());
 
-			if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
-			{
-				selectedChildNodeIndex = i;
-
-				mSelectedNode = nodeChild;
-				//AddLog(LogCategory::info, TS_ENGINE::Utility::GetConcatCStrs("Clicked on: ", nodeChild->GetName()));
-			}
-
-			//HandleNodeDragDrop(mSelectedNode, nodeChild);
-		}
+		mMouseClicked = true;
 	}
+
+	if (TS_ENGINE::Input::IsMouseButtonReleased(TS_ENGINE::Mouse::Button0) && mMouseClicked)
+	{
+		mMouseClicked = false;
+	}
+}
+
+void EditorLayer::UpdateCameraRT(Ref<TS_ENGINE::Camera> camera, float deltaTime)
+{
+	// Resize
+	if (TS_ENGINE::FramebufferSpecification spec = camera->GetFramebuffer()->GetSpecification();
+		mViewportPanelSize.x > 0.0f && mViewportPanelSize.y > 0.0f && // zero sized framebuffer is invalid
+		(spec.Width != mViewportPanelSize.x || spec.Height != mViewportPanelSize.y))
+	{
+		camera->GetFramebuffer()->Resize((uint32_t)mViewportPanelSize.x, (uint32_t)mViewportPanelSize.y);
+	}
+
+	camera->GetFramebuffer()->Bind();
+
+	//if(!mGammaCorrection)
+	TS_ENGINE::RenderCommand::SetClearColor(Vector4(0.2f, 0.3f, 0.3f, 1.0f));
+	//else
+		//TS_ENGINE::RenderCommand::SetClearColor(Vector4(pow(0.2f, mGammaValue), pow(0.3f, mGammaValue), pow(0.3f, mGammaValue), 1.0f));
+
+	TS_ENGINE::RenderCommand::Clear();
+
+	// Clear our entity ID attachment to -1
+	camera->GetFramebuffer()->ClearAttachment(1, -1);
+
+	//mCurrentShader->SetBool("u_Gamma", mGammaCorrection);
+	//mCurrentShader->SetFloat("u_GammaValue", mGammaValue);
+	//mCurrentShader->SetBool("u_Hdr", mHdr);
+	//mCurrentShader->SetFloat("u_HdrExposure", mHdrExposure);
+
+	mDirectionalLight->SetCommonParams(mCurrentShader, mDirectionalLight->GetNode()->GetTransform()->GetLocalPosition(),
+		mDirectionalLight->GetNode()->GetTransform()->GetForward(), Vector3(0.5f), Vector3(0.5f), Vector3(0.5f));
+
+	camera->Update(deltaTime);
+	mScene1->Update(mCurrentShader, deltaTime);
+
+	OnOverlay();
+}
+
+void EditorLayer::ShowMainMenuBar()
+{
+	if (ImGui::BeginMainMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("Open", "CTRL+O"))
+			{
+
+			}
+			if (ImGui::MenuItem("Save", "CTRL+S"))
+			{
+
+			}
+			ImGui::EndMenu();
+		}
+
+		/*if (ImGui::BeginMenu("Edit"))
+		{
+			if (ImGui::MenuItem("Undo", "CTRL+Z"))
+			{
+
+			}
+
+			if (ImGui::MenuItem("Redo", "CTRL+Y", false, false))
+			{
+
+			}
+
+			ImGui::Separator();
+
+			if (ImGui::MenuItem("Cut", "CTRL+X"))
+			{
+
+			}
+
+			if (ImGui::MenuItem("Copy", "CTRL+C"))
+			{
+
+			}
+
+			if (ImGui::MenuItem("Paste", "CTRL+V"))
+			{
+
+			}
+
+			ImGui::EndMenu();
+		}*/
+
+		if (ImGui::BeginMenu("Create"))
+		{
+			if (ImGui::BeginMenu("Primitive"))
+			{
+				if (ImGui::MenuItem("Quad"))
+				{
+
+				}
+
+				if (ImGui::MenuItem("Cube"))
+				{
+					Ref<TS_ENGINE::Node> node = CreateRef<TS_ENGINE::Node>();
+					node->SetName("Cube");
+					Ref<TS_ENGINE::Cube> cube = CreateRef<TS_ENGINE::Cube>("Cube");
+					//cube->SetColor(Vector3(0.5f, 0.5f, 0.5f));
+					//cube->SetTexture("Crate.png");
+					cube->Create();
+
+					node->AttachObject(cube);
+					mScene1->GetSceneNode()->AddChild(node);
+				}
+
+				if (ImGui::MenuItem("Sphere"))
+				{
+
+				}
+
+				if (ImGui::MenuItem("Model"))
+				{
+
+				}
+
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Light"))
+			{
+				if (ImGui::MenuItem("Directional"))
+				{
+
+				}
+
+				if (ImGui::MenuItem("Point"))
+				{
+
+				}
+
+				if (ImGui::MenuItem("Spot"))
+				{
+
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::EndMenu();
+		}
+
+		ImGui::EndMainMenuBar();
+	}
+}
+
+void EditorLayer::ShowPanels()
+{
+	//ImGuiStyle& style = ImGui::GetStyle();
+	//style.WindowMenuButtonPosition = ImGuiDir_None;
+
+	bool opened = false;
+	ImGuiWindowFlags defaultWindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
+
+#pragma region Panel Size And Positions 
+	//No need to set MainMenuBar size and position, DefaultSize: CurrentWindowWidth, 18.0f, DefaultPos: 0, 0
+
+	ImVec2 subMenuPos = ImVec2(0.0f, 18.0f);
+	ImVec2 subMenuSize = ImVec2((float)TS_ENGINE::Application::Get().GetWindow().GetWidth() - 250.0f, 14.0f);
+
+	mViewportPanelPos = ImVec2(0.0f, 52.0f);
+	mViewportPanelSize = ImVec2((float)TS_ENGINE::Application::Get().GetWindow().GetWidth() - 250.0f, 
+		(float)TS_ENGINE::Application::Get().GetWindow().GetHeight() - 52.0f);
+	mViewportBounds[0] = { mViewportPanelPos.x, mViewportPanelPos.y };
+	mViewportBounds[1] = { mViewportPanelPos.x + mViewportPanelSize.x, mViewportPanelPos.y + mViewportPanelSize.y };
+
+	ImVec2 inspectorPanelPos = ImVec2((float)TS_ENGINE::Application::Get().GetWindow().GetWidth() - 250.0f, 18.0f);
+	ImVec2 inspectorPanelSize = ImVec2(250.0f, (float)TS_ENGINE::Application::Get().GetWindow().GetHeight() * 0.5f);
+
+	ImVec2 hierarchyPanelPos = ImVec2((float)TS_ENGINE::Application::Get().GetWindow().GetWidth() - 250.0f, (float)TS_ENGINE::Application::Get().GetWindow().GetHeight() * 0.5f + 19.0f);//19.0f is the tile text height
+	ImVec2 hierarchyPanelSize = ImVec2(250.0f, (float)TS_ENGINE::Application::Get().GetWindow().GetHeight() * 0.5f);
+
+	ImVec2 statsPanelPos = ImVec2(TS_ENGINE::Application::Get().GetWindow().GetWidth() - 450.0f, 19.0f);
+	ImVec2 statsPanelSize = ImVec2(200.0f, 150.0f);
+#pragma endregion
+
+	mSceneGui->ShowViewportWindow(mViewportPanelPos, mViewportPanelSize, mEditorCamera, mSceneCamera);
+	mSceneGui->ShowInspectorWindow(inspectorPanelPos, inspectorPanelSize);
+	mSceneGui->ShowHierarchyWindow(mScene1, hierarchyPanelPos, hierarchyPanelSize);
+
+#pragma region Sub-Menu 
+	ImGui::SetNextWindowPos(subMenuPos);
+	ImGui::SetNextWindowSize(subMenuSize);
+	ImGui::Begin("SubMenu", &opened, defaultWindowFlags | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
+	{
+		ImGui::Button("Scene");
+		ImGui::SameLine();
+		ImGui::Button("Game");
+
+		//ImGui::Checkbox("Show Grid", &mShowGrid);
+
+		//ImGui::SameLine();
+		//ImGui::Spacing();
+		//ImGui::SameLine();
+
+		//ImGui::Checkbox("Gamma Correction", &mGammaCorrection);
+
+		//ImGui::SameLine();
+		//ImGui::Spacing();
+		//ImGui::SameLine();
+
+		//if (mGammaCorrection)
+		//{
+		//	ImGui::PushItemWidth(200);
+		//	ImGui::SliderFloat("GammaValue", &mGammaValue, 0.1f, 2.2f);
+		//}
+
+		//ImGui::SameLine();
+		//ImGui::Spacing();
+		//ImGui::SameLine();
+
+		//ImGui::Checkbox("HDR", &mHdr);
+
+		//ImGui::SameLine();
+		//ImGui::Spacing();
+		//ImGui::SameLine();
+
+		//if (mHdr)
+		//{
+		//	ImGui::PushItemWidth(200);
+		//	ImGui::SliderFloat("Expose", &mHdrExposure, 0.01f, 10.0f);//More expose will hide the detail
+		//}
+	}
+	ImGui::End();
+#pragma endregion
 }
 
 void EditorLayer::OnImGUIRender()
@@ -160,283 +503,8 @@ void EditorLayer::OnImGUIRender()
 	float minWinSizeX = style.WindowMinSize.x;
 	style.WindowMinSize.x = minWinSizeX;
 
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
-	bool opened = false;
-
-#pragma region Panel Size And Positions 
-	//No need to set MainMenuBar size and position, DefaultSize: CurrentWindowWidth, 18.0f, DefaultPos: 0, 0
-
-	ImVec2 inspectorPanelPos = ImVec2(TS_ENGINE::Application::Get().GetWindow().GetWidth() - 250, 0);
-	ImVec2 inspectorPanelSize = ImVec2(250, TS_ENGINE::Application::Get().GetWindow().GetHeight() / 2);
-
-	ImVec2 hierarchyPanelPos = ImVec2(TS_ENGINE::Application::Get().GetWindow().GetWidth() - 250, TS_ENGINE::Application::Get().GetWindow().GetHeight() / 2);
-	ImVec2 hierarchyPanelSize = ImVec2(250, TS_ENGINE::Application::Get().GetWindow().GetHeight() / 2);
-
-	ImVec2 viewportPanelPos = ImVec2(0, 0);
-	ImVec2 viewportPanelSize = ImVec2(TS_ENGINE::Application::Get().GetWindow().GetWidth(), TS_ENGINE::Application::Get().GetWindow().GetHeight());
-#pragma endregion
-
-#pragma region Transform Gizmos
-	ImGui::Begin("Viewport", &opened, window_flags | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
-
-	ImGui::SetWindowPos("Viewport", viewportPanelPos);
-	ImGui::SetWindowSize("Viewport", viewportPanelSize);
-
-	//ImGuizmo set perspective and drawlist
-	ImGuizmo::SetOrthographic(false);
-	ImGuizmo::SetDrawlist();
-
-	float windowWidth = (float)ImGui::GetWindowWidth();
-	float windowHeight = (float)ImGui::GetWindowHeight();
-	ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
-
-	const float* projection;
-	const float* view;
-
-	if (mEditorCamera)
-	{
-		projection = glm::value_ptr(mEditorCamera->GetProjectionMatrix());
-		view = glm::value_ptr(mEditorCamera->GetViewMatrix());
-	}
-
-	const float* identityMatrix = glm::value_ptr(glm::mat4(1));
-
-	//ImGui::Image((ImTextureID)colorBuffer, ImVec2{ windowWidth, windowHeight }, ImVec2(0, 1), ImVec2(1, 0));
-
-	if (mSelectedNode)
-	{
-		float* matrix = (float*)glm::value_ptr(mSelectedNode->GetTransform()->GetModelMatrix());
-		Vector3 initRot = mSelectedNode->GetTransform()->GetLocalEulerAngles();
-
-		ImGuizmo::Manipulate(view, projection, mTransformOperation, mTransformMode, matrix);
-		//std::string str = "Model matrix of " + std::string(mSelectedNode->GetName()) + " before change";
-		//Logger::PrintMatrix(str.c_str(), matrix);
-
-		//Utility::DecomposedData* dd =  Utility::Decompose(matrix);
-
-		float matrixTranslation[3], matrixRotation[3], matrixScale[3];
-		ImGuizmo::DecomposeMatrixToComponents(matrix, matrixTranslation, matrixRotation, matrixScale);
-
-		if (ImGuizmo::IsUsing())
-		{
-			if (mTranslateActive)
-				mSelectedNode->GetTransform()->SetLocalPosition(Vector3(matrixTranslation[0], matrixTranslation[1], matrixTranslation[2]));
-			else if (mRotateActive)
-				mSelectedNode->GetTransform()->SetLocalEulerAngles(Vector3(matrixRotation[0], matrixRotation[1], matrixRotation[2]));
-			else if (mScaleActive)
-				mSelectedNode->GetTransform()->SetLocalScale(Vector3(matrixScale[0], matrixScale[1], matrixScale[2]));
-
-			mSelectedNode->UpdateModelMatrices();
-
-			//mSelectedNode->GetTransform()->OverrideModelMatrix(matrix);
-			//mSelectedNode->GetTransform()->ComputeModelMatrix();
-			//ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, matrix);
-		}
-	}
-
-	ImGui::End();
-#pragma endregion
-
-	ImGui::Begin("Stats");
-	{
-		ImGui::SetWindowSize(ImVec2(200, 150));
-		ImGui::SetWindowPos(ImVec2(TS_ENGINE::Application::Get().GetWindow().GetWidth() - ImGui::GetWindowSize().x - 250, 0));
-
-		if (ImGui::Checkbox("Batching enabled", &mCurrentScene->m_BatchingEnabled))
-		{
-			if (mCurrentScene->m_BatchingEnabled)
-			{
-				mSelectedNode = nullptr;
-				mCurrentShader = mBatchLitShader;
-			}
-			else
-			{
-				mSelectedNode = nullptr;
-				mCurrentScene->OnUnBatched();	
-
-				for (auto& node : mNodes)
-				{
-					mCurrentScene->GetSceneNode()->AddChild(node);
-					node->SetParentNode(mCurrentScene->GetSceneNode());
-				}
-
-				mCurrentShader = mLitShader;
-			}
-
-			mCurrentScene->m_BatchButton.Click(mCurrentShader, mNodes);
-			
-			if (mCurrentScene->m_BatchingEnabled)
-				mCurrentScene->OnBatched();	
-		}
-
-		ImGui::Text("FPS: %.1f, %.3f ms/frame", 1000.0f / TS_ENGINE::Application::Get().GetDeltaTime(), TS_ENGINE::Application::Get().GetDeltaTime());
-
-		ImGui::Text("Draw Calls: %d", TS_ENGINE::Application::Get().GetDrawCalls());
-		ImGui::Text("Vertices: %d", TS_ENGINE::Application::Get().GetTotalVertices());
-		ImGui::Text("Indices: %d", TS_ENGINE::Application::Get().GetTotalIndices());
-	}
-	ImGui::End();
-
-	ImGui::Begin("Inspector");
-	{
-		ImGui::SetWindowSize(inspectorPanelSize);
-		ImGui::SetWindowPos(inspectorPanelPos);
-
-#pragma region Transform Component
-		if (mSelectedNode != NULL)
-		{
-			ImGui::Checkbox(" ", &mSelectedNode->m_Enabled);
-			ImGui::SameLine();
-			ImGui::Text(mSelectedNode->GetName().c_str());
-
-			ImGui::BeginChild("Transform", ImVec2(inspectorPanelSize.x - 18, 0.09259f * TS_ENGINE::Application::Get().GetWindow().GetWidth()), true, window_flags | ImGuiWindowFlags_NoScrollbar);
-
-			ImGui::Text("Transform");
-			ImGui::SameLine();
-			if (ImGui::RadioButton("Tr", mTranslateActive))
-			{
-				mTranslateActive = true;
-				mRotateActive = false;
-				mScaleActive = false;
-
-				//mTransformOperation = ImGuizmo::OPERATION::TRANSLATE;
-			}
-			ImGui::SameLine();
-			if (ImGui::RadioButton("Rt", mRotateActive))
-			{
-				mRotateActive = true;
-				mTranslateActive = false;
-				mScaleActive = false;
-
-				//mTransformOperation = ImGuizmo::OPERATION::ROTATE;
-			}
-			ImGui::SameLine();
-			if (ImGui::RadioButton("Sc", mScaleActive))
-			{
-				mScaleActive = true;
-				mTranslateActive = false;
-				mRotateActive = false;
-
-				//mTransformOperation = ImGuizmo::OPERATION::SCALE;
-			}
-
-			float* temp = new float[3]
-			{
-				mSelectedNode->GetTransform()->GetLocalPosition().x,
-					mSelectedNode->GetTransform()->GetLocalPosition().y,
-					mSelectedNode->GetTransform()->GetLocalPosition().z
-			};
-
-			if (ImGui::DragFloat3("Position", temp))
-			{
-				mSelectedNode->GetTransform()->SetLocalPosition(Vector3(temp[0], temp[1], temp[2]));
-				//mSelectedNode->UpdateModelMatrices();
-			}
-
-			temp = new float[3] 
-			{
-				mSelectedNode->GetTransform()->GetLocalEulerAngles().x,
-					mSelectedNode->GetTransform()->GetLocalEulerAngles().y,
-					mSelectedNode->GetTransform()->GetLocalEulerAngles().z
-			};
-
-			if (ImGui::DragFloat3("Rotation", temp))
-			{
-				mSelectedNode->GetTransform()->SetLocalEulerAngles(Vector3(temp[0], temp[1], temp[2]));
-				//mSelectedNode->UpdateModelMatrices();
-			}
-			//Scale
-			mCurrScale[0] = mSelectedNode->GetTransform()->GetLocalScale().x;
-			mCurrScale[1] = mSelectedNode->GetTransform()->GetLocalScale().y;
-			mCurrScale[2] = mSelectedNode->GetTransform()->GetLocalScale().z;
-
-			if (ImGui::DragFloat3("Scale", mCurrScale))
-			{
-				//Avoid zero
-				if (mCurrScale[0] == 0.0f)
-					mCurrScale[0] = 0.0001f;
-				if (mCurrScale[1] == 0.0f)
-					mCurrScale[1] = 0.0001f;
-				if (mCurrScale[2] == 0.0f)
-					mCurrScale[2] = 0.0001f;
-
-				//Avoid zero
-				if (mLastScale[0] == 0.0f)
-					mLastScale[0] = 0.0001f;
-				if (mLastScale[1] == 0.0f)
-					mLastScale[1] = 0.0001f;
-				if (mLastScale[2] == 0.0f)
-					mLastScale[2] = 0.0001f;
-
-				if (m_ScaleLock)
-				{
-					//Logger::Print("Temp Scale", mCurrScale);
-					//Logger::Print("Last Scale", mLastScale);
-
-					if (mCurrScale[0] != mLastScale[0])//X Scaled
-					{
-						mCurrScale[1] = mLastScale[1] * (mCurrScale[0] / mLastScale[0]);
-						mCurrScale[2] = mLastScale[2] * (mCurrScale[0] / mLastScale[0]);
-					}
-					if (mCurrScale[1] != mLastScale[1])//Y Scaled
-					{
-						mCurrScale[0] = mLastScale[0] * (mCurrScale[1] / mLastScale[1]);
-						mCurrScale[2] = mLastScale[2] * (mCurrScale[1] / mLastScale[1]);
-					}
-					if (mCurrScale[2] != mLastScale[2])//Z Scaled
-					{
-						mCurrScale[0] = mLastScale[0] * (mCurrScale[2] / mLastScale[2]);
-						mCurrScale[1] = mLastScale[1] * (mCurrScale[2] / mLastScale[2]);
-					}
-				}
-				//Record last scale
-				mLastScale[0] = mCurrScale[0];
-				mLastScale[1] = mCurrScale[1];
-				mLastScale[2] = mCurrScale[2];
-
-				mSelectedNode->GetTransform()->SetLocalScale(Vector3(mCurrScale[0], mCurrScale[1], mCurrScale[2]));
-				mSelectedNode->UpdateModelMatrices();
-			}
-
-			ImGui::SameLine();
-			//ImGui::Checkbox("L", &mScaleLock);		
-
-			if (!m_ScaleLock)
-			{
-				if (ImGui::ImageButton((ImTextureID)mUnlockedIcon->GetRendererID(), ImVec2(18, 18)))
-					m_ScaleLock = true;
-			}
-			else
-			{
-				if (ImGui::ImageButton((ImTextureID)mLockedIcon->GetRendererID(), ImVec2(18, 18)))
-					m_ScaleLock = false;
-			}
-
-			//temp = NULL;
-			delete temp;
-			ImGui::EndChild();
-		}
-
-#pragma endregion
-	
-	}
-	ImGui::End();
-
-	ImGui::Begin("Hierarchy");
-	{
-		ImGui::SetWindowSize(hierarchyPanelSize);
-		ImGui::SetWindowPos(hierarchyPanelPos);
-
-		ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-		ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
-
-		if (ImGui::TreeNodeEx((void*)(intptr_t)0, base_flags, mCurrentScene->GetSceneNode()->GetName().c_str()))
-		{
-			CreateUIForAllNodes(mCurrentScene->GetSceneNode());
-			ImGui::TreePop();
-		}
-	}
-	ImGui::End();
+	ShowMainMenuBar();
+	ShowPanels();
 }
 
 void EditorLayer::OnEvent(TS_ENGINE::Event& e)
@@ -457,10 +525,19 @@ bool EditorLayer::OnKeyPressed(TS_ENGINE::KeyPressedEvent& e)
 		TS_ENGINE::Application::Get().ToggleWireframeMode();
 		break;
 	case TS_ENGINE::Key::G:
-		SpawnNewObject();
+		//SpawnNewObject();
 		break;
 	case TS_ENGINE::Key::Delete:
 		break;
+	case TS_ENGINE::Key::Q:
+		mSceneGui->SwitchToTranslateMode();
+		break;
+	case TS_ENGINE::Key::E:
+		mSceneGui->SwitchToRotateMode();
+		break;
+	case TS_ENGINE::Key::R:
+		mSceneGui->SwitchToScaleMode();
+
 		break;
 	}
 
@@ -469,6 +546,12 @@ bool EditorLayer::OnKeyPressed(TS_ENGINE::KeyPressedEvent& e)
 
 bool EditorLayer::OnMouseButtonPressed(TS_ENGINE::MouseButtonPressedEvent& e)
 {
+	if (e.GetMouseButton() == TS_ENGINE::Mouse::ButtonLeft)//Why is this creating an issue
+	{
+		if(!ImGuizmo::IsOver())
+			mSceneGui->SetSelectedNode(nullptr);
+	}
+
 	return false;
 }
 
@@ -477,105 +560,134 @@ void EditorLayer::OnOverlay()
 
 }
 
-Ref<TS_ENGINE::Node> EditorLayer::SpawnGameObjectNode(uint32_t index, uint32_t randColorIndex)//Index is a random number between 0 to 6
-{
-	if (index == 0)
-	{
-		Ref<TS_ENGINE::Node> node = CreateRef<TS_ENGINE::Node>();
-		node->SetName("QuadNode");
-		node->GetTransform()->SetEulerAngles(0.0f, 180.0f, 0.0f);
+//Vector2 GetGridPosFromIndex(size_t index, size_t width)
+//{
+//	size_t x = index % width;
+//	size_t y = (index - x) / width;
+//
+//	return Vector2(x, y);
+//}
 
-		Ref<TS_ENGINE::Quad> quad = CreateRef<TS_ENGINE::Quad>("Quad");
-		quad->SetColor(ColorPallete[randColorIndex]);
-		quad->SetTexture("Crate.png");
-		quad->Create();
+//void EditorLayer::SpawnNewObject()
+//{
+//	int randomIndex = 0 + (std::rand() % (6 - 0 + 1));
+//	int randomColorIndex = 0 + (std::rand() % (6 - 0 + 1));
+//
+//	Ref<TS_ENGINE::Node> node = SpawnGameObjectNode(randomIndex, randomColorIndex);
+//
+//	//go->SetColor(ColorPallete[randomColorIndex]);
+//	Vector2 gridPos = GetGridPosFromIndex(mNodes.size(), mGridSizeX);
+//
+//	if (randomIndex == 5 || randomIndex == 6)
+//		node->GetTransform()->SetLocalPosition(2 * gridPos.x, -node->GetTransform()->GetLocalScale().x * 0.5f, 2 * gridPos.y);
+//	else
+//		node->GetTransform()->SetLocalPosition(2 * gridPos.x, 0, 2 * gridPos.y);
+//
+//	mScene1->GetSceneNode()->AddChild(mScene1->GetSceneNode(), node);
+//	node->SetParentNode(mScene1->GetSceneNode());
+//
+//	mNodes.push_back(node);
+//}
 
-		node->AttachGameObject(quad);
-		return node;
-	}
-	else if (index == 1)
-	{
-		Ref<TS_ENGINE::Node> node = CreateRef<TS_ENGINE::Node>();
-		node->SetName("QuadNode");
-		node->GetTransform()->SetEulerAngles(0.0f, 180.0f, 0.0f);
-
-		Ref<TS_ENGINE::Quad> quad = CreateRef<TS_ENGINE::Quad>("Quad");
-		quad->SetColor(ColorPallete[randColorIndex]);
-		quad->SetTexture("CrateTex1.png");
-		quad->Create();
-
-
-		node->AttachGameObject(quad);
-		return node;
-	}
-	else if (index == 2)
-	{
-		Ref<TS_ENGINE::Node> node = CreateRef<TS_ENGINE::Node>();
-		node->SetName("QuadNode");
-		node->GetTransform()->SetEulerAngles(0.0f, 180.0f, 0.0f);
-
-		Ref<TS_ENGINE::Quad> quad = CreateRef<TS_ENGINE::Quad>("Quad");
-		quad->SetColor(ColorPallete[randColorIndex]);
-		quad->SetTexture("Terrain.png");
-		quad->Create();
-
-		node->AttachGameObject(quad);
-		return node;
-	}
-	else if (index == 3)
-	{
-		Ref<TS_ENGINE::Node> node = CreateRef<TS_ENGINE::Node>();
-		node->SetName("CubeNode");
-		node->GetTransform()->SetEulerAngles(0, 180.0f + 90.0f, 0);
-
-		Ref<TS_ENGINE::Cube> cube = CreateRef<TS_ENGINE::Cube>("Cube");
-		cube->SetColor(ColorPallete[randColorIndex]);
-		cube->SetTexture("Crate.png");
-		cube->Create();
-
-		node->AttachGameObject(cube);
-		return node;
-	}
-	else if (index == 4)
-	{
-		Ref<TS_ENGINE::Node> node = CreateRef<TS_ENGINE::Node>();
-		node->SetName("CubeNode");
-		node->GetTransform()->SetEulerAngles(0.0f, 180.0f + 45.0f, 0.0f);
-
-		Ref<TS_ENGINE::Cube> cube = CreateRef<TS_ENGINE::Cube>("Cube");
-		cube->SetColor(ColorPallete[randColorIndex]);
-		cube->SetTexture("Crate.png");
-		cube->Create();
-
-		node->AttachGameObject(cube);
-		return node;
-	}
-	else if (index == 5)
-	{
-		Ref<TS_ENGINE::Node> node = CreateRef<TS_ENGINE::Node>();
-		node->SetName("Model");
-		node->GetTransform()->SetEulerAngles(-90, 0, 180.0f);
-		node->GetTransform()->SetScale(0.5f);
-
-		mModelLoader->LoadModel("Assets\\Models", "monk_character.glb");
-		mModelLoader->GetLastLoadedModel()->SetName("Model1");
-
-		node->AttachGameObject(mModelLoader->GetLastLoadedModel());
-		return node;
-	}
-	else if (index == 6)
-	{
-		Ref<TS_ENGINE::Node> node = CreateRef<TS_ENGINE::Node>();
-		node->SetName("Model");
-		node->GetTransform()->SetEulerAngles(-90, 0, 180.0f);
-		node->GetTransform()->SetScale(0.5f);
-
-		mModelLoader->LoadModel("Assets\\Models", "monk_character.glb");
-		mModelLoader->GetLastLoadedModel()->SetName("Model2");
-
-		node->AttachGameObject(mModelLoader->GetLastLoadedModel());
-		return node;
-	}
-	else
-		return nullptr;
-}
+//Ref<TS_ENGINE::Node> EditorLayer::SpawnGameObjectNode(uint32_t index, uint32_t randColorIndex)//Index is a random number between 0 to 6
+//{
+//	if (index == 0)
+//	{
+//		Ref<TS_ENGINE::Node> node = CreateRef<TS_ENGINE::Node>();
+//		node->SetName("QuadNode");
+//		node->GetTransform()->SetLocalEulerAngles(0.0f, 180.0f, 0.0f);
+//
+//		Ref<TS_ENGINE::Quad> quad = CreateRef<TS_ENGINE::Quad>("Quad");
+//		quad->SetColor(ColorPallete[randColorIndex]);
+//		quad->SetTexture("Crate.png");
+//		quad->Create();
+//
+//		node->AttachGameObject(quad);
+//		return node;
+//	}
+//	else if (index == 1)
+//	{
+//		Ref<TS_ENGINE::Node> node = CreateRef<TS_ENGINE::Node>();
+//		node->SetName("QuadNode");
+//		node->GetTransform()->SetLocalEulerAngles(0.0f, 180.0f, 0.0f);
+//
+//		Ref<TS_ENGINE::Quad> quad = CreateRef<TS_ENGINE::Quad>("Quad");
+//		quad->SetColor(ColorPallete[randColorIndex]);
+//		quad->SetTexture("CrateTex1.png");
+//		quad->Create();
+//
+//
+//		node->AttachGameObject(quad);
+//		return node;
+//	}
+//	else if (index == 2)
+//	{
+//		Ref<TS_ENGINE::Node> node = CreateRef<TS_ENGINE::Node>();
+//		node->SetName("QuadNode");
+//		node->GetTransform()->SetLocalEulerAngles(0.0f, 180.0f, 0.0f);
+//
+//		Ref<TS_ENGINE::Quad> quad = CreateRef<TS_ENGINE::Quad>("Quad");
+//		quad->SetColor(ColorPallete[randColorIndex]);
+//		quad->SetTexture("Terrain.png");
+//		quad->Create();
+//
+//		node->AttachGameObject(quad);
+//		return node;
+//	}
+//	else if (index == 3)
+//	{
+//		Ref<TS_ENGINE::Node> node = CreateRef<TS_ENGINE::Node>();
+//		node->SetName("CubeNode");
+//		node->GetTransform()->SetLocalEulerAngles(0, 180.0f + 90.0f, 0);
+//
+//		Ref<TS_ENGINE::Cube> cube = CreateRef<TS_ENGINE::Cube>("Cube");
+//		cube->SetColor(ColorPallete[randColorIndex]);
+//		cube->SetTexture("Crate.png");
+//		cube->Create();
+//
+//		node->AttachGameObject(cube);
+//		return node;
+//	}
+//	else if (index == 4)
+//	{
+//		Ref<TS_ENGINE::Node> node = CreateRef<TS_ENGINE::Node>();
+//		node->SetName("CubeNode");
+//		node->GetTransform()->SetLocalEulerAngles(0.0f, 180.0f + 45.0f, 0.0f);
+//
+//		Ref<TS_ENGINE::Cube> cube = CreateRef<TS_ENGINE::Cube>("Cube");
+//		cube->SetColor(ColorPallete[randColorIndex]);
+//		cube->SetTexture("Crate.png");
+//		cube->Create();
+//
+//		node->AttachGameObject(cube);
+//		return node;
+//	}
+//	else if (index == 5)
+//	{
+//		Ref<TS_ENGINE::Node> node = CreateRef<TS_ENGINE::Node>();
+//		node->SetName("Model");
+//		node->GetTransform()->SetLocalEulerAngles(-90, 0, 180.0f);
+//		node->GetTransform()->SetLocalScale(1.0f, 1.0f, 1.0f);
+//
+//		mModelLoader->LoadModel("Assets\\Models", "monk_character.glb");
+//		mModelLoader->GetLastLoadedModel()->SetName("Model1");
+//
+//		node->AttachGameObject(mModelLoader->GetLastLoadedModel());
+//		return node;
+//	}
+//	else if (index == 6)
+//	{
+//		Ref<TS_ENGINE::Node> node = CreateRef<TS_ENGINE::Node>();
+//		node->SetName("Model");
+//		node->GetTransform()->SetLocalEulerAngles(-90, 0, 180.0f);
+//		node->GetTransform()->SetLocalScale(1.0f, 1.0f, 1.0f);
+//
+//		mModelLoader->LoadModel("Assets\\Models", "monk_character.glb");
+//		mModelLoader->GetLastLoadedModel()->SetName("Model2");
+//
+//		node->AttachGameObject(mModelLoader->GetLastLoadedModel());
+//		return node;
+//	}
+//	else
+//		return nullptr;
+//}

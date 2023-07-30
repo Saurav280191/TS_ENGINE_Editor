@@ -50,7 +50,17 @@ file(GLOB LayersSrc
 src/EditorLayer.h
 src/EditorLayer.cpp
 )
+
 source_group("Layers" FILES ${LayersSrc})
+
+file(GLOB LayersEditorSrc
+src/Editor/EditorCamera.h
+src/Editor/EditorCamera.cpp
+src/Editor/SceneGui.h
+src/Editor/SceneGui.cpp
+)
+
+source_group("Layers/Editor" FILES ${LayersEditorSrc})
 
 #Shaders Filter
 file(GLOB ShadersSrc
@@ -58,6 +68,9 @@ ${CMAKE_SOURCE_DIR}/Assets/Shaders/BatchLit.vert
 ${CMAKE_SOURCE_DIR}/Assets/Shaders/BatchLit.frag
 ${CMAKE_SOURCE_DIR}/Assets/Shaders/Lit.vert
 ${CMAKE_SOURCE_DIR}/Assets/Shaders/Lit.frag
+${CMAKE_SOURCE_DIR}/Assets/Shaders/HDRLighting.vert
+${CMAKE_SOURCE_DIR}/Assets/Shaders/HDRLighting.frag
+${CMAKE_SOURCE_DIR}/Assets/Shaders/PickingLit.frag
 )
 source_group("Shaders" FILES ${ShadersSrc})
 
@@ -70,6 +83,7 @@ ${TS_ENGINE_DIR}/Dependencies/include/assimp/build/${CMAKE_ARCHITECTURE}/lib/${C
 add_executable (${PROJECT_NAME} 
 ${SOURCE_FILES} # SOURCE_FILES Default Filter
 ${LayersSrc} #Layers Filter
+${LayersEditorSrc} #Layers/Editor Filter
 ${ShadersSrc} #Shaders Filter
 ${ImGuiSrc} #ImGui Filter
 )
@@ -92,6 +106,7 @@ add_compile_definitions(
     _CRT_SECURE_NO_DEPRECATE
     _SCL_SECURE_NO_WARNINGS
     TS_PLATFORM_WINDOWS
+	TS_ENGINE_EDITOR
     )
 
 #Include directories
