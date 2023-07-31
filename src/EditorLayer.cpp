@@ -211,7 +211,8 @@ void EditorLayer::OnUpdate(float deltaTime)
 	//Editor camera pass
 	{
 		UpdateCameraRT(mEditorCamera, deltaTime);
-		PickGameObject();
+		if (!ImGuizmo::IsOver())
+			PickGameObject();
 		mEditorCamera->GetFramebuffer()->Unbind();
 	}
 
@@ -256,9 +257,8 @@ void EditorLayer::PickGameObject()
 					mSceneGui->SetSelectedNode(hoveredOnNode);
 			}
 			else
-			{
-				if (!ImGuizmo::IsOver())
-					mSceneGui->SetSelectedNode(nullptr);//Deselect
+			{				
+				mSceneGui->SetSelectedNode(nullptr);//Deselect
 			}
 		}
 
