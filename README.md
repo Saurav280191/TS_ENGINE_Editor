@@ -7,4 +7,4 @@ It currently includes some basic editor related features like:
 3. Different panels for showing scene hierarchy and transforming position, rotation and scale.
 4. Picking and manipulating objects.
 5. Material editor. (In progress)
-6. HDR color space. (In progress)
+6. HDR color and gamma correction. (In progress)
