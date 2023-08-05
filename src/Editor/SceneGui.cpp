@@ -25,7 +25,7 @@ namespace TS_ENGINE {
 				mSelectedNode->UpdateTransformationMatrices(modelMatrix);
 				Vector3 eulerAngles;
 				Utility::DecomposeTransform(modelMatrix, mSelectedNodePosition, eulerAngles, mSelectedNodeScale);
-				mSelectedNodeEulerAngles = eulerAngles * Vector3(57.2958f);
+				mSelectedNodeEulerAngles = eulerAngles * Vector3(57.2958f);//To Degree
 
 				mJustSelected = false;
 			}
@@ -218,11 +218,8 @@ namespace TS_ENGINE {
 						mTransformOperation = ImGuizmo::OPERATION::SCALE;
 					}
 
-					//mSelectedModelPosition = glm::value_ptr(mSelectedNode->GetTransform()->GetLocalPosition());
-					//mSelectedModelEulerAngles = glm::value_ptr(mSelectedNode->GetTransform()->GetLocalEulerAngles());
-					//mSelectedModelScale = glm::value_ptr(mSelectedNode->GetTransform()->GetLocalScale());
-
 					float* pos = (float*)glm::value_ptr(mSelectedNodePosition);
+					//mSelectedNodeEulerAngles = TS_ENGINE::MyMath::ClampEulerAngles(mSelectedNodeEulerAngles);//Will clamp the euler angles between 0 - 360
 					float* eulerAngles = (float*)glm::value_ptr(mSelectedNodeEulerAngles);
 					float* scale = (float*)glm::value_ptr(mSelectedNodeScale);
 

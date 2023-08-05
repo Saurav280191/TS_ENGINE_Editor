@@ -2,23 +2,37 @@
 #include "TS_ENGINE.h"
 #include <Events/KeyEvent.h>
 #include <Events/MouseEvent.h>
+
+//Renderer headers
+#include <Renderer/Texture.h>
+#include "Renderer/RenderCommand.h"
+#include <Renderer/SceneCamera.h>
+#include "Renderer/RendererAPI.h"
+#include "Renderer/Framebuffer.h"
 #include <Renderer/Material.h>
 #include <Renderer/Texture.h>
 #include <Renderer/Lighting/Light.h>
+
+//Primitive headers
 #include <Primitive/Quad.h>
 #include <Primitive/Cube.h>
 #include <Primitive/Sphere.h>
 #include <Primitive/Line.h>
+
+//Other object classes
 #include <ModelLoader.h>
-#include <Renderer/Texture.h>
-#include "Renderer/RenderCommand.h"
+#include <Factory.h>
+
+//Scene management headers
 #include <SceneManager/Node.h>
 #include <SceneManager/Scene.h>
-#include <Renderer/SceneCamera.h>
+#include <SceneManager/SceneSerializer.h>
+#include <SceneManager/SceneManager.h>
+
+//Camera headers
 #include "Editor/EditorCamera.h"
-#include "Renderer/RendererAPI.h"
 #include "Editor/SceneGui.h"
-#include "Renderer/Framebuffer.h"
+
 
 #include <imgui.h>
 #define IMGUI_DEFINE_MATH_OPERATORS
@@ -53,10 +67,7 @@ private:
 	float mAspectRatio;
 	
 	Ref<EditorCamera> mEditorCamera;
-
-	Ref<TS_ENGINE::SceneCamera> mSceneCamera;
-	Ref<TS_ENGINE::Quad> mSceneCameraGui;
-	Ref<TS_ENGINE::Line> mFrustrumLine;
+	Ref<TS_ENGINE::SceneCamera> mCurrentSceneCamera;
 
 	ImVec2 mViewportPanelPos;
 	ImVec2 mViewportPanelSize;
@@ -78,14 +89,14 @@ private:
 
 	bool mOrthographicProjectionActive;
 
-	Ref<TS_ENGINE::Texture2D> 
+	//Ref<TS_ENGINE::Texture2D> 
 		//mUnlockedIcon, 
 		//mLockedIcon,
 		//mMeshFilterIcon, 
 		//mMeshRendererIcon,
 		//mMaterialIcon, 
-		//mLitMaterialIcon,
-		mCameraIcon;
+		//mLitMaterialIcon;
+		
 
 	//ImVec4 mPickedColor;
 	//TS_ENGINE::GameObject* mBatchedGameObject;

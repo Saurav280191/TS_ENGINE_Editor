@@ -19,9 +19,7 @@ EditorLayer::EditorLayer() :
 	//mUnlockedIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\Unlocked.png");
 	//mUnlockedIcon->SetVerticalFlip(false);
 	//mLockedIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\Locked.png");
-	//mLockedIcon->SetVerticalFlip(false);
-	mCameraIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\Camera1.png");
-	mCameraIcon->SetVerticalFlip(false);
+	//mLockedIcon->SetVerticalFlip(false);	
 	//mMeshFilterIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MeshFilterIcon.png");
 	//mMeshRendererIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MeshRendererIcon.png");
 	//mMaterialIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MaterialIcon.png");
@@ -49,153 +47,61 @@ void EditorLayer::OnAttach()
 
 #pragma region Cameras
 	mEditorCamera = CreateRef<EditorCamera>("EditorCamera");
-	mEditorCamera->SetCurrentShader(mDefaultShader);
 
 	mAspectRatio = (float)TS_ENGINE::Application::Get().GetWindow().GetWidth() / (float)TS_ENGINE::Application::Get().GetWindow().GetHeight();
 	mEditorCamera->SetPerspective(TS_ENGINE::Camera::Perspective(45.0f, mAspectRatio, 0.1f, 1000.0f));
 	mEditorCamera->GetNode()->GetTransform()->SetLocalPosition(0.0f, 1.0f, 10.0f);
 	mEditorCamera->GetNode()->GetTransform()->SetLocalEulerAngles(-30.0f, 0.0f, 0.0f);
 	mEditorCamera->CreateFramebuffer(1920, 1080);//Create framebuffer for editorCamera
+	mEditorCamera->Initialize();
 
-	mSceneCamera = CreateRef<TS_ENGINE::SceneCamera>("Camera1");
-	mSceneCamera->GetNode()->GetTransform()->SetLocalEulerAngles(0.0f, 30.0f, 0.0f);
-	mSceneCamera->SetPerspective(TS_ENGINE::Camera::Perspective(45.0f, mAspectRatio, 1.0f, 20.0f));
-	mSceneCamera->GetNode()->SetName("Camera1");
-	mSceneCamera->CreateFramebuffer(800, 600);//Create framebuffer for sceneCamera
+#pragma region DummyScene	
+	//Scene
+	mScene1 = CreateRef<TS_ENGINE::Scene>("Scene1");
 
-	//SceneCameraGuiQuad
-	mSceneCameraGui = CreateRef<TS_ENGINE::Quad>("CameraGui");
-	mSceneCameraGui->SetMaterial(mDefaultMat);
-	mSceneCameraGui->SetColor(1, 1, 1);
-	mSceneCameraGui->SetTexture(mCameraIcon);
-	mSceneCameraGui->Create();
+	//Scene Camera
+	Ref<TS_ENGINE::SceneCamera> defaultSceneCamera = TS_ENGINE::Factory::GetInstance()->CreateSceneCamera(mEditorCamera);	
+	defaultSceneCamera->GetNode()->GetTransform()->SetLocalPosition(7.156f, 2.951f, 8.770f);
+	defaultSceneCamera->GetNode()->GetTransform()->SetLocalEulerAngles(-13.235f, 38.064f, -1.505f);
+	defaultSceneCamera->SetPerspective(TS_ENGINE::Camera::Perspective(45.0f, mAspectRatio, 1.0f, 20.0f));		
+	defaultSceneCamera->CreateFramebuffer(800, 600);//Create framebuffer for sceneCamera
+	defaultSceneCamera->Initialize();
 
-	mSceneCameraGui->GetNode()->AttachObject(mSceneCameraGui);
-	mSceneCameraGui->GetNode()->SetName("CameraGuiNode");
-	mSceneCameraGui->GetNode()->GetTransform()->SetLocalEulerAngles(0.0, 90.0f, 0.0f);
-	mSceneCameraGui->GetNode()->GetTransform()->SetLocalScale(-1.0f, 1.0f, 1.0f);
-#pragma endregion
-
-#ifdef TS_ENGINE_EDITOR
-	mSceneCameraGui->GetNode()->HideInEditor();//Hides the node in hierarchy
-#endif
-
-	Ref<TS_ENGINE::GameObject> frustrumGameObject = CreateRef<TS_ENGINE::GameObject>("SceneCameraFrustrum");
-
-	mFrustrumLine = CreateRef<TS_ENGINE::Line>("FrustrumLine");
-	mFrustrumLine->SetMaterial(mDefaultMat);
-	mFrustrumLine->SetColor(1, 1, 1);
-	mFrustrumLine->DisableDepthTest();
-
-	frustrumGameObject->GetNode()->AttachObject(mFrustrumLine);
-	frustrumGameObject->GetNode()->SetName("SceneCameraFrustrumNode");
-
-#ifdef TS_ENGINE_EDITOR
-	frustrumGameObject->GetNode()->HideInEditor();//Hides the node in hierarchy
-#endif
-
-	Matrix4 projViewIMat = glm::inverse(mSceneCamera->GetProjectionViewMatrix());
-
-	std::vector<Vector4> points = {
-		projViewIMat * glm::vec4(-1, -1, -1, 1),//0
-		projViewIMat * glm::vec4(-1, -1, 1, 1),//1
-
-		projViewIMat * glm::vec4(-1, -1, 1, 1),//1
-		projViewIMat * glm::vec4(-1, 1, 1, 1),//2
-
-		projViewIMat * glm::vec4(-1, 1, 1, 1),//2
-		projViewIMat * glm::vec4(-1, 1, -1, 1),//3
-
-		projViewIMat * glm::vec4(-1, 1, -1, 1),//3
-		projViewIMat * glm::vec4(-1, -1, -1, 1),//0
-
-		projViewIMat * glm::vec4(1, -1, -1, 1),//4
-		projViewIMat * glm::vec4(1, -1, 1, 1),//5
-
-		projViewIMat * glm::vec4(1, -1, -1, 1),//4
-		projViewIMat * glm::vec4(1, 1, -1, 1),//7
-
-		projViewIMat * glm::vec4(1, 1, 1, 1),//6
-		projViewIMat * glm::vec4(1, 1, -1, 1),//7
-
-		projViewIMat * glm::vec4(1, -1, 1, 1),//5
-		projViewIMat * glm::vec4(1, 1, 1, 1),//6
-
-		projViewIMat * glm::vec4(-1, 1, -1, 1),//3
-		projViewIMat * glm::vec4(1, 1, -1, 1),//7
-
-		projViewIMat * glm::vec4(-1, -1, -1, 1),//0
-		projViewIMat * glm::vec4(1, -1, -1, 1),//4
-
-		projViewIMat * glm::vec4(-1, 1, 1, 1),//2
-		projViewIMat * glm::vec4(1, 1, 1, 1),//6
-
-		projViewIMat * glm::vec4(-1, -1, 1, 1),//1
-		projViewIMat * glm::vec4(1, -1, 1, 1),//5
-	};
-
-	std::vector<Vector3> vertices(points.size());
-	for (int i = 0; i < points.size(); i++)
-		vertices[i] = Vector3(points[i]) / points[i].w;
-
-	mFrustrumLine->Create(vertices);
-
-
-	mScene1 = CreateRef<TS_ENGINE::Scene>("Scene");
-
-	//mModelLoader = CreateRef<TS_ENGINE::ModelLoader>();
-
-	mDirectionalLight = CreateRef<TS_ENGINE::Light>();
-
-	mDirectionalLight->GetNode()->GetTransform()->SetLocalPosition(0.0f, 3.0f, 0.0f);
-	mDirectionalLight->GetNode()->GetTransform()->SetLocalEulerAngles(45.0f, 0.0f, 0.0f);
-	mDirectionalLight->GetNode()->SetName("Directional Light");
-	mDirectionalLight->GetNode()->AttachObject(mDirectionalLight);
-
-	//Add a default ground
-	Ref<TS_ENGINE::Quad> ground = CreateRef<TS_ENGINE::Quad>("Ground");
+	//Default ground
+	Ref<TS_ENGINE::GameObject> ground = TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::GameObject::QUAD);
+	ground->SetName("Ground");
 	ground->SetTexture("raw_plank_wall_diff_4k.jpg");
-	ground->SetTextureTiling(2, 2);
-	ground->SetMaterial(mDefaultMat);
-	ground->Create();
-
+	ground->SetTextureTiling(2, 2);	
 	ground->GetNode()->GetTransform()->SetLocalEulerAngles(-90.0f, 0.0f, 0.0f);
-	ground->GetNode()->GetTransform()->SetLocalScale(10.0f, 10.0f, 10.0f);
-	ground->GetNode()->AttachObject(ground);
-	ground->GetNode()->SetName(ground->GetName());
+	ground->GetNode()->GetTransform()->SetLocalScale(10.0f, 10.0f, 10.0f);	
 
-	//Add default cube
-	Ref<TS_ENGINE::Cube> cube = CreateRef<TS_ENGINE::Cube>("Cube");
-	cube->SetTexture("Crate.png");
-	cube->SetColor(1.0f, 1.0f, 1.0f);
-	cube->SetMaterial(mDefaultMat);
-	cube->Create();
-	cube->GetNode()->SetName("Cube");
+	//Cube
+	Ref<TS_ENGINE::GameObject> cube = TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::GameObject::CUBE);
+	cube->SetName("Cube");
+	cube->SetTexture("Crate.png");	
 	cube->GetNode()->GetTransform()->SetLocalPosition(0.0f, 0.5f, 0.0f);
-	//cube->GetNode()->GetTransform()->SetLocalScale(Vector3(0.25f));
-	//cube->GetNode()->GetTransform()->LookAt(mEditorCamera->GetNode()->GetTransform());
-	cube->GetNode()->AttachObject(cube);
-
-	Ref<TS_ENGINE::Cube> cube1 = CreateRef<TS_ENGINE::Cube>("Cube1");
-	//cube1->SetTexture("Crate.png");
-	cube1->SetColor(1, 0, 0);
-	cube1->SetMaterial(mDefaultMat);
-	cube1->Create();
+	
+	//Cube1
+	Ref<TS_ENGINE::GameObject> cube1 = TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::GameObject::CUBE);
 	cube1->GetNode()->SetName("Cube1");
+	cube1->ChangeColor(Vector3(1, 0, 0));
 	cube1->GetNode()->GetTransform()->SetLocalPosition(1.0f, 1.0f, -1.0f);
 	cube1->GetNode()->GetTransform()->SetLocalScale(0.3f, 0.3f, 0.3f);
 	cube1->GetNode()->GetTransform()->SetLocalEulerAngles(30.0f, 60.0f, 10.0f);
-	cube1->GetNode()->AttachObject(cube1);
+		
+	//Set scene hierarchy
 	cube->GetNode()->AddChild(cube1->GetNode());
-
-	//ground->GetNode()->AddChild(cube->GetNode());
-
-	mSceneCamera->GetNode()->AddChild(frustrumGameObject->GetNode());
-	mSceneCamera->GetNode()->AddChild(mSceneCameraGui->GetNode());
 	mScene1->GetSceneNode()->AddChild(ground->GetNode());
 	mScene1->GetSceneNode()->AddChild(cube->GetNode());
-	mScene1->GetSceneNode()->AddChild(mSceneCamera->GetNode());
-	mScene1->Initialize(*mEditorCamera.get());
+	mScene1->GetSceneNode()->AddChild(defaultSceneCamera->GetNode());
+
+	//Initialize Scene
+	mCurrentSceneCamera = defaultSceneCamera;
+	mScene1->Initialize(mEditorCamera);
+#pragma endregion 
+
+	//Set current scene
+	TS_ENGINE::SceneManager::GetInstance()->SetCurrentScene(mScene1);
 }
 
 void EditorLayer::OnDetach()
@@ -206,7 +112,6 @@ void EditorLayer::OnDetach()
 void EditorLayer::OnUpdate(float deltaTime)
 {
 	TS_ENGINE::Application::Get().ResetStats();
-	mSceneCameraGui->GetNode()->LookAt(mEditorCamera->GetNode());
 
 	//Editor camera pass
 	{
@@ -218,8 +123,8 @@ void EditorLayer::OnUpdate(float deltaTime)
 
 	//Scene camera pass
 	{
-		UpdateCameraRT(mSceneCamera, deltaTime);
-		mSceneCamera->GetFramebuffer()->Unbind();
+		UpdateCameraRT(mCurrentSceneCamera, deltaTime);
+		mCurrentSceneCamera->GetFramebuffer()->Unbind();
 	}
 }
 
@@ -248,16 +153,15 @@ void EditorLayer::PickGameObject()
 
 			if (entityID != -1)
 			{
-				Ref<TS_ENGINE::Node> hoveredOnNode = mScene1->GetNodeByEntityID(entityID);
+				Ref<TS_ENGINE::Node> hoveredOnNode = mScene1->PickNodeByEntityID(entityID);
 
-				if (hoveredOnNode == mSceneCameraGui->GetNode())//Don't select mSceneCameraGui
-					hoveredOnNode = mSceneCamera->GetNode();//Select it's parent node
+				mCurrentSceneCamera->CheckIfSelected(hoveredOnNode);
 
 				if (hoveredOnNode != nullptr)
 					mSceneGui->SetSelectedNode(hoveredOnNode);
 			}
 			else
-			{				
+			{
 				mSceneGui->SetSelectedNode(nullptr);//Deselect
 			}
 		}
@@ -298,10 +202,10 @@ void EditorLayer::UpdateCameraRT(Ref<TS_ENGINE::Camera> camera, float deltaTime)
 	//mCurrentShader->SetBool("u_Hdr", mHdr);
 	//mCurrentShader->SetFloat("u_HdrExposure", mHdrExposure);
 
-	mDirectionalLight->SetCommonParams(mCurrentShader, mDirectionalLight->GetNode()->GetTransform()->GetLocalPosition(),
-		mDirectionalLight->GetNode()->GetTransform()->GetForward(), Vector3(0.5f), Vector3(0.5f), Vector3(0.5f));
+	//mDirectionalLight->SetCommonParams(mCurrentShader, mDirectionalLight->GetNode()->GetTransform()->GetLocalPosition(),
+	//	mDirectionalLight->GetNode()->GetTransform()->GetForward(), Vector3(0.5f), Vector3(0.5f), Vector3(0.5f));
 
-	camera->Update(deltaTime);
+	camera->Update(mCurrentShader, deltaTime);
 	mScene1->Update(mCurrentShader, deltaTime);
 
 	OnOverlay();
@@ -319,7 +223,7 @@ void EditorLayer::ShowMainMenuBar()
 			}
 			if (ImGui::MenuItem("Save", "CTRL+S"))
 			{
-
+				TS_ENGINE::SceneManager::GetInstance()->SaveCurrentScene();
 			}
 			ImGui::EndMenu();
 		}
@@ -430,7 +334,7 @@ void EditorLayer::ShowPanels()
 	ImVec2 subMenuSize = ImVec2((float)TS_ENGINE::Application::Get().GetWindow().GetWidth() - 250.0f, 14.0f);
 
 	mViewportPanelPos = ImVec2(0.0f, 52.0f);
-	mViewportPanelSize = ImVec2((float)TS_ENGINE::Application::Get().GetWindow().GetWidth() - 250.0f, 
+	mViewportPanelSize = ImVec2((float)TS_ENGINE::Application::Get().GetWindow().GetWidth() - 250.0f,
 		(float)TS_ENGINE::Application::Get().GetWindow().GetHeight() - 52.0f);
 	mViewportBounds[0] = { mViewportPanelPos.x, mViewportPanelPos.y };
 	mViewportBounds[1] = { mViewportPanelPos.x + mViewportPanelSize.x, mViewportPanelPos.y + mViewportPanelSize.y };
@@ -445,7 +349,7 @@ void EditorLayer::ShowPanels()
 	ImVec2 statsPanelSize = ImVec2(200.0f, 150.0f);
 #pragma endregion
 
-	mSceneGui->ShowViewportWindow(mViewportPanelPos, mViewportPanelSize, mEditorCamera, mSceneCamera);
+	mSceneGui->ShowViewportWindow(mViewportPanelPos, mViewportPanelSize, mEditorCamera, mCurrentSceneCamera);
 	mSceneGui->ShowInspectorWindow(inspectorPanelPos, inspectorPanelSize);
 	mSceneGui->ShowHierarchyWindow(mScene1, hierarchyPanelPos, hierarchyPanelSize);
 
@@ -548,7 +452,7 @@ bool EditorLayer::OnMouseButtonPressed(TS_ENGINE::MouseButtonPressedEvent& e)
 {
 	if (e.GetMouseButton() == TS_ENGINE::Mouse::ButtonLeft)//Why is this creating an issue
 	{
-		if(!ImGuizmo::IsOver())
+		if (!ImGuizmo::IsOver())
 			mSceneGui->SetSelectedNode(nullptr);
 	}
 

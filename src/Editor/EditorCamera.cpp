@@ -1,6 +1,6 @@
-#include "tspch.h"
+#include <tspch.h>
 #include "EditorCamera.h"
-#include "Core/Input.h"
+#include <Core/Input.h>
 #include <GLM/gtx/quaternion.hpp>
 #include <Primitive/Sphere.h>
 #include <SceneManager/Node.h>
@@ -11,12 +11,12 @@ EditorCamera::EditorCamera(const std::string& name) : Camera(name)
 {
 	mName = name;
 	mNode->SetName(name + " Node");
-	mCameraType = TS_ENGINE::Camera::CameraType::EDITORCAMERA;
+	mCameraType = TS_ENGINE::Camera::Type::EDITORCAMERA;
 
-	mSkyboxShader = TS_ENGINE::Shader::Create("HDRLighting", "HDRLighting.vert", "HDRLighting.frag");
-	mSkyboxMat = CreateRef<TS_ENGINE::Material>("SkyboxMaterial", mSkyboxShader);//Create default material
+	//mSkyboxShader = TS_ENGINE::Shader::Create("HDRLighting", "HDRLighting.vert", "HDRLighting.frag");
+	//mSkyboxMat = CreateRef<TS_ENGINE::Material>("SkyboxMaterial", mSkyboxShader);//Create default material
 
-	mCurrentShader = mSkyboxShader;
+	//mCurrentShader = mSkyboxShader;
 
 	//Create skybox gameobject	
 	Ref<Sphere> skyboxSphere = CreateRef<TS_ENGINE::Sphere>("Skybox");
@@ -42,7 +42,7 @@ void EditorCamera::SetName(const std::string& name)
 	mName = name;
 	mNode->SetName(name);
 }
-void EditorCamera::Update(float deltaTime)
+void EditorCamera::Update(Ref<TS_ENGINE::Shader> shader, float deltaTime)
 {
 	mNode->InitializeTransformMatrices();
 
@@ -51,7 +51,7 @@ void EditorCamera::Update(float deltaTime)
 
 	Controls(deltaTime);
 
-	mCurrentShader->SetVec3("u_ViewPos", mNode->GetTransform()->GetLocalPosition());
-	mCurrentShader->SetMat4("u_View", mViewMatrix);
-	mCurrentShader->SetMat4("u_Projection", mProjectionMatrix);
+	shader->SetVec3("u_ViewPos", mNode->GetTransform()->GetLocalPosition());
+	shader->SetMat4("u_View", mViewMatrix);
+	shader->SetMat4("u_Projection", mProjectionMatrix);
 }

@@ -4,7 +4,8 @@
 #include <Renderer/Texture.h>
 #include <GameObject.h>
 #include <Application.h>
-#include "Utils/Utility.h"
+#include <Utils/Utility.h>
+#include <Utils/MyMath.h>
 
 namespace TS_ENGINE {
 
@@ -19,7 +20,7 @@ namespace TS_ENGINE {
 		void ShowViewportWindow(ImVec2 viewportPanelPos, ImVec2 viewportPanelSize, 
 			Ref<TS_ENGINE::Camera> mEditorCamera, Ref<TS_ENGINE::Camera> mSceneCamera);
 
-		void ShowStatsWindow(ImVec2 statsPanelPos, ImVec2 statsPanelSize);
+		void ShowStatsWindow(ImVec2 statsPanelPos, ImVec2 statsPanelSize);		
 		void ShowInspectorWindow(ImVec2 inspectorPanelPos, ImVec2 inspectorPanelSize);
 		void ShowHierarchyWindow(Ref<TS_ENGINE::Scene> scene, ImVec2 hierarchyPanelPos, ImVec2 hierarchyPanelSize);
 		
@@ -63,10 +64,5 @@ namespace TS_ENGINE {
 		Vector3 mSelectedNodePosition;
 		Vector3 mSelectedNodeEulerAngles;
 		Vector3 mSelectedNodeScale;
-
-		Vector4 mDeltaTransformationMatrixPtrRow0;
-		Vector4 mDeltaTransformationMatrixPtrRow1;
-		Vector4 mDeltaTransformationMatrixPtrRow2;
-		Vector4 mDeltaTransformationMatrixPtrRow3;
 	};
 }
