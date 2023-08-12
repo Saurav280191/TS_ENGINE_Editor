@@ -6,6 +6,7 @@
 #include <Application.h>
 #include <Utils/Utility.h>
 #include <Utils/MyMath.h>
+#include <Factory.h>
 
 namespace TS_ENGINE {
 
@@ -23,7 +24,7 @@ namespace TS_ENGINE {
 		void ShowStatsWindow(ImVec2 statsPanelPos, ImVec2 statsPanelSize);		
 		void ShowInspectorWindow(ImVec2 inspectorPanelPos, ImVec2 inspectorPanelSize);
 		void ShowHierarchyWindow(Ref<TS_ENGINE::Scene> scene, ImVec2 hierarchyPanelPos, ImVec2 hierarchyPanelSize);
-		
+
 		Ref<Node> GetSelectedNode();
 
 		void SwitchToTranslateMode();
@@ -46,7 +47,8 @@ namespace TS_ENGINE {
 		void HandleNodeDragDrop(Ref<TS_ENGINE::Node> _pickedNode, Ref<TS_ENGINE::Node> _targetParentNode);
 		void CreateUIForAllNodes(const Ref<TS_ENGINE::Node> node);
 
-		Ref<Texture2D> mMeshRendererIcon;
+		Ref<Texture2D> mMeshEditorIcon;
+		Ref<Texture2D> mMaterialEditorIcon;
 		Ref<Node> mSelectedNode;
 
 		//ImGuizmo params
@@ -60,6 +62,18 @@ namespace TS_ENGINE {
 		bool mRotateActive = false;
 		bool mScaleActive = false;
 		bool mJustSelected = false;
+
+		const char* mCurrentMeshItem = "Default";
+		int mCurrentMeshIndex;
+		const char* mMeshNameList[7] = {
+			"Quad",
+			"Cube",
+			"Sphere",
+			"Cone",
+			"Cylinder",
+			"Model",
+			"Empty"
+		};
 	public:
 		Vector3 mSelectedNodePosition;
 		Vector3 mSelectedNodeEulerAngles;

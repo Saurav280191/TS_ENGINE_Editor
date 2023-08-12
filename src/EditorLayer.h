@@ -6,7 +6,7 @@
 //Renderer headers
 #include <Renderer/Texture.h>
 #include "Renderer/RenderCommand.h"
-#include <Renderer/SceneCamera.h>
+#include <Renderer/Camera/SceneCamera.h>
 #include "Renderer/RendererAPI.h"
 #include "Renderer/Framebuffer.h"
 #include <Renderer/Material.h>
@@ -50,17 +50,17 @@ public:
 	virtual void OnDetach() override;
 	virtual void OnUpdate(float deltaTime) override;
 
-	virtual void OnImGUIRender() override;
+	virtual void OnImGuiRender() override;
 	virtual void OnEvent(TS_ENGINE::Event& e) override;
 
 	void ShowMainMenuBar();
 	void ShowPanels();
 	void PickGameObject();
-	void UpdateCameraRT(Ref<TS_ENGINE::Camera> camera, float deltaTime);
+	void UpdateCameraRT(Ref<TS_ENGINE::Camera> camera, float deltaTime, bool isEditorCamera = false);
 private:
 	bool OnKeyPressed(TS_ENGINE::KeyPressedEvent& e);
 	bool OnMouseButtonPressed(TS_ENGINE::MouseButtonPressedEvent& e);
-	void OnOverlay();
+	void OnOverlayRender();
 
 	Ref<TS_ENGINE::Scene> mScene1;
 	Ref<TS_ENGINE::SceneGui> mSceneGui;
@@ -81,6 +81,8 @@ private:
 	Ref<TS_ENGINE::Shader> mBatchLitShader;
 	Ref<TS_ENGINE::Shader> mHdrLightingShader;
 	Ref<TS_ENGINE::Shader> mCurrentShader;
+
+	float mDeltaTime;
 
 	Ref<TS_ENGINE::Material> mDefaultMat;
 	Ref<TS_ENGINE::Material> mHdrMat;
