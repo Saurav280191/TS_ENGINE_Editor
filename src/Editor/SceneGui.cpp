@@ -36,31 +36,46 @@ namespace TS_ENGINE {
 
 	//Position of Viewport is: (0, 52)
 	//Size of Viewport is: (WindowWidth - 250, WindowHeight - 52)
-	void SceneGui::ShowViewportWindow(ImVec2 viewportPanelPos, ImVec2 viewportPanelSize,
-		Ref<TS_ENGINE::Camera> mEditorCamera, Ref<TS_ENGINE::Camera> mSceneCamera)
+	void SceneGui::ShowViewportWindow(Ref<TS_ENGINE::Camera> editorCamera, Ref<TS_ENGINE::Camera> currentSceneCamera)
 	{
 #pragma region Editor camera viewport
 
-		ImGui::SetNextWindowPos(viewportPanelPos);
-		ImGui::SetNextWindowSize(viewportPanelSize);
-
-		ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoDecoration);
+		//ImGui::SetNextWindowPos(viewportPanelPos);
+		//ImGui::SetNextWindowSize(viewportPanelSize);
+		//ImGui::SetNextWindowPos(ImVec2(0, 18));
+		ImGui::Begin("Viewport", 0, ImGuiWindowFlags_NoDecoration);// | ImGuiWindowFlags_NoDocking);
 		{
-			ImVec2 cameraFramebufferWindowSize = viewportPanelSize - ImVec2(0, 15.0f);
+			ImVec2 cameraFramebufferWindowSize = ImGui::GetWindowSize();
+
+			mViewportPos = ImGui::GetWindowPos();
+			mViewportSize = ImGui::GetWindowSize();
+			mViewportBounds[0] = { ImGui::GetWindowPos().x, ImGui::GetWindowPos().y };
+			mViewportBounds[1] = { ImGui::GetWindowPos().x + ImGui::GetWindowSize().x, ImGui::GetWindowPos().y + ImGui::GetWindowSize().y };
+
+			//Resize editor camera's frambuffer size
+			if (TS_ENGINE::FramebufferSpecification spec = editorCamera->GetFramebuffer()->GetSpecification();
+				cameraFramebufferWindowSize.x > 0.0f && cameraFramebufferWindowSize.y > 0.0f && // zero sized framebuffer is invalid
+				(spec.Width != cameraFramebufferWindowSize.x || spec.Height != cameraFramebufferWindowSize.y))
+			{
+				editorCamera->GetFramebuffer()->Resize((uint32_t)cameraFramebufferWindowSize.x, (uint32_t)cameraFramebufferWindowSize.y);
+			}
 
 			//Camera framebuffer output image
 			{
-				uint64_t mEditorCameraRenderTextureID = mEditorCamera->GetFramebuffer()->GetColorAttachmentRendererID();
-				ImGui::Image(reinterpret_cast<void*>(mEditorCameraRenderTextureID), cameraFramebufferWindowSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				uint64_t editorCameraRenderTextureID = editorCamera->GetFramebuffer()->GetColorAttachmentRendererID();
+				//TS_CORE_INFO("Editor camera framebuffer size {0}, {1} ", 
+				//	editorCamera->GetFramebuffer()->GetSpecification().Width, editorCamera->GetFramebuffer()->GetSpecification().Height);
+
+				ImGui::Image(reinterpret_cast<void*>(editorCameraRenderTextureID), cameraFramebufferWindowSize, ImVec2(0, 1), ImVec2(1, 0));
 			}
 
 			//ImGuizmo
 			{
 				//ImGuizmo set perspective and drawlist
 				ImGuizmo::SetOrthographic(false);
-				ImGuizmo::SetDrawlist();				
+				ImGuizmo::SetDrawlist();
 
-				ImVec2 guizmoViewportPos = viewportPanelPos + ImVec2(8.032f, 8.109f);//TODO: Found value (8.032f, 8.109f) to fix offset issue. Need to find the root cause of the issue.
+				ImVec2 guizmoViewportPos = ImGui::GetWindowPos() + ImVec2(8.0f, 27.0f);//TODO: Found value (8.0f, 27.0f) to fix offset issue. Need to find the root cause of the issue.
 				ImVec2 guizmoViewportSize = cameraFramebufferWindowSize;
 
 				ImGuizmo::SetRect(guizmoViewportPos.x, guizmoViewportPos.y, guizmoViewportSize.x, guizmoViewportSize.y);
@@ -68,10 +83,10 @@ namespace TS_ENGINE {
 				const float* projection = nullptr;
 				const float* view = nullptr;
 
-				if (mEditorCamera)
+				if (editorCamera)
 				{
-					projection = glm::value_ptr(mEditorCamera->GetProjectionMatrix());
-					view = glm::value_ptr(mEditorCamera->GetViewMatrix());
+					projection = glm::value_ptr(editorCamera->GetProjectionMatrix());
+					view = glm::value_ptr(editorCamera->GetViewMatrix());
 				}
 
 				float* identityMatrix = (float*)glm::value_ptr(Matrix4(1));
@@ -84,19 +99,19 @@ namespace TS_ENGINE {
 			}
 
 			//Scene camera frambuffer image
-			if (mSceneCamera)
+			if (currentSceneCamera)
 			{
-				ImVec2 sceneCameraFrameBufferViewportWindowSize = ImVec2(200.0f * TS_ENGINE::Application::Get().GetWindow().GetAspectRatio(), 200.0f);
-				ImVec2 sceneCameraFrameBufferViewportWindowPos = viewportPanelPos + viewportPanelSize - sceneCameraFrameBufferViewportWindowSize - ImVec2(10, 10.0f);
+				ImVec2 sceneCameraFramebufferViewportWindowSize = ImVec2(200.0f * TS_ENGINE::Application::Get().GetWindow().GetAspectRatio(), 200.0f);
+				ImVec2 sceneCameraFramebufferViewportWindowPos = ImGui::GetWindowSize() - sceneCameraFramebufferViewportWindowSize - ImVec2(10, 10);
 
-				ImGui::SetCursorPos(sceneCameraFrameBufferViewportWindowPos - ImVec2(0, 50.0f));
+				ImGui::SetCursorPos(sceneCameraFramebufferViewportWindowPos);
 
-				uint64_t textureID = mSceneCamera->GetFramebuffer()->GetColorAttachmentRendererID();
-				ImGui::Image(reinterpret_cast<void*>(textureID), sceneCameraFrameBufferViewportWindowSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				uint64_t textureID = currentSceneCamera->GetFramebuffer()->GetColorAttachmentRendererID();
+				ImGui::Image(reinterpret_cast<void*>(textureID), sceneCameraFramebufferViewportWindowSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 
 				// Calculate border coordinates
-				ImVec2 borderMin = sceneCameraFrameBufferViewportWindowPos;
-				ImVec2 borderMax = sceneCameraFrameBufferViewportWindowPos + sceneCameraFrameBufferViewportWindowSize;
+				ImVec2 borderMin = sceneCameraFramebufferViewportWindowPos + ImVec2(0, 20);
+				ImVec2 borderMax = sceneCameraFramebufferViewportWindowPos + sceneCameraFramebufferViewportWindowSize + ImVec2(0, 20);
 
 				// Draw the border
 				ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -158,14 +173,15 @@ namespace TS_ENGINE {
 		ImGui::End();
 	}
 
-	void SceneGui::ShowInspectorWindow(ImVec2 inspectorPanelPos, ImVec2 inspectorPanelSize)
+	void SceneGui::ShowInspectorWindow()
 	{
-		ImGuiWindowFlags inspectorWindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
+		//ImGuiWindowFlags inspectorWindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
+		//ImGui::SetNextWindowPos(inspectorPanelPos);
+		//ImGui::SetNextWindowSize(inspectorPanelSize);
+		//bool open = true;
+		//mSelectedNode = SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetChildAt(1);//Temporarily added for test
 
-		ImGui::SetNextWindowPos(inspectorPanelPos);
-		ImGui::SetNextWindowSize(inspectorPanelSize);
-		bool open = true;
-		ImGui::Begin("Inspector", &open, inspectorWindowFlags);
+		ImGui::Begin("Inspector");
 		{
 			if (mSelectedNode != NULL)
 			{
@@ -176,13 +192,13 @@ namespace TS_ENGINE {
 				ImGui::Text(GetSelectedNode()->GetName().c_str());
 
 #pragma region Transform Component
-				ImGui::BeginChild("Transform", ImVec2(inspectorPanelSize.x - 18, 128.0f), true,
-					inspectorWindowFlags | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
+
+				ImGui::BeginChild("Transform", ImVec2(ImGui::GetWindowSize().x, 128.0f), true);
 
 				ImGui::Text("Transform");
 				ImGui::SameLine();
 
-				if (ImGui::Combo("Options", &mTransformCurrentItem, mTransformComboItems, IM_ARRAYSIZE(mTransformComboItems)))
+				if (ImGui::Combo("##TransformMode", &mTransformCurrentItem, mTransformComboItems, IM_ARRAYSIZE(mTransformComboItems)))
 				{
 					switch (mTransformCurrentItem)
 					{
@@ -259,8 +275,7 @@ namespace TS_ENGINE {
 					case TS_ENGINE::EntityType::GAMEOBJECT:
 					{
 #pragma region Mesh Editor
-						ImGui::BeginChild("Mesh Container", ImVec2(inspectorPanelSize.x - 18, 0.09259f * (float)TS_ENGINE::Application::Get().GetWindow().GetWidth()), true,
-							inspectorWindowFlags | ImGuiWindowFlags_NoScrollbar);
+						ImGui::BeginChild("Mesh Container", ImVec2(ImGui::GetWindowSize().x, 128.0f), true);
 
 						ImGui::Image((ImTextureID)mMeshEditorIcon->GetRendererID(), ImVec2(20, 20));
 						ImGui::SameLine();
@@ -315,8 +330,7 @@ namespace TS_ENGINE {
 #pragma endregion
 
 #pragma region Material Editor
-						ImGui::BeginChild("Material Editor", ImVec2(inspectorPanelSize.x - 18, 0.09259f * (float)TS_ENGINE::Application::Get().GetWindow().GetWidth()), true,
-							inspectorWindowFlags | ImGuiWindowFlags_NoScrollbar);
+						ImGui::BeginChild("Material Editor", ImVec2(ImGui::GetWindowSize().x, 128.0f), true);
 
 						ImGui::Image((ImTextureID)mMaterialEditorIcon->GetRendererID(), ImVec2(20, 20));
 						ImGui::SameLine();
@@ -353,12 +367,12 @@ namespace TS_ENGINE {
 		}
 	}
 
-	void SceneGui::ShowHierarchyWindow(Ref<TS_ENGINE::Scene> scene, ImVec2 hierarchyPanelPos, ImVec2 hierarchyPanelSize)
+	void SceneGui::ShowHierarchyWindow(Ref<TS_ENGINE::Scene> scene)
 	{
-		ImGui::SetNextWindowPos(hierarchyPanelPos);
-		ImGui::SetNextWindowSize(hierarchyPanelSize);
-		bool open = true;
-		ImGui::Begin("Hierarchy", &open, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+		//ImGui::SetNextWindowPos(hierarchyPanelPos);
+		//ImGui::SetNextWindowSize(hierarchyPanelSize);
+		//bool open = true;
+		ImGui::Begin("Hierarchy");// , & open, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 		{
 			ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 			ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -368,6 +382,15 @@ namespace TS_ENGINE {
 				CreateUIForAllNodes(scene->GetSceneNode());
 				ImGui::TreePop();
 			}
+		}
+		ImGui::End();
+	}
+
+	void SceneGui::ShowContentBrowser()
+	{
+		ImGui::Begin("ContentBrowser");
+		{
+
 		}
 		ImGui::End();
 	}

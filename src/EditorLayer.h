@@ -50,17 +50,23 @@ public:
 	virtual void OnDetach() override;
 	virtual void OnUpdate(float deltaTime) override;
 
+#pragma region ImGUI functions
 	virtual void OnImGuiRender() override;
+	void ShowMainMenuBar();
+	void ShowSubMenu();
+	void ShowPanels();
+#pragma endregion
+
 	virtual void OnEvent(TS_ENGINE::Event& e) override;
 
-	void ShowMainMenuBar();
-	void ShowPanels();
 	void PickGameObject();
 	void UpdateCameraRT(Ref<TS_ENGINE::Camera> camera, float deltaTime, bool isEditorCamera = false);
 private:
 	bool OnKeyPressed(TS_ENGINE::KeyPressedEvent& e);
 	bool OnMouseButtonPressed(TS_ENGINE::MouseButtonPressedEvent& e);
 	void OnOverlayRender();
+
+	ImGuiWindowFlags defaultWindowFlags;
 
 	Ref<TS_ENGINE::Scene> mScene1;
 	Ref<TS_ENGINE::SceneGui> mSceneGui;
@@ -71,7 +77,6 @@ private:
 
 	ImVec2 mViewportPanelPos;
 	ImVec2 mViewportPanelSize;
-	glm::vec2 mViewportBounds[2];
 
 	bool mMouseClicked = false;
 

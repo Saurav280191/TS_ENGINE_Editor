@@ -18,12 +18,11 @@ namespace TS_ENGINE {
 
 		void ShowTransformGizmos(const float* view, const float* projection);
 
-		void ShowViewportWindow(ImVec2 viewportPanelPos, ImVec2 viewportPanelSize, 
-			Ref<TS_ENGINE::Camera> mEditorCamera, Ref<TS_ENGINE::Camera> mSceneCamera);
-
+		void ShowViewportWindow(Ref<TS_ENGINE::Camera> editorCamera, Ref<TS_ENGINE::Camera> currentSceneCamera);
 		void ShowStatsWindow(ImVec2 statsPanelPos, ImVec2 statsPanelSize);		
-		void ShowInspectorWindow(ImVec2 inspectorPanelPos, ImVec2 inspectorPanelSize);
-		void ShowHierarchyWindow(Ref<TS_ENGINE::Scene> scene, ImVec2 hierarchyPanelPos, ImVec2 hierarchyPanelSize);
+		void ShowInspectorWindow();
+		void ShowHierarchyWindow(Ref<TS_ENGINE::Scene> scene);
+		void ShowContentBrowser();
 
 		Ref<Node> GetSelectedNode();
 
@@ -43,6 +42,21 @@ namespace TS_ENGINE {
 		
 		void SetSelectedNode(Ref<TS_ENGINE::Node> node);
 
+		ImVec2 GetViewportPos()
+		{
+			return mViewportPos;
+		}
+
+		ImVec2 GetViewportSize()
+		{
+			return mViewportSize;
+		}
+
+		Vector2* GetViewportBounds()
+		{
+			return mViewportBounds;
+		}
+
 	private:
 		void HandleNodeDragDrop(Ref<TS_ENGINE::Node> _pickedNode, Ref<TS_ENGINE::Node> _targetParentNode);
 		void CreateUIForAllNodes(const Ref<TS_ENGINE::Node> node);
@@ -55,16 +69,17 @@ namespace TS_ENGINE {
 		ImGuizmo::OPERATION mTransformOperation = ImGuizmo::OPERATION::TRANSLATE;
 		
 		ImGuizmo::MODE mTransformMode = ImGuizmo::MODE::LOCAL;		
-		const char* mTransformComboItems[2];// = new const char* [2] {"Local", "World"};
-		int mTransformCurrentItem = 0;
-
+		
 		bool mTranslateActive = true;
 		bool mRotateActive = false;
 		bool mScaleActive = false;
 		bool mJustSelected = false;
 
-		const char* mCurrentMeshItem = "Default";
-		int mCurrentMeshIndex;
+		ImVec2 mViewportPos;
+		ImVec2 mViewportSize;
+		Vector2 mViewportBounds[2];
+
+		const char* mTransformComboItems[2];// = new const char* [2] {"Local", "World"};
 		const char* mMeshNameList[7] = {
 			"Quad",
 			"Cube",
@@ -74,9 +89,14 @@ namespace TS_ENGINE {
 			"Model",
 			"Empty"
 		};
+		
+		const char* mCurrentMeshItem = "Default";
+		
+		int mTransformCurrentItem = 0;
+		int mCurrentMeshIndex = 0;
 	public:
 		Vector3 mSelectedNodePosition;
 		Vector3 mSelectedNodeEulerAngles;
-		Vector3 mSelectedNodeScale;
+		Vector3 mSelectedNodeScale;		
 	};
 }

@@ -114,13 +114,16 @@ void EditorLayer::PickGameObject()
 	{
 		//Picking code
 		auto [mx, my] = ImGui::GetMousePos();
-		mx -= mViewportBounds[0].x;
-		my -= mViewportBounds[0].y;
-		glm::vec2 viewportSize = mViewportBounds[1] - mViewportBounds[0];
+
+		mx -= mSceneGui->GetViewportBounds()[0].x;
+		my -= mSceneGui->GetViewportBounds()[0].y;
+		
+		glm::vec2 viewportSize = mSceneGui->GetViewportBounds()[1] - mSceneGui->GetViewportBounds()[0];
+		
 		my = viewportSize.y - my;
 
-		int mouseX = (int)mx - 8;//TODO: Offset (-8, 2) is needed for proper picking. Need to find the root cause of this issue.
-		int mouseY = (int)my + 2;
+		int mouseX = (int)mx - 8.0f;//TODO: Offset (-8, 26) is needed for proper picking. Need to find the root cause of this issue.
+		int mouseY = (int)my + 26.0f;
 
 		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
 		{
@@ -166,12 +169,12 @@ void EditorLayer::PickGameObject()
 void EditorLayer::UpdateCameraRT(Ref<TS_ENGINE::Camera> camera, float deltaTime, bool isEditorCamera)
 {
 	// Resize
-	if (TS_ENGINE::FramebufferSpecification spec = camera->GetFramebuffer()->GetSpecification();
-		mViewportPanelSize.x > 0.0f && mViewportPanelSize.y > 0.0f && // zero sized framebuffer is invalid
-		(spec.Width != mViewportPanelSize.x || spec.Height != mViewportPanelSize.y))
-	{
-		camera->GetFramebuffer()->Resize((uint32_t)mViewportPanelSize.x, (uint32_t)mViewportPanelSize.y);
-	}
+	//if (TS_ENGINE::FramebufferSpecification spec = camera->GetFramebuffer()->GetSpecification();
+	//	mViewportPanelSize.x > 0.0f && mViewportPanelSize.y > 0.0f && // zero sized framebuffer is invalid
+	//	(spec.Width != mViewportPanelSize.x || spec.Height != mViewportPanelSize.y))
+	//{
+	//	camera->GetFramebuffer()->Resize((uint32_t)mViewportPanelSize.x, (uint32_t)mViewportPanelSize.y);
+	//}
 
 	camera->GetFramebuffer()->Bind();
 
@@ -195,6 +198,53 @@ void EditorLayer::UpdateCameraRT(Ref<TS_ENGINE::Camera> camera, float deltaTime,
 
 	camera->Update(mCurrentShader, deltaTime);
 	mScene1->Update(mCurrentShader, deltaTime);
+}
+
+void EditorLayer::OnUpdate(float deltaTime)
+{
+	mDeltaTime = deltaTime;
+	TS_ENGINE::Application::Get().ResetStats();
+
+	//Scene camera pass
+	if(mCurrentSceneCamera)
+	{
+		UpdateCameraRT(mCurrentSceneCamera, deltaTime);
+		mCurrentSceneCamera->GetFramebuffer()->Unbind();
+	}
+
+	//Editor camera pass
+	{
+		UpdateCameraRT(mEditorCamera, deltaTime, true);
+
+		//Render after all gameObjects rendered to show as an overlay.
+		OnOverlayRender();
+
+		if (!ImGuizmo::IsOver())
+			PickGameObject();
+		mEditorCamera->GetFramebuffer()->Unbind();
+	}
+
+}
+
+#pragma region ImGUI functions
+
+void EditorLayer::OnImGuiRender()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	ImGuiStyle& style = ImGui::GetStyle();
+	float minWinSizeX = style.WindowMinSize.x;
+	style.WindowMinSize.x = minWinSizeX;
+	style.WindowBorderSize = 0.0f;
+
+	defaultWindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
+
+	ShowMainMenuBar();
+
+	if (ImGui::DockSpaceOverViewport())
+	{
+		//ShowSubMenu();
+		ShowPanels();
+	}
 }
 
 void EditorLayer::ShowMainMenuBar()
@@ -297,92 +347,55 @@ void EditorLayer::ShowMainMenuBar()
 	}
 }
 
-void EditorLayer::ShowPanels()
+void EditorLayer::ShowSubMenu()
 {
-	//ImGuiStyle& style = ImGui::GetStyle();
-	//style.WindowMenuButtonPosition = ImGuiDir_None;
-
-	bool opened = false;
-	ImGuiWindowFlags defaultWindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
-
-#pragma region Panel Size And Positions 
 	//No need to set MainMenuBar size and position, DefaultSize: CurrentWindowWidth, 18.0f, DefaultPos: 0, 0
-
 	ImVec2 subMenuPos = ImVec2(0.0f, 19.8f);
 	ImVec2 subMenuSize = ImVec2((float)TS_ENGINE::Application::Get().GetWindow().GetWidth() - 250.0f, 34.5f);
 
-	mViewportPanelPos = ImVec2(0.0f, 52.0f);
-	mViewportPanelSize = ImVec2(
-	(float)TS_ENGINE::Application::Get().GetWindow().GetWidth() - 250.0f,
-	(float)TS_ENGINE::Application::Get().GetWindow().GetHeight() - mViewportPanelPos.y);
-
-	//mViewportPanelPos = ImVec2(0.0f, 0.0f);
-	//mViewportPanelSize = ImVec2((float)TS_ENGINE::Application::Get().GetWindow().GetWidth(), (float)TS_ENGINE::Application::Get().GetWindow().GetHeight());
-
-	mViewportBounds[0] = { mViewportPanelPos.x, mViewportPanelPos.y };
-	mViewportBounds[1] = { mViewportPanelPos.x + mViewportPanelSize.x, mViewportPanelPos.y + mViewportPanelSize.y };
-
-	ImVec2 inspectorPanelPos = ImVec2((float)TS_ENGINE::Application::Get().GetWindow().GetWidth() - 250.0f, 18.0f);
-	ImVec2 inspectorPanelSize = ImVec2(250.0f, (float)TS_ENGINE::Application::Get().GetWindow().GetHeight() * 0.5f);
-
-	ImVec2 hierarchyPanelPos = ImVec2((float)TS_ENGINE::Application::Get().GetWindow().GetWidth() - 250.0f, (float)TS_ENGINE::Application::Get().GetWindow().GetHeight() * 0.5f + 19.0f);//19.0f is the tile text height
-	ImVec2 hierarchyPanelSize = ImVec2(250.0f, (float)TS_ENGINE::Application::Get().GetWindow().GetHeight() * 0.5f);
-	
-	//ImVec2 contentBrowserPos = ImVec2(0, (float)TS_ENGINE::Application::Get().GetWindow().GetHeight() - 250.0f);
-	//ImVec2 contentBrowserSize = ImVec2((float)TS_ENGINE::Application::Get().GetWindow().GetWidth() - 250.0f, 250.0f);
-
-	ImVec2 statsPanelPos = ImVec2(TS_ENGINE::Application::Get().GetWindow().GetWidth() - 450.0f, 19.0f);
-	ImVec2 statsPanelSize = ImVec2(200.0f, 150.0f);
-#pragma endregion
-
-	mSceneGui->ShowViewportWindow(mViewportPanelPos, mViewportPanelSize, mEditorCamera, mCurrentSceneCamera);
-	mSceneGui->ShowInspectorWindow(inspectorPanelPos, inspectorPanelSize);
-	mSceneGui->ShowHierarchyWindow(mScene1, hierarchyPanelPos, hierarchyPanelSize);
-	//mSceneGui->ShowContentBrowser(contentBrowserPos, contentBrowserSize);
-
 #pragma region Sub-Menu 
-	ImGui::SetNextWindowPos(subMenuPos);
-	ImGui::SetNextWindowSize(subMenuSize);
-	ImGui::Begin("SubMenu", &opened, defaultWindowFlags | ImGuiWindowFlags_NoScrollbar);
+	//ImGui::SetNextWindowPos(subMenuPos);
+	//ImGui::SetNextWindowSize(subMenuSize);
+	ImGui::Begin("SubMenu");// , 0, defaultWindowFlags | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar);
 	{
 		ImGui::Button("Scene", ImVec2(50, 20));
 		ImGui::SameLine();
 		ImGui::Button("Game", ImVec2(50, 20));
 
 		{
-		//ImGui::Checkbox("Show Grid", &mShowGrid);
+			//ImGui::Checkbox("Show Grid", &mShowGrid);
 
-		//ImGui::SameLine();
-		//ImGui::Spacing();
-		//ImGui::SameLine();
+			//ImGui::SameLine();
+			//ImGui::Spacing();
+			//ImGui::SameLine();
 
-		//ImGui::Checkbox("Gamma Correction", &mGammaCorrection);
+			//ImGui::Checkbox("Gamma Correction", &mGammaCorrection);
 
-		//ImGui::SameLine();
-		//ImGui::Spacing();
-		//ImGui::SameLine();
+			//ImGui::SameLine();
+			//ImGui::Spacing();
+			//ImGui::SameLine();
 
-		//if (mGammaCorrection)
-		//{
-		//	ImGui::PushItemWidth(200);
-		//	ImGui::SliderFloat("GammaValue", &mGammaValue, 0.1f, 2.2f);
-		//}
+			//if (mGammaCorrection)
+			//{
+			//	ImGui::PushItemWidth(200);
+			//	ImGui::SliderFloat("GammaValue", &mGammaValue, 0.1f, 2.2f);
+			//}
 
-		//ImGui::SameLine();
-		//ImGui::Spacing();
-		//ImGui::SameLine();
+			//ImGui::SameLine();
+			//ImGui::Spacing();
+			//ImGui::SameLine();
 
-		//ImGui::Checkbox("HDR", &mHdr);
+			//ImGui::Checkbox("HDR", &mHdr);
 
-		//ImGui::SameLine();
-		//ImGui::Spacing();
-		//ImGui::SameLine();
+			//ImGui::SameLine();
+			//ImGui::Spacing();
+			//ImGui::SameLine();
 
-		//if (mHdr)
-		//{
-		//	ImGui::PushItemWidth(200);
-		//	ImGui::SliderFloat("Expose", &mHdrExposure, 0.01f, 10.0f);//More expose will hide the detail
-		//}
+			//if (mHdr)
+			//{
+			//	ImGui::PushItemWidth(200);
+			//	ImGui::SliderFloat("Expose", &mHdrExposure, 0.01f, 10.0f);//More expose will hide the detail
+			//}
 		}
 	}
 
@@ -390,42 +403,20 @@ void EditorLayer::ShowPanels()
 #pragma endregion
 }
 
-void EditorLayer::OnUpdate(float deltaTime)
+void EditorLayer::ShowPanels()
 {
-	mDeltaTime = deltaTime;
-	TS_ENGINE::Application::Get().ResetStats();
+#pragma region Panel Size And Positions 
+	ImVec2 statsPanelPos = ImVec2(TS_ENGINE::Application::Get().GetWindow().GetWidth() - 450.0f, 19.0f);
+	ImVec2 statsPanelSize = ImVec2(200.0f, 150.0f);
+#pragma endregion
 
-	//Scene camera pass
-	if(mCurrentSceneCamera)
-	{
-		UpdateCameraRT(mCurrentSceneCamera, deltaTime);
-		mCurrentSceneCamera->GetFramebuffer()->Unbind();
-	}
-
-	//Editor camera pass
-	{
-		UpdateCameraRT(mEditorCamera, deltaTime, true);
-
-		//Render after all gameObjects rendered to show as an overlay.
-		OnOverlayRender();
-
-		if (!ImGuizmo::IsOver())
-			PickGameObject();
-		mEditorCamera->GetFramebuffer()->Unbind();
-	}
-
+		mSceneGui->ShowViewportWindow(mEditorCamera, mCurrentSceneCamera);
+		mSceneGui->ShowInspectorWindow();
+		mSceneGui->ShowHierarchyWindow(mScene1);
+		mSceneGui->ShowContentBrowser();
 }
 
-void EditorLayer::OnImGuiRender()
-{
-	ImGuiIO& io = ImGui::GetIO();
-	ImGuiStyle& style = ImGui::GetStyle();
-	float minWinSizeX = style.WindowMinSize.x;
-	style.WindowMinSize.x = minWinSizeX;
-
-	ShowMainMenuBar();
-	ShowPanels();
-}
+#pragma endregion
 
 void EditorLayer::OnEvent(TS_ENGINE::Event& e)
 {
