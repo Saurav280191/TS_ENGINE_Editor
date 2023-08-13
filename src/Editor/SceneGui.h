@@ -7,6 +7,7 @@
 #include <Utils/Utility.h>
 #include <Utils/MyMath.h>
 #include <Factory.h>
+#include <filesystem>
 
 namespace TS_ENGINE {
 
@@ -94,6 +95,7 @@ namespace TS_ENGINE {
 		
 		int mTransformCurrentItem = 0;
 		int mCurrentMeshIndex = 0;
+		std::filesystem::path mCurrentDirectory;
 	public:
 		Vector3 mSelectedNodePosition;
 		Vector3 mSelectedNodeEulerAngles;

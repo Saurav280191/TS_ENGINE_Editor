@@ -5,6 +5,8 @@
 
 namespace TS_ENGINE {
 
+	static std::filesystem::path mAssetsPath = "Assets";
+
 	SceneGui::SceneGui()
 	{
 		mTransformComboItems[0] = "Local";
@@ -13,6 +15,8 @@ namespace TS_ENGINE {
 		mMeshEditorIcon->SetVerticalFlip(false);
 		mMaterialEditorIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\LitMaterialIcon.png");
 		mMaterialEditorIcon->SetVerticalFlip(false);
+
+		mCurrentDirectory = mAssetsPath;
 	}
 
 	void SceneGui::ShowTransformGizmos(const float* view, const float* projection)
@@ -390,14 +394,38 @@ namespace TS_ENGINE {
 	{
 		ImGui::Begin("ContentBrowser");
 		{
+			if (mCurrentDirectory != std::filesystem::path(mAssetsPath))
+			{
+				if (ImGui::Button("<-"))
+				{
+					mCurrentDirectory = mCurrentDirectory.parent_path();
+				}
+			}
+
+			for (auto& directoryEntry : std::filesystem::directory_iterator(mCurrentDirectory))
+			{
+				const auto& path = directoryEntry.path();
+				auto relativePath = std::filesystem::relative(path, mAssetsPath);
+				std::string filenameStr = relativePath.filename().string();
+
+				if (directoryEntry.is_directory())
+				{
+					if (ImGui::Button(filenameStr.c_str()))
+					{
+						mCurrentDirectory /= path.filename();
+					}
+				}
+				else
+				{
+					if (ImGui::Button(filenameStr.c_str()))
+					{
+
+					}
+				}
+			}
 
 		}
 		ImGui::End();
-	}
-
-	Ref<Node> SceneGui::GetSelectedNode()
-	{
-		return mSelectedNode;
 	}
 
 	void SceneGui::SwitchToTranslateMode()
