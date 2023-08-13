@@ -25,7 +25,10 @@ namespace TS_ENGINE {
 		void ShowHierarchyWindow(Ref<TS_ENGINE::Scene> scene);
 		void ShowContentBrowser();
 
-		Ref<Node> GetSelectedNode();
+		Ref<Node> GetSelectedNode()
+		{
+			return mSelectedNode;
+		}
 
 		void SwitchToTranslateMode();
 		void SwitchToRotateMode();
