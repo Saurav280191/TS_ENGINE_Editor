@@ -80,23 +80,20 @@ void EditorLayer::OnAttach()
 	ground->GetNode()->GetTransform()->SetLocalScale(10.0f, 10.0f, 10.0f);
 
 	//Cube
-	/*Ref<TS_ENGINE::GameObject> cube = TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::GameObject::CUBE);
+	Ref<TS_ENGINE::GameObject> cube = TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::CUBE);
 	cube->SetName("Cube");
 	cube->SetTexture("Crate.png");	
-	cube->GetNode()->GetTransform()->SetLocalPosition(0.0f, 0.5f, 0.0f);*/
+	cube->GetNode()->GetTransform()->SetLocalPosition(0.0f, 0.5f, 0.0f);
 	
 	//Cube1
-	/*Ref<TS_ENGINE::GameObject> cube1 = TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::GameObject::CUBE);
+	Ref<TS_ENGINE::GameObject> cube1 = TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::CUBE);
 	cube1->GetNode()->SetName("Cube1");
 	cube1->ChangeColor(Vector3(1, 0, 0));
 	cube1->GetNode()->GetTransform()->SetLocalPosition(1.0f, 1.0f, -1.0f);
 	cube1->GetNode()->GetTransform()->SetLocalScale(0.3f, 0.3f, 0.3f);
-	cube1->GetNode()->GetTransform()->SetLocalEulerAngles(30.0f, 60.0f, 10.0f);*/
-	
-	//Set scene hierarchy
-	/*cube->GetNode()->AddChild(cube1->GetNode());
-	mScene1->GetSceneNode()->AddChild(ground->GetNode());
-	mScene1->GetSceneNode()->AddChild(cube->GetNode());*/
+	cube1->GetNode()->GetTransform()->SetLocalEulerAngles(30.0f, 60.0f, 10.0f);
+	cube1->GetNode()->SetParent(cube->GetNode());
+
 #pragma endregion 
 
 	//Needs to be done at the end to initialize the hierarchy once
@@ -122,8 +119,8 @@ void EditorLayer::PickGameObject()
 		
 		my = viewportSize.y - my;
 
-		int mouseX = (int)mx - 8.0f;//TODO: Offset (-8, 26) is needed for proper picking. Need to find the root cause of this issue.
-		int mouseY = (int)my + 26.0f;
+		int mouseX = (int)mx - 8;//TODO: Offset (-8, 26) is needed for proper picking. Need to find the root cause of this issue.
+		int mouseY = (int)my + 26;
 
 		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
 		{
