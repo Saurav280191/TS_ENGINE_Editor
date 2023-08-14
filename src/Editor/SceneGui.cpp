@@ -38,15 +38,8 @@ namespace TS_ENGINE {
 		}
 	}
 
-	//Position of Viewport is: (0, 52)
-	//Size of Viewport is: (WindowWidth - 250, WindowHeight - 52)
 	void SceneGui::ShowViewportWindow(Ref<TS_ENGINE::Camera> editorCamera, Ref<TS_ENGINE::Camera> currentSceneCamera)
 	{
-#pragma region Editor camera viewport
-
-		//ImGui::SetNextWindowPos(viewportPanelPos);
-		//ImGui::SetNextWindowSize(viewportPanelSize);
-		//ImGui::SetNextWindowPos(ImVec2(0, 18));
 		ImGui::Begin("Viewport", 0, ImGuiWindowFlags_NoDecoration);// | ImGuiWindowFlags_NoDocking);
 		{
 			ImVec2 cameraFramebufferWindowSize = ImGui::GetWindowSize();
@@ -123,15 +116,6 @@ namespace TS_ENGINE {
 			}
 		}
 		ImGui::End();
-
-		/*ImGui::SetNextWindowPos(ImVec2(0, mViewportPanelSize.y + 40));
-		ImGui::SetNextWindowSize(ImVec2(mViewportPanelSize.x, 40));
-
-		ImGui::Begin("PickedColorTestWindow", &opened, defaultWindowFlags | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
-		ImGui::ColorButton("##ColorButton", mPickedColor, ImGuiColorEditFlags_NoAlpha);
-		ImGui::End();*/
-
-#pragma endregion
 	}
 
 	void SceneGui::ShowStatsWindow(ImVec2 statsPanelPos, ImVec2 statsPanelSize)
@@ -179,12 +163,6 @@ namespace TS_ENGINE {
 
 	void SceneGui::ShowInspectorWindow()
 	{
-		//ImGuiWindowFlags inspectorWindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
-		//ImGui::SetNextWindowPos(inspectorPanelPos);
-		//ImGui::SetNextWindowSize(inspectorPanelSize);
-		//bool open = true;
-		//mSelectedNode = SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetChildAt(1);//Temporarily added for test
-
 		ImGui::Begin("Inspector");
 		{
 			if (mSelectedNode != NULL)
