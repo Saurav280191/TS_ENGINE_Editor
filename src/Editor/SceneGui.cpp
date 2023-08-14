@@ -371,25 +371,6 @@ namespace TS_ENGINE {
 		}
 	}
 
-	void SceneGui::ShowHierarchyWindow(Ref<TS_ENGINE::Scene> scene)
-	{
-		//ImGui::SetNextWindowPos(hierarchyPanelPos);
-		//ImGui::SetNextWindowSize(hierarchyPanelSize);
-		//bool open = true;
-		ImGui::Begin("Hierarchy");// , & open, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-		{
-			ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-			ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
-
-			if (ImGui::TreeNodeEx((void*)(intptr_t)0, base_flags, scene->GetSceneNode()->GetName().c_str()))
-			{
-				CreateUIForAllNodes(scene->GetSceneNode());
-				ImGui::TreePop();
-			}
-		}
-		ImGui::End();
-	}
-
 	void SceneGui::ShowContentBrowser()
 	{
 		ImGui::Begin("ContentBrowser");
@@ -452,10 +433,37 @@ namespace TS_ENGINE {
 		mTransformOperation = ImGuizmo::OPERATION::SCALE;
 	}
 
-	void SceneGui::CreateUIForAllNodes(const Ref<TS_ENGINE::Node> node)
+	void SceneGui::ShowHierarchyWindow(Ref<TS_ENGINE::Scene> scene)
 	{
-		static ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
-		static int selectedChildNodeIndex = -1;
+		ImGui::Begin("Hierarchy");
+		{
+			ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+
+			ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+			int nodeTreeGuiIndex = 0;
+
+			if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, base_flags | ImGuiTreeNodeFlags_OpenOnArrow, scene->GetSceneNode()->GetName().c_str()))
+			{
+				nodeTreeGuiIndex++;
+
+				HandleNodeDrag(scene->GetSceneNode().get());
+				HandleNodeDrop(scene->GetSceneNode().get());
+				
+				if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+				{
+					SetSelectedNode(scene->GetSceneNode());
+				}
+
+				CreateUIForAllNodes(nodeTreeGuiIndex, scene->GetSceneNode());
+				ImGui::TreePop();
+			}
+		}
+		ImGui::End();
+	}
+
+	void SceneGui::CreateUIForAllNodes(int& nodeTreeGuiIndex, const Ref<TS_ENGINE::Node> node)
+	{
+		ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
 
 		for (int i = 0; i < node->GetChildCount(); i++)
 		{
@@ -483,79 +491,64 @@ namespace TS_ENGINE {
 
 			if (nodeChild->GetChildCount() > 0)
 			{
-				bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)selectedChildNodeIndex, node_flags, nodeChild->GetName().c_str());
-
-				if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+				if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, nodeChild->GetName().c_str()))
 				{
-					selectedChildNodeIndex = i;
+					nodeTreeGuiIndex++;
 
-					SetSelectedNode(nodeChild);
-				}
+					HandleNodeDrag(nodeChild.get());
+					HandleNodeDrop(nodeChild.get());
 
-				HandleNodeDragDrop(mSelectedNode, nodeChild);
+					if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+					{
+						SetSelectedNode(nodeChild);
+					}
 
-				if (node_open)
-				{
-					CreateUIForAllNodes(nodeChild);
+					CreateUIForAllNodes(nodeTreeGuiIndex, nodeChild);
 					ImGui::TreePop();
 				}
 			}
 			else//Tree Leaves
 			{
 				node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-#ifdef TS_ENGINE_EDITOR
+
 				if (nodeChild->IsVisibleInEditor())
-#endif
 				{
-					ImGui::TreeNodeEx((void*)(intptr_t)selectedChildNodeIndex, node_flags, nodeChild->GetName().c_str());
-
-					if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+					if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, nodeChild->GetName().c_str()))
 					{
-						selectedChildNodeIndex = i;
+						nodeTreeGuiIndex++;
 
-						SetSelectedNode(nodeChild);
+						HandleNodeDrag(nodeChild.get());
+						HandleNodeDrop(nodeChild.get());
+
+						if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+						{
+							SetSelectedNode(nodeChild);
+						}
 					}
 				}
-
-				HandleNodeDragDrop(mSelectedNode, nodeChild);
 			}
 		}
-
 	}
 
-	void SceneGui::HandleNodeDragDrop(Ref<TS_ENGINE::Node> _pickedNode, Ref<TS_ENGINE::Node> _targetParentNode)
+	void SceneGui::HandleNodeDrag(Node* node)
 	{
-		static Ref<TS_ENGINE::Node> pickedNode;
-		static TS_ENGINE::Node* lastParentNode;
-		static Matrix4 pickedNodeLastModelMatrix;
-
 		if (ImGui::BeginDragDropSource())
 		{
-			ImGui::SetDragDropPayload("_TREENODE", NULL, 0);
-			//lastParentNode = _pickedNode->GetParentNodePtr();//TODO
-			pickedNodeLastModelMatrix = _pickedNode->GetTransform()->GetTransformationMatrix();
-
-			if (!pickedNode)
-			{
-				pickedNode = _pickedNode;
-				TS_CORE_INFO("Picked node: " + pickedNode->GetName());
-			}
-
+			ImGui::SetDragDropPayload("_TREENODE", node, sizeof(Node));
+			ImGui::Text("Dragging: %s", node->GetName().c_str());
 			ImGui::EndDragDropSource();
 		}
+	}
 
+	void SceneGui::HandleNodeDrop(Node* targetParentNode)
+	{
 		if (ImGui::BeginDragDropTarget())
 		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_TREENODE"))
 			{
-				//lastParentNode->RemoveChild(pickedNode);//TODO
-				_targetParentNode->AddChild(pickedNode);
-				TS_CORE_INFO("Accepted payload!");
-			}
-			else
-			{
-				TS_CORE_INFO("Dropped: " + pickedNode->GetName());
-				TS_CORE_INFO("Payload not accepted!");
+				Node* pickedNode = reinterpret_cast<Node*>(payload->Data);
+				TS_CORE_INFO("Dropped {0} on {1}", pickedNode->GetName().c_str(), targetParentNode->GetName().c_str());
+				pickedNode->SetParent(targetParentNode);
 			}
 
 			ImGui::EndDragDropTarget();

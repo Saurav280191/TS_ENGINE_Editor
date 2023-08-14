@@ -62,8 +62,10 @@ namespace TS_ENGINE {
 		}
 
 	private:
-		void HandleNodeDragDrop(Ref<TS_ENGINE::Node> _pickedNode, Ref<TS_ENGINE::Node> _targetParentNode);
-		void CreateUIForAllNodes(const Ref<TS_ENGINE::Node> node);
+		void HandleNodeDrag(Node* node);
+		void HandleNodeDrop(Node* targetParentNode);
+
+		void CreateUIForAllNodes(int& nodeTreeGuiIndex, const Ref<TS_ENGINE::Node> node);
 
 		Ref<Texture2D> mMeshEditorIcon;
 		Ref<Texture2D> mMaterialEditorIcon;
