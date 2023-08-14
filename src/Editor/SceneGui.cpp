@@ -526,6 +526,18 @@ namespace TS_ENGINE {
 			{
 				Node* pickedNode = reinterpret_cast<Node*>(payload->Data);
 				TS_CORE_INFO("Dropped {0} on {1}", pickedNode->GetName().c_str(), targetParentNode->GetName().c_str());
+				
+				{//This code snippet multiplies the inverse transform matrix of old parent to node's transform to negate/undo the multiplication done earlier to handle proper transforms
+					Matrix4 oldParentTransformMatrix = targetParentNode->GetTransform()->m_TransformationMatrix;
+					Matrix4 transformMatrix = pickedNode->GetTransform()->m_TransformationMatrix;
+					Matrix4 newTransformMatrix = glm::inverse(oldParentTransformMatrix) * transformMatrix;
+					auto dd = Utility::Decompose(newTransformMatrix);
+
+					pickedNode->GetTransform()->m_Pos = dd->translation;
+					pickedNode->GetTransform()->m_EulerAngles = dd->eulerAngles * Vector3(57.2958f);
+					pickedNode->GetTransform()->m_Scale = dd->scale;
+				}
+
 				pickedNode->SetParent(targetParentNode);
 			}
 
