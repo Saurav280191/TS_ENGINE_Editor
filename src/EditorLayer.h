@@ -95,14 +95,6 @@ private:
 	Ref<TS_ENGINE::Light> mDirectionalLight;
 
 	bool mOrthographicProjectionActive;
-
-	//Ref<TS_ENGINE::Texture2D> 
-		//mUnlockedIcon, 
-		//mLockedIcon,
-		//mMeshFilterIcon, 
-		//mMeshRendererIcon,
-		//mMaterialIcon, 
-		//mLitMaterialIcon;
 		
 
 	//ImVec4 mPickedColor;

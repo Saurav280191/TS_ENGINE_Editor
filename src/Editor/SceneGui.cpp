@@ -11,10 +11,31 @@ namespace TS_ENGINE {
 	{
 		mTransformComboItems[0] = "Local";
 		mTransformComboItems[1] = "World";
-		mMeshEditorIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MeshEditor.png");
-		mMeshEditorIcon->SetVerticalFlip(false);
-		mMaterialEditorIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\LitMaterialIcon.png");
-		mMaterialEditorIcon->SetVerticalFlip(false);
+
+		mMeshEditorIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\MeshEditor.png");
+		//mMeshEditorIcon->SetVerticalFlip(false);
+		mMaterialEditorIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\LitMaterialIcon.png");
+		//mMaterialEditorIcon->SetVerticalFlip(false);
+
+		mContentBrowserDirectoryIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\ContentBrowserDirectoryIcon.png");
+		//mContentBrowserDirectoryIcon->SetVerticalFlip(false);
+		mContentBrowserModelFileIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\ContentBrowserModelFileIcon.png");
+		//mContentBrowserModelFileIcon->SetVerticalFlip(false);
+		mContentBrowserImageFileIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\ContentBrowserImageFileIcon.png");
+		//mContentBrowserImageFileIcon->SetVerticalFlip(false);
+		mContentBrowserShaderFileIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\ContentBrowserShaderFileIcon.png");
+		//mContentBrowserShaderFileIcon->SetVerticalFlip(false);
+		mContentBrowserMiscFileIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\ContentBrowserMiscFileIcon.png");
+		//mContentBrowserMiscFileIcon->SetVerticalFlip(false);
+
+		//mUnlockedIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\Unlocked.png");
+		//mUnlockedIcon->SetVerticalFlip(false);
+		//mLockedIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\Locked.png");
+		//mLockedIcon->SetVerticalFlip(false);	
+		//mMeshFilterIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MeshFilterIcon.png");
+		//mMeshRendererIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MeshRendererIcon.png");
+		//mMaterialIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MaterialIcon.png");
+		//mLitMaterialIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\LitMaterialIcon.png");
 
 		mCurrentDirectory = mAssetsPath;
 	}
@@ -351,7 +372,7 @@ namespace TS_ENGINE {
 
 	void SceneGui::ShowContentBrowser()
 	{
-		ImGui::Begin("ContentBrowser");
+		ImGui::Begin("ContentBrowser", 0, ImGuiWindowFlags_HorizontalScrollbar);
 		{
 			if (mCurrentDirectory != std::filesystem::path(mAssetsPath))
 			{
@@ -367,19 +388,92 @@ namespace TS_ENGINE {
 				auto relativePath = std::filesystem::relative(path, mAssetsPath);
 				std::string filenameStr = relativePath.filename().string();
 
+				float buttonSize = 128.0f;
+				float spacing = 50.0f;
+				float iconSize = buttonSize * 0.75f;
+
 				if (directoryEntry.is_directory())
 				{
-					if (ImGui::Button(filenameStr.c_str()))
+					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+
+					if (ImGui::Button(("##" + filenameStr).c_str(), ImVec2(buttonSize, buttonSize)))
 					{
 						mCurrentDirectory /= path.filename();
 					}
+
+					ImGui::SameLine();					
+					ImVec2 imagePos = cursorPos + ImVec2((buttonSize - iconSize) * 0.5f, (buttonSize - iconSize) * 0.5f);
+					ImGui::SetCursorScreenPos(imagePos);
+					ImGui::Image((void*)(intptr_t)mContentBrowserDirectoryIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
+					
+					ImGui::SameLine();
+					
+					if (std::strlen(filenameStr.c_str()) > 15)//Truncate string to 15 characters
+					{
+						filenameStr = Utility::GetTruncatedString(filenameStr, 15);
+					}
+
+					ImVec2 textPos = cursorPos + ImVec2((buttonSize - ImGui::CalcTextSize(filenameStr.c_str()).x) * 0.5f , buttonSize);
+					ImGui::SetCursorScreenPos(textPos);					
+					ImGui::Text(filenameStr.c_str());
+					
+					ImGui::SameLine();					
+					ImGui::SetCursorScreenPos(cursorPos + ImVec2(buttonSize + spacing, 0));
 				}
 				else
 				{
-					if (ImGui::Button(filenameStr.c_str()))
-					{
+					std::string fileName;
+					std::string fileExtension;
+					Utility::GetFilenameAndExtension(filenameStr, fileName, fileExtension);
 
+					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+
+					if (ImGui::Button(("##" + filenameStr).c_str(), ImVec2(buttonSize, buttonSize)))
+					{
+						
 					}
+
+					ImGui::SameLine();
+					ImGui::SetCursorScreenPos(cursorPos);
+					
+					ImVec2 imagePos = cursorPos + ImVec2((buttonSize - iconSize) * 0.5f, (buttonSize - iconSize) * 0.5f);
+					ImGui::SetCursorScreenPos(imagePos);
+
+					if (fileExtension == "png" || fileExtension == "jpg")
+					{
+						ImGui::Image((void*)(intptr_t)mContentBrowserImageFileIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
+
+						ImGui::SameLine();
+						ImVec2 textPos = cursorPos + ImVec2((buttonSize - ImGui::CalcTextSize(fileExtension.c_str()).x) * 0.5f - 5.0f, buttonSize - ImGui::CalcTextSize(fileName.c_str()).y - 30.0f);
+						ImGui::SetCursorScreenPos(textPos);
+						ImGui::Text(("." + fileExtension).c_str());
+					}
+					else if (fileExtension == "vert" || fileExtension == "frag")
+					{
+						ImGui::Image((void*)(intptr_t)mContentBrowserShaderFileIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
+					}
+					else if (fileExtension == "obj" || fileExtension == "stl" || fileExtension == "fbx" || fileExtension == "glb" || fileExtension == "gltf")
+					{
+						ImGui::Image((void*)(intptr_t)mContentBrowserModelFileIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
+					}
+					else
+					{						
+						ImGui::Image((void*)(intptr_t)mContentBrowserMiscFileIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
+					}
+
+					ImGui::SameLine();
+					
+					if (std::strlen(fileName.c_str()) > 15)//Truncate string to 15 characters
+					{
+						fileName = Utility::GetTruncatedString(fileName, 15);
+					}
+
+					ImVec2 textPos = cursorPos + ImVec2((buttonSize - ImGui::CalcTextSize(fileName.c_str()).x) * 0.5f, buttonSize);
+					ImGui::SetCursorScreenPos(textPos);
+					ImGui::Text(fileName.c_str());
+					
+					ImGui::SameLine();
+					ImGui::SetCursorScreenPos(cursorPos + ImVec2(buttonSize + spacing, 0));
 				}
 			}
 

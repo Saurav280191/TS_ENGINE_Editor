@@ -16,14 +16,7 @@ EditorLayer::EditorLayer() :
 	Layer("SandboxLayer")//,
 	//mBatchedGameObject(NULL)
 {
-	//mUnlockedIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\Unlocked.png");
-	//mUnlockedIcon->SetVerticalFlip(false);
-	//mLockedIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\Locked.png");
-	//mLockedIcon->SetVerticalFlip(false);	
-	//mMeshFilterIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MeshFilterIcon.png");
-	//mMeshRendererIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MeshRendererIcon.png");
-	//mMaterialIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MaterialIcon.png");
-	//mLitMaterialIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\LitMaterialIcon.png");
+	
 }
 
 void EditorLayer::OnAttach()

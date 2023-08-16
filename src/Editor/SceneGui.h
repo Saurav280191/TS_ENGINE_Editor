@@ -69,6 +69,12 @@ namespace TS_ENGINE {
 
 		Ref<Texture2D> mMeshEditorIcon;
 		Ref<Texture2D> mMaterialEditorIcon;
+		Ref<Texture2D> mContentBrowserDirectoryIcon;
+		Ref<Texture2D> mContentBrowserModelFileIcon;
+		Ref<Texture2D> mContentBrowserImageFileIcon;
+		Ref<Texture2D> mContentBrowserShaderFileIcon;
+		Ref<Texture2D> mContentBrowserMiscFileIcon;
+
 		Ref<Node> mSelectedNode;
 
 		//ImGuizmo params
