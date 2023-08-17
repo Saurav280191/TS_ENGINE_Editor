@@ -67,21 +67,22 @@ void EditorLayer::OnAttach()
 	//Default ground
 	Ref<TS_ENGINE::GameObject> ground = TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::QUAD);
 	ground->SetName("Ground");
-	ground->SetTexture("raw_plank_wall_diff_4k.jpg");
-	ground->SetTextureTiling(2, 2);	
+	ground->GetMaterial()->SetDiffuseMap(TS_ENGINE::Texture2D::Create("Assets\\Textures\\raw_plank_wall_diff_4k.jpg"));
+	ground->GetMaterial()->SetDiffuseMapTiling(Vector2(2, 2));
 	ground->GetNode()->GetTransform()->SetLocalEulerAngles(-90.0f, 0.0f, 0.0f);
 	ground->GetNode()->GetTransform()->SetLocalScale(10.0f, 10.0f, 10.0f);
 
 	//Cube
 	Ref<TS_ENGINE::GameObject> cube = TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::CUBE);
 	cube->SetName("Cube");
-	cube->SetTexture("Crate.png");	
+	//cube->GetMaterial()->SetAmbientColor(Vector4(0.5f, 0.5, 0.5f, 1.0f));
+	cube->GetMaterial()->SetDiffuseMap(TS_ENGINE::Texture2D::Create("Assets\\Textures\\crate.png"));
 	cube->GetNode()->GetTransform()->SetLocalPosition(0.0f, 0.5f, 0.0f);
 	
 	//Cube1
 	Ref<TS_ENGINE::GameObject> cube1 = TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::CUBE);
 	cube1->GetNode()->SetName("Cube1");
-	cube1->ChangeColor(Vector3(1, 0, 0));
+	cube1->GetMaterial()->SetAmbientColor(Vector4(1, 0, 0, 1));
 	cube1->GetNode()->GetTransform()->SetLocalPosition(1.0f, 1.0f, -1.0f);
 	cube1->GetNode()->GetTransform()->SetLocalScale(0.3f, 0.3f, 0.3f);
 	cube1->GetNode()->GetTransform()->SetLocalEulerAngles(30.0f, 60.0f, 10.0f);

@@ -4,12 +4,28 @@ out vec4 v_FragColor;
 out uint entityID;
 
 in vec3 v_FragPos;//World space
-in vec3 v_Color;
 in vec3 v_Normal;
 in vec2 v_TexCoord;
 
-uniform sampler2D u_Sampler;
-uniform int u_HasTexture;
+uniform vec4 u_AmbientColor;
+
+uniform vec4 u_DiffuseColor;
+uniform int u_HasDiffuseTexture;
+uniform vec2 u_DiffuseMapOffset;
+uniform vec2 u_DiffuseMapTiling;
+uniform sampler2D u_DiffuseSampler;
+
+uniform vec4 u_SpecularColor;
+uniform int u_HasSpecularTexture;
+uniform vec2 u_SpecularMapOffset;
+uniform vec2 u_SpecularMapTiling;
+uniform sampler2D u_SpecularSampler;
+
+uniform int u_HasNormalTexture;
+uniform vec2 u_NormalMapOffset;
+uniform vec2 u_NormalMapTiling;
+uniform sampler2D u_NormalSampler;
+
 uniform vec3 u_ViewPos;
 uniform vec3 u_LightPos;
 uniform bool u_Gamma;
@@ -58,15 +74,14 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 color, vec3 viewDir)
 
 void main()
 { 
-    vec4 result;
-
-    if(u_HasTexture == 1)
+	// Ambient
+    vec4 result = u_AmbientColor;
+	
+	//Diffuse
+    if(u_HasDiffuseTexture == 1)
     {
-        result = vec4(v_Color, 1) * texture(u_Sampler, v_TexCoord);
-    }   
-    else
-    {
-        result = vec4(v_Color, 1);
+		vec2 tiledAndOffsetTexCoords = (v_TexCoord * u_DiffuseMapTiling) + (u_DiffuseMapOffset * 0.01f);
+        result = result * u_DiffuseColor * texture2D(u_DiffuseSampler, tiledAndOffsetTexCoords);
     }
 
     //vec3 viewDir = normalize(u_ViewPos - v_FragPos);

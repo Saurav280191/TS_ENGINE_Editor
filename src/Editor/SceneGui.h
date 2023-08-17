@@ -110,6 +110,24 @@ namespace TS_ENGINE {
 	public:
 		Vector3 mSelectedNodePosition;
 		Vector3 mSelectedNodeEulerAngles;
-		Vector3 mSelectedNodeScale;		
+		Vector3 mSelectedNodeScale;
+		
+		//Materail properties
+		Vector4 mAmbientColor;
+		Vector4 mDiffuseColor;
+		Ref<Texture2D> mDiffuseMap;
+		float testFloat = 0.0f;
+		float testFloat1 = 0.0f;
+		float* mDiffuseMapOffset;
+		float* mDiffuseMapTiling;
+		Vector4 mSpecularColor;
+		Ref<Texture2D> mSpecularMap;
+		float* mSpecularMapOffset;
+		float* mSpecularMapTiling;
+		float mShininess;
+		Ref<Texture2D> mNormalMap;
+		float* mNormalMapOffset;
+		float* mNormalMapTiling;
+		float mBumpValue;
 	};
 }

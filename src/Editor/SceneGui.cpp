@@ -53,7 +53,7 @@ namespace TS_ENGINE {
 				Vector3 eulerAngles;
 				Utility::DecomposeTransform(modelMatrix, mSelectedNodePosition, eulerAngles, mSelectedNodeScale);
 				mSelectedNodeEulerAngles = eulerAngles * Vector3(57.2958f);//To Degree
-
+				
 				mJustSelected = false;
 			}
 		}
@@ -198,9 +198,11 @@ namespace TS_ENGINE {
 
 				ImGui::BeginChild("Transform", ImVec2(ImGui::GetWindowSize().x, 128.0f), true);
 
+				float transformTextPosY = ImGui::GetCursorPosY();
 				ImGui::Text("Transform");
 				ImGui::SameLine();
 
+				ImGui::SetCursorPosY(transformTextPosY - 2.5f);
 				if (ImGui::Combo("##TransformMode", &mTransformCurrentItem, mTransformComboItems, IM_ARRAYSIZE(mTransformComboItems)))
 				{
 					switch (mTransformCurrentItem)
@@ -278,12 +280,14 @@ namespace TS_ENGINE {
 					case TS_ENGINE::EntityType::GAMEOBJECT:
 					{
 #pragma region Mesh Editor
-						ImGui::BeginChild("Mesh Container", ImVec2(ImGui::GetWindowSize().x, 128.0f), true);
+						ImGui::BeginChild("Mesh Container", ImVec2(ImGui::GetWindowSize().x, 75.0f), true);
 
+						float meshEditorIconPosY = ImGui::GetCursorPosY();
 						ImGui::Image((ImTextureID)mMeshEditorIcon->GetRendererID(), ImVec2(20, 20));
 						ImGui::SameLine();
 
 						ImGui::SameLine();
+						ImGui::SetCursorPosY(meshEditorIconPosY + 3.5f);
 						ImGui::Text("Mesh Container");
 
 						/*if (ImGui::ListBox("Mesh", &mCurrentMeshIndex, mMeshNameList, 2, 1))
@@ -298,10 +302,13 @@ namespace TS_ENGINE {
 								break;
 							}
 						}*/
-
+						ImGui::Spacing();
 						ImGui::SetNextItemWidth(100);
+						float meshHeaderTextY = ImGui::GetCursorPosY();
 						ImGui::Text("Mesh");
 						ImGui::SameLine();
+
+						ImGui::SetCursorPosY(meshHeaderTextY - 2.5f);
 						if (ImGui::BeginCombo("##Mesh", mCurrentMeshItem))
 						{
 							for (int n = 0; n < IM_ARRAYSIZE(mMeshNameList); n++)
@@ -333,12 +340,142 @@ namespace TS_ENGINE {
 #pragma endregion
 
 #pragma region Material Editor
-						ImGui::BeginChild("Material Editor", ImVec2(ImGui::GetWindowSize().x, 128.0f), true);
+						ImGui::BeginChild("Material Editor", ImVec2(ImGui::GetWindowSize().x, 380.0f), true);
 
+						float materialIconPosY = ImGui::GetCursorPosY();
 						ImGui::Image((ImTextureID)mMaterialEditorIcon->GetRendererID(), ImVec2(20, 20));
 						ImGui::SameLine();
-						ImGui::Text("Material Editor");
+						ImGui::SetCursorPosY(materialIconPosY + 3.5f);
+						ImGui::Text("Material Editor");						
 
+						ImGui::Spacing();
+
+						//Ambient 
+						ImGui::Text("Ambient");
+						if (ImGui::ColorEdit4("##AmbientColor", mAmbientColor.data))
+						{
+							mSelectedNode->GetAttachedObject()->GetMaterial()->SetAmbientColor(mAmbientColor);
+						}
+
+						ImGui::Spacing();
+
+						// Diffuse 
+						ImGui::Text("Diffuse");
+						// Color
+						if (ImGui::ColorEdit4("##DiffuseColor", mDiffuseColor.data))
+						{
+							mSelectedNode->GetAttachedObject()->GetMaterial()->SetDiffuseColor(mDiffuseColor);
+						}
+						
+						ImGui::Spacing();
+
+						// Texture
+						if (mDiffuseMap)
+						{
+							ImGui::ImageButton((void*)(intptr_t)mDiffuseMap->GetRendererID(), ImVec2(40, 40));
+						}
+						else
+						{
+							ImGui::ImageButton((void*)(intptr_t)0, ImVec2(40, 40));
+						}
+						ImGui::SameLine();
+						//Offset and tiling
+						ImGui::SetNextItemWidth(100.0f);
+						ImVec2 diffuseMapOffsetUiPos = ImGui::GetCursorPos();
+						if (ImGui::DragFloat2("##DiffuseMapOffset", mDiffuseMapOffset))
+						{
+							mSelectedNode->GetAttachedObject()->GetMaterial()->SetDiffuseMapOffset(Vector2(mDiffuseMapOffset[0], mDiffuseMapOffset[1]));
+						}
+						ImGui::SameLine();
+						ImGui::Text("Offset");
+						ImGui::SetCursorPos(diffuseMapOffsetUiPos + ImVec2(0.0f, 26.0f));
+						ImGui::SetNextItemWidth(100.0f);
+						if (ImGui::DragFloat2("##DiffuseMapTiling", mDiffuseMapTiling))
+						{
+							mSelectedNode->GetAttachedObject()->GetMaterial()->SetDiffuseMapTiling(Vector2(mDiffuseMapTiling[0], mDiffuseMapTiling[1]));
+						}
+						ImGui::SameLine();
+						ImGui::Text("Tiling");
+
+						ImGui::Spacing();
+
+						// Specular 
+						ImGui::Text("Specular");
+						// Color
+						if (ImGui::ColorEdit4("##SpecularColor", mSpecularColor.data))
+						{
+							mSelectedNode->GetAttachedObject()->GetMaterial()->SetSpecularColor(mSpecularColor);
+						}
+						
+						ImGui::Spacing();
+						
+						// Texture
+						if (mSpecularMap)
+						{
+							ImGui::ImageButton((void*)(intptr_t)mSpecularMap->GetRendererID(), ImVec2(40, 40));
+						}
+						else
+						{
+							ImGui::ImageButton((void*)(intptr_t)0, ImVec2(40, 40));
+						}
+						ImGui::SameLine();
+						//Offset and tiling
+						ImGui::SetNextItemWidth(100.0f);
+						ImVec2 specularMapOffsetUiPos = ImGui::GetCursorPos();
+						if (ImGui::DragFloat2("##SpecularMapOffset", mSpecularMapOffset))
+						{
+							mSelectedNode->GetAttachedObject()->GetMaterial()->SetSpecularMapOffset(Vector2(mSpecularMapOffset[0], mSpecularMapOffset[1]));
+						}
+						ImGui::SameLine();
+						ImGui::Text("Offset");
+						ImGui::SetCursorPos(specularMapOffsetUiPos + ImVec2(0.0f, 26.0f));
+						ImGui::SetNextItemWidth(100.0f);
+						if (ImGui::DragFloat2("##SpecularMapTiling", mSpecularMapTiling))
+						{
+							mSelectedNode->GetAttachedObject()->GetMaterial()->SetSpecularMapTiling(Vector2(mSpecularMapTiling[0], mSpecularMapTiling[1]));
+						}
+						ImGui::SameLine();
+						ImGui::Text("Tiling");
+
+						ImGui::Spacing();
+
+						// Normal
+						ImGui::Text("Normal");
+						//Texture						
+						if (mNormalMap)
+						{
+							ImGui::ImageButton((void*)(intptr_t)mNormalMap->GetRendererID(), ImVec2(40, 40));
+						}
+						else
+						{
+							ImGui::ImageButton((void*)(intptr_t)0, ImVec2(40, 40));
+						}
+						ImGui::SameLine();
+						//Offset and tiling
+						ImGui::SetNextItemWidth(100.0f);
+						ImVec2 normalMapOffsetUiPos = ImGui::GetCursorPos();
+						if (ImGui::DragFloat2("##NormalMapOffset", mNormalMapOffset))
+						{
+							mSelectedNode->GetAttachedObject()->GetMaterial()->SetNormalMapOffset(Vector2(mNormalMapOffset[0], mNormalMapOffset[1]));
+						}
+						ImGui::SameLine();
+						ImGui::Text("Offset");
+						ImGui::SetCursorPos(normalMapOffsetUiPos + ImVec2(0.0f, 26.0f));
+						ImGui::SetNextItemWidth(100.0f);
+						if (ImGui::DragFloat2("##NormalMapTiling", mNormalMapTiling))
+						{
+							mSelectedNode->GetAttachedObject()->GetMaterial()->SetNormalMapTiling(Vector2(mNormalMapTiling[0], mNormalMapTiling[1]));
+						}
+						ImGui::SameLine();
+						ImGui::Text("Tiling");
+
+						ImGui::Spacing();
+
+						// Slider
+						if (ImGui::SliderFloat("##BumpValue", &mBumpValue, 0, 20.0f))
+						{
+							mSelectedNode->GetAttachedObject()->GetMaterial()->SetBumpValue(mBumpValue);
+						}
 						ImGui::EndChild();
 #pragma endregion
 					}
@@ -650,6 +787,7 @@ namespace TS_ENGINE {
 			{
 				if (Ref<Object> object = node->GetAttachedObject())
 				{
+					//Mesh container
 					switch (object->GetPrimitiveType())
 					{
 					case PrimitiveType::QUAD:
@@ -674,6 +812,22 @@ namespace TS_ENGINE {
 						mCurrentMeshItem = "Empty";
 						break;
 					}
+
+					//Mesh Renderer
+					mAmbientColor = object->GetMaterial()->GetAmbientColor();
+					mDiffuseColor = object->GetMaterial()->GetDiffuseColor();
+					mDiffuseMap = object->GetMaterial()->GetDiffuseMap();					
+					mDiffuseMapOffset = new float[2] { object->GetMaterial()->GetDiffuseMapOffset().x, object->GetMaterial()->GetDiffuseMapOffset().y };
+					mDiffuseMapTiling = new float[2] { object->GetMaterial()->GetDiffuseMapTiling().x, object->GetMaterial()->GetDiffuseMapTiling().y };
+					mSpecularColor = object->GetMaterial()->GetSpecularColor();
+					mSpecularMap = object->GetMaterial()->GetSpecularMap();
+					mSpecularMapOffset = new float[2] { object->GetMaterial()->GetSpecularMapOffset().x, object->GetMaterial()->GetSpecularMapOffset().y };
+					mSpecularMapTiling = new float[2] { object->GetMaterial()->GetSpecularMapTiling().x, object->GetMaterial()->GetSpecularMapTiling().y };
+					mShininess = object->GetMaterial()->GetShininess();
+					mNormalMap = object->GetMaterial()->GetNormalMap();
+					mNormalMapOffset = new float[2] { object->GetMaterial()->GetNormalMapOffset().x, object->GetMaterial()->GetNormalMapOffset().y };
+					mNormalMapTiling = new float[2] { object->GetMaterial()->GetNormalMapTiling().x, object->GetMaterial()->GetNormalMapTiling().y };
+					mBumpValue = object->GetMaterial()->GetBumpValue();
 				}
 			}
 		}
