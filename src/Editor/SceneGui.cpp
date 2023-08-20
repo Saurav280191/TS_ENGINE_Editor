@@ -85,6 +85,7 @@ namespace TS_ENGINE {
 				//	editorCamera->GetFramebuffer()->GetSpecification().Width, editorCamera->GetFramebuffer()->GetSpecification().Height);
 
 				ImGui::Image(reinterpret_cast<void*>(editorCameraRenderTextureID), cameraFramebufferWindowSize, ImVec2(0, 1), ImVec2(1, 0));
+				DropItemInViewport();
 			}
 
 			//ImGuizmo
@@ -373,10 +374,12 @@ namespace TS_ENGINE {
 						if (mDiffuseMap)
 						{
 							ImGui::ImageButton((void*)(intptr_t)mDiffuseMap->GetRendererID(), ImVec2(40, 40));
+							DropContentBrowserTexture(TextureType::DIFFUSE);
 						}
 						else
 						{
 							ImGui::ImageButton((void*)(intptr_t)0, ImVec2(40, 40));
+							DropContentBrowserTexture(TextureType::DIFFUSE);
 						}
 						ImGui::SameLine();
 						//Offset and tiling
@@ -578,6 +581,8 @@ namespace TS_ENGINE {
 
 					if (fileExtension == "png" || fileExtension == "jpg")
 					{
+						DragContentBrowserItem(path.string().c_str(), ItemType::TEXTURE);
+						
 						ImGui::Image((void*)(intptr_t)mContentBrowserImageFileIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
 
 						ImGui::SameLine();
@@ -591,15 +596,17 @@ namespace TS_ENGINE {
 					}
 					else if (fileExtension == "obj" || fileExtension == "stl" || fileExtension == "fbx" || fileExtension == "glb" || fileExtension == "gltf")
 					{
+						DragContentBrowserItem(path.string().c_str(), ItemType::MODEL);
+
 						ImGui::Image((void*)(intptr_t)mContentBrowserModelFileIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
 					}
 					else
-					{						
+					{
 						ImGui::Image((void*)(intptr_t)mContentBrowserMiscFileIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
 					}
 
 					ImGui::SameLine();
-					
+
 					if (std::strlen(fileName.c_str()) > 15)//Truncate string to 15 characters
 					{
 						fileName = Utility::GetTruncatedString(fileName, 15);
@@ -655,9 +662,9 @@ namespace TS_ENGINE {
 			{
 				nodeTreeGuiIndex++;
 
-				HandleNodeDrag(scene->GetSceneNode().get());
-				HandleNodeDrop(scene->GetSceneNode().get());
-				
+				DragHierarchySceneNode(scene->GetSceneNode().get());
+				DropHierarchySceneNode(scene->GetSceneNode().get());
+
 				if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
 				{
 					SetSelectedNode(scene->GetSceneNode());
@@ -704,8 +711,8 @@ namespace TS_ENGINE {
 				{
 					nodeTreeGuiIndex++;
 
-					HandleNodeDrag(nodeChild.get());
-					HandleNodeDrop(nodeChild.get());
+					DragHierarchySceneNode(nodeChild.get());
+					DropHierarchySceneNode(nodeChild.get());
 
 					if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
 					{
@@ -726,8 +733,8 @@ namespace TS_ENGINE {
 					{
 						nodeTreeGuiIndex++;
 
-						HandleNodeDrag(nodeChild.get());
-						HandleNodeDrop(nodeChild.get());
+						DragHierarchySceneNode(nodeChild.get());
+						DropHierarchySceneNode(nodeChild.get());
 
 						if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
 						{
@@ -739,7 +746,7 @@ namespace TS_ENGINE {
 		}
 	}
 
-	void SceneGui::HandleNodeDrag(Node* node)
+	void SceneGui::DragHierarchySceneNode(Node* node)
 	{
 		if (ImGui::BeginDragDropSource())
 		{
@@ -748,8 +755,21 @@ namespace TS_ENGINE {
 			ImGui::EndDragDropSource();
 		}
 	}
+	void SceneGui::DragContentBrowserItem(const char* filePath, ItemType itemType)
+	{
+		if (ImGui::BeginDragDropSource())
+		{
+			if (itemType == ItemType::TEXTURE)
+				ImGui::SetDragDropPayload("_CONTENTBROWSER_TEXTURE", filePath, strlen(filePath) * sizeof(const char*));
+			else if (itemType == ItemType::MODEL)
+				ImGui::SetDragDropPayload("_CONTENTBROWSER_MODEL", filePath, strlen(filePath) * sizeof(const char*));
+			
+			ImGui::Text("Dragging: %s", filePath);
+			ImGui::EndDragDropSource();
+		}
+	}
 
-	void SceneGui::HandleNodeDrop(Node* targetParentNode)
+	void SceneGui::DropHierarchySceneNode(Node* targetParentNode)
 	{
 		if (ImGui::BeginDragDropTarget())
 		{
@@ -770,6 +790,56 @@ namespace TS_ENGINE {
 				}
 
 				pickedNode->SetParent(targetParentNode);
+			}
+			else if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_MODEL"))
+			{
+				const char* draggedModelPath = reinterpret_cast<const char*>(payload->Data);
+				//Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::MODEL);//TODO: Add codde to Model creation instead of GameObject
+			}
+			ImGui::EndDragDropTarget();
+		}
+	}
+	void SceneGui::DropContentBrowserTexture(TextureType textureType)
+	{
+		Ref<Material> material = mSelectedNode->GetAttachedObject()->GetMaterial();
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_TEXTURE"))
+			{
+				const char* draggedTexturePath = reinterpret_cast<const char*>(payload->Data);
+				TS_CORE_INFO("Dropped {0} on {1}", draggedTexturePath, "DiffuseTextureDropZone");
+
+				Ref<Texture2D> texture = Texture2D::Create(draggedTexturePath);
+
+				if (textureType == TextureType::DIFFUSE)
+				{
+					mDiffuseMap = texture;
+					material->SetDiffuseMap(texture);
+				}
+				else if (textureType == TextureType::SPECUALR)
+				{
+					mSpecularMap = texture;
+					material->SetSpecularMap(texture);
+				}
+				else if (textureType == TextureType::NORMAL)
+				{
+					mNormalMap = texture;
+					material->SetNormalMap(texture);
+				}
+			}
+
+			ImGui::EndDragDropTarget();
+		}
+	}
+	void SceneGui::DropItemInViewport()
+	{
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_MODEL"))
+			{
+				const char* draggedModelPath = reinterpret_cast<const char*>(payload->Data);
+				//Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::MODEL);//TODO: Add codde to Model creation instead of GameObject
 			}
 
 			ImGui::EndDragDropTarget();

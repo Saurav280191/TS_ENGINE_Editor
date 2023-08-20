@@ -62,10 +62,27 @@ namespace TS_ENGINE {
 		}
 
 	private:
-		void HandleNodeDrag(Node* node);
-		void HandleNodeDrop(Node* targetParentNode);
-
+		enum ItemType
+		{
+			TEXTURE,
+			MODEL,
+			MATERIAL
+		};
+		enum TextureType
+		{
+			DIFFUSE,
+			SPECUALR,
+			NORMAL
+		};
+		
 		void CreateUIForAllNodes(int& nodeTreeGuiIndex, const Ref<TS_ENGINE::Node> node);
+		
+		void DragHierarchySceneNode(Node* node);
+		void DragContentBrowserItem(const char* filePath, ItemType itemType);
+		
+		void DropHierarchySceneNode(Node* targetParentNode);
+		void DropContentBrowserTexture(TextureType textureType);
+		void DropItemInViewport();
 
 		Ref<Texture2D> mMeshEditorIcon;
 		Ref<Texture2D> mMaterialEditorIcon;
