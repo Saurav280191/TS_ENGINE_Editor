@@ -54,8 +54,6 @@ src/EditorLayer.cpp
 source_group("Layers" FILES ${LayersSrc})
 
 file(GLOB LayersEditorSrc
-src/Editor/EditorCamera.h
-src/Editor/EditorCamera.cpp
 src/Editor/SceneGui.h
 src/Editor/SceneGui.cpp
 )
@@ -107,6 +105,7 @@ add_compile_definitions(
     _SCL_SECURE_NO_WARNINGS
     TS_PLATFORM_WINDOWS
 	TS_ENGINE_EDITOR
+	IMGUI_DEFINE_MATH_OPERATORS
     )
 
 #Include directories
