@@ -75,13 +75,14 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 color, vec3 viewDir)
 void main()
 { 
 	// Ambient
-    vec4 result = u_AmbientColor;
+    vec4 result = u_AmbientColor;    
+    result *= u_DiffuseColor;
 	
 	//Diffuse
     if(u_HasDiffuseTexture == 1)
     {
 		vec2 tiledAndOffsetTexCoords = (v_TexCoord * u_DiffuseMapTiling) + (u_DiffuseMapOffset * 0.01f);
-        result = result * u_DiffuseColor * texture2D(u_DiffuseSampler, tiledAndOffsetTexCoords);
+        result *= texture2D(u_DiffuseSampler, tiledAndOffsetTexCoords);
     }
 
     //vec3 viewDir = normalize(u_ViewPos - v_FragPos);

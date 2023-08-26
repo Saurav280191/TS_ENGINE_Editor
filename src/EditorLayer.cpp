@@ -39,7 +39,7 @@ void EditorLayer::OnAttach()
 #pragma endregion
 
 #pragma region Cameras
-	mEditorCamera = CreateRef<EditorCamera>("EditorCamera");
+	mEditorCamera = CreateRef<TS_ENGINE::EditorCamera>("EditorCamera");
 
 	mAspectRatio = (float)TS_ENGINE::Application::Get().GetWindow().GetWidth() / (float)TS_ENGINE::Application::Get().GetWindow().GetHeight();
 	mEditorCamera->SetPerspective(TS_ENGINE::Camera::Perspective(45.0f, mAspectRatio, 0.1f, 1000.0f));
@@ -48,55 +48,60 @@ void EditorLayer::OnAttach()
 	mEditorCamera->CreateFramebuffer(1920, 1080);//Create framebuffer for editorCamera
 	mEditorCamera->Initialize();
 
-#pragma region DummyScene	
 	//Create and set current scene in SceneManager
-	mScene1 = CreateRef<TS_ENGINE::Scene>("Scene1");	
+	mScene1 = CreateRef<TS_ENGINE::Scene>("Scene1", mEditorCamera);	
 	TS_ENGINE::SceneManager::GetInstance()->SetCurrentScene(mScene1);
-	
-	//Scene Camera
-	Ref<TS_ENGINE::SceneCamera> defaultSceneCamera = TS_ENGINE::Factory::GetInstance()->CreateSceneCamera(mEditorCamera);
-	defaultSceneCamera->SetName("SceneCamera1");
-	defaultSceneCamera->GetNode()->GetTransform()->SetLocalPosition(7.156f, 2.951f, 8.770f);
-	defaultSceneCamera->GetNode()->GetTransform()->SetLocalEulerAngles(-13.235f, 38.064f, 0.0f);
-	defaultSceneCamera->SetPerspective(TS_ENGINE::Camera::Perspective(45.0f, mAspectRatio, 1.0f, 20.0f));		
-	defaultSceneCamera->CreateFramebuffer(800, 600);//Create framebuffer for sceneCamera
-	defaultSceneCamera->Initialize();
-	mScene1->GetSceneNode()->AddChild(defaultSceneCamera->GetNode());
-	mCurrentSceneCamera = defaultSceneCamera;
-
-	//Default ground
-	Ref<TS_ENGINE::GameObject> ground = TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::QUAD);
-	ground->SetName("Ground");
-	ground->GetMaterial()->SetDiffuseMap(TS_ENGINE::Texture2D::Create("Assets\\Textures\\raw_plank_wall_diff_4k.jpg"));
-	ground->GetMaterial()->SetDiffuseMapTiling(Vector2(2, 2));
-	ground->GetNode()->GetTransform()->SetLocalEulerAngles(-90.0f, 0.0f, 0.0f);
-	ground->GetNode()->GetTransform()->SetLocalScale(10.0f, 10.0f, 10.0f);
-
-	//Cube
-	Ref<TS_ENGINE::GameObject> cube = TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::CUBE);
-	cube->SetName("Cube");
-	//cube->GetMaterial()->SetAmbientColor(Vector4(0.5f, 0.5, 0.5f, 1.0f));
-	cube->GetMaterial()->SetDiffuseMap(TS_ENGINE::Texture2D::Create("Assets\\Textures\\crate.png"));
-	cube->GetNode()->GetTransform()->SetLocalPosition(0.0f, 0.5f, 0.0f);
-	
-	//Cube1
-	Ref<TS_ENGINE::GameObject> cube1 = TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::CUBE);
-	cube1->GetNode()->SetName("Cube1");
-	cube1->GetMaterial()->SetAmbientColor(Vector4(1, 0, 0, 1));
-	cube1->GetNode()->GetTransform()->SetLocalPosition(1.0f, 1.0f, -1.0f);
-	cube1->GetNode()->GetTransform()->SetLocalScale(0.3f, 0.3f, 0.3f);
-	cube1->GetNode()->GetTransform()->SetLocalEulerAngles(30.0f, 60.0f, 10.0f);
-	cube1->GetNode()->SetParent(cube->GetNode());
-
-#pragma endregion 
-
-	//Needs to be done at the end to initialize the hierarchy once
-	mScene1->Initialize(mEditorCamera);
 }
 
 void EditorLayer::OnDetach()
 {
 	mScene1.reset();
+}
+
+void EditorLayer::OnUpdate(float deltaTime)
+{
+	mDeltaTime = deltaTime;
+	TS_ENGINE::Application::Get().ResetStats();
+
+	mScene1->Render(mCurrentShader, deltaTime);
+
+	//Editor camera pass
+	{
+		mScene1->UpdateCameraRT(mEditorCamera, mCurrentShader, deltaTime, true);
+
+		//Render after all gameObjects rendered to show as an overlay.
+		OnOverlayRender();
+		
+		if (!ImGuizmo::IsOver())
+			PickGameObject();
+
+		mEditorCamera->GetFramebuffer()->Unbind();
+	}
+}
+
+void EditorLayer::PickNode(TS_ENGINE::Node* node, int entityID)
+{
+	if (node->GetMeshes().size() > 0)
+	{
+		TS_CORE_TRACE("Checking: {0}", node->GetName());
+
+		if (node->GetEntity()->GetEntityID() == entityID)
+		{
+			TS_CORE_TRACE("{0} has matching entityID", node->GetName());
+			mMatchingNode = node;
+		}
+	}
+
+	for (auto& childNode : node->GetChildren())
+	{
+		PickNode(childNode, entityID);
+	}
+}
+
+TS_ENGINE::Node* EditorLayer::PickNodeByEntityID(int entityID)
+{
+	PickNode(mScene1->GetSceneNode(), entityID);
+	return mMatchingNode;
 }
 
 void EditorLayer::PickGameObject()
@@ -108,9 +113,9 @@ void EditorLayer::PickGameObject()
 
 		mx -= mSceneGui->GetViewportBounds()[0].x;
 		my -= mSceneGui->GetViewportBounds()[0].y;
-		
+
 		glm::vec2 viewportSize = mSceneGui->GetViewportBounds()[1] - mSceneGui->GetViewportBounds()[0];
-		
+
 		my = viewportSize.y - my;
 
 		int mouseX = (int)mx - 8;//TODO: Offset (-8, 26) is needed for proper picking. Need to find the root cause of this issue.
@@ -123,17 +128,17 @@ void EditorLayer::PickGameObject()
 			//TS_CORE_TRACE("Pixel color = {0}", glm::to_string(pixelColor));
 
 			int entityID = mEditorCamera->GetFramebuffer()->ReadPixel(1, mouseX, mouseY);
-			TS_CORE_TRACE("EntityID = {0}", entityID);
+			TS_CORE_TRACE("Picking entity with ID : {0}", entityID);
 
 			if (entityID != -1)
 			{
-				Ref<TS_ENGINE::Node> hoveredOnNode = nullptr;
+				TS_ENGINE::Node* hoveredOnNode = nullptr;
 
 				//Check if scene camera's GUI was selected
-				if (mCurrentSceneCamera->IsSceneCameraGuiSelected(entityID))
-					hoveredOnNode = mCurrentSceneCamera->GetNode();
+				if (mScene1->GetCurrentSceneCamera()->IsSceneCameraGuiSelected(entityID))
+					hoveredOnNode = mScene1->GetCurrentSceneCamera()->GetNode().get();
 				else
-					hoveredOnNode = mScene1->PickNodeByEntityID(entityID);
+					hoveredOnNode = PickNodeByEntityID(entityID);
 
 				if (hoveredOnNode != nullptr)
 				{
@@ -155,66 +160,6 @@ void EditorLayer::PickGameObject()
 	{
 		mMouseClicked = false;
 	}
-}
-
-void EditorLayer::UpdateCameraRT(Ref<TS_ENGINE::Camera> camera, float deltaTime, bool isEditorCamera)
-{
-	// Resize
-	//if (TS_ENGINE::FramebufferSpecification spec = camera->GetFramebuffer()->GetSpecification();
-	//	mViewportPanelSize.x > 0.0f && mViewportPanelSize.y > 0.0f && // zero sized framebuffer is invalid
-	//	(spec.Width != mViewportPanelSize.x || spec.Height != mViewportPanelSize.y))
-	//{
-	//	camera->GetFramebuffer()->Resize((uint32_t)mViewportPanelSize.x, (uint32_t)mViewportPanelSize.y);
-	//}
-
-	camera->GetFramebuffer()->Bind();
-
-	//if(!mGammaCorrection)
-	TS_ENGINE::RenderCommand::SetClearColor(Vector4(0.2f, 0.3f, 0.3f, 1.0f));
-	//else
-		//TS_ENGINE::RenderCommand::SetClearColor(Vector4(pow(0.2f, mGammaValue), pow(0.3f, mGammaValue), pow(0.3f, mGammaValue), 1.0f));
-
-	TS_ENGINE::RenderCommand::Clear();
-
-	// Clear our entity ID attachment to -1
-	camera->GetFramebuffer()->ClearAttachment(1, -1);
-
-	//mCurrentShader->SetBool("u_Gamma", mGammaCorrection);
-	//mCurrentShader->SetFloat("u_GammaValue", mGammaValue);
-	//mCurrentShader->SetBool("u_Hdr", mHdr);
-	//mCurrentShader->SetFloat("u_HdrExposure", mHdrExposure);
-
-	//mDirectionalLight->SetCommonParams(mCurrentShader, mDirectionalLight->GetNode()->GetTransform()->GetLocalPosition(),
-	//	mDirectionalLight->GetNode()->GetTransform()->GetForward(), Vector3(0.5f), Vector3(0.5f), Vector3(0.5f));
-
-	camera->Update(mCurrentShader, deltaTime);
-	mScene1->Update(mCurrentShader, deltaTime);
-}
-
-void EditorLayer::OnUpdate(float deltaTime)
-{
-	mDeltaTime = deltaTime;
-	TS_ENGINE::Application::Get().ResetStats();
-
-	//Scene camera pass
-	if(mCurrentSceneCamera)
-	{
-		UpdateCameraRT(mCurrentSceneCamera, deltaTime);
-		mCurrentSceneCamera->GetFramebuffer()->Unbind();
-	}
-
-	//Editor camera pass
-	{
-		UpdateCameraRT(mEditorCamera, deltaTime, true);
-
-		//Render after all gameObjects rendered to show as an overlay.
-		OnOverlayRender();
-
-		if (!ImGuizmo::IsOver())
-			PickGameObject();
-		mEditorCamera->GetFramebuffer()->Unbind();
-	}
-
 }
 
 #pragma region ImGUI functions
@@ -293,23 +238,23 @@ void EditorLayer::ShowMainMenuBar()
 			{
 				if (ImGui::MenuItem("Quad"))
 				{
-					TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::QUAD);
+					//TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::QUAD);
 				}
 
 				if (ImGui::MenuItem("Cube"))
 				{
-					TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::CUBE);
+					//TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::CUBE);
 				}
 
 				if (ImGui::MenuItem("Sphere"))
 				{
-					TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::SPHERE);
+					//TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::SPHERE);
 				}
 
-				if (ImGui::MenuItem("Model"))
+				/*if (ImGui::MenuItem("Model"))
 				{
 					TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::MODEL);
-				}
+				}*/
 
 				ImGui::EndMenu();
 			}
@@ -401,7 +346,7 @@ void EditorLayer::ShowPanels()
 	ImVec2 statsPanelSize = ImVec2(200.0f, 150.0f);
 #pragma endregion
 
-		mSceneGui->ShowViewportWindow(mEditorCamera, mCurrentSceneCamera);
+		mSceneGui->ShowViewportWindow(mEditorCamera, mScene1->GetCurrentSceneCamera());
 		mSceneGui->ShowInspectorWindow();
 		mSceneGui->ShowHierarchyWindow(mScene1);
 		mSceneGui->ShowContentBrowser();
@@ -460,7 +405,7 @@ bool EditorLayer::OnMouseButtonPressed(TS_ENGINE::MouseButtonPressedEvent& e)
 void EditorLayer::OnOverlayRender()
 {
 	//This should render only for editor camera framebuffer
-	mCurrentSceneCamera->RenderGui(mCurrentShader, mDeltaTime);//Render Scene camera's GUI	
+	mScene1->GetCurrentSceneCamera()->RenderGui(mCurrentShader, mDeltaTime);//Render Scene camera's GUI
 }
 
 //Vector2 GetGridPosFromIndex(size_t index, size_t width)

@@ -2,11 +2,10 @@
 #include "SceneManager/Node.h"
 #include "SceneManager/Scene.h"
 #include <Renderer/Texture.h>
-#include <GameObject.h>
 #include <Application.h>
 #include <Utils/Utility.h>
 #include <Utils/MyMath.h>
-#include <Factory.h>
+//#include <Factory.h>
 #include <filesystem>
 
 namespace TS_ENGINE {
@@ -20,46 +19,27 @@ namespace TS_ENGINE {
 		void ShowTransformGizmos(const float* view, const float* projection);
 
 		void ShowViewportWindow(Ref<TS_ENGINE::Camera> editorCamera, Ref<TS_ENGINE::Camera> currentSceneCamera);
-		void ShowStatsWindow(ImVec2 statsPanelPos, ImVec2 statsPanelSize);		
+		void ShowStatsWindow(ImVec2 statsPanelPos, ImVec2 statsPanelSize);
 		void ShowInspectorWindow();
 		void ShowHierarchyWindow(Ref<TS_ENGINE::Scene> scene);
 		void ShowContentBrowser();
 
-		Ref<Node> GetSelectedNode()
-		{
-			return mSelectedNode;
-		}
+		Node* GetSelectedNode() { return mSelectedNode; }
 
 		void SwitchToTranslateMode();
 		void SwitchToRotateMode();
 		void SwitchToScaleMode();
 
-		ImGuizmo::OPERATION GetTransformOperation()
-		{
-			return mTransformOperation;
-		}
+		ImGuizmo::OPERATION GetTransformOperation() { return mTransformOperation; }
+		ImGuizmo::MODE GetTransformMode() { return mTransformMode; }
 
-		ImGuizmo::MODE GetTransformMode()
-		{
-			return mTransformMode;
-		}
-		
-		void SetSelectedNode(Ref<TS_ENGINE::Node> node);
+		void SetSelectedNode(TS_ENGINE::Node* node);
 
-		ImVec2 GetViewportPos()
-		{
-			return mViewportPos;
-		}
+		ImVec2 GetViewportPos() { return mViewportPos; }
 
-		ImVec2 GetViewportSize()
-		{
-			return mViewportSize;
-		}
+		ImVec2 GetViewportSize() { return mViewportSize; }
 
-		Vector2* GetViewportBounds()
-		{
-			return mViewportBounds;
-		}
+		Vector2* GetViewportBounds() { return mViewportBounds; }
 
 	private:
 		enum ItemType
@@ -71,18 +51,41 @@ namespace TS_ENGINE {
 		enum TextureType
 		{
 			DIFFUSE,
-			SPECUALR,
+			SPECULAR,
 			NORMAL
 		};
+		//Material properties
+		struct MaterialGui
+		{
+			Vector4 mAmbientColor = Vector4(1, 1, 1, 1);
+			Vector4 mDiffuseColor = Vector4(1, 1, 1, 1);
+			Ref<Texture2D> mDiffuseMap = nullptr;
+			float testFloat = 0.0f;
+			float testFloat1 = 0.0f;
+			float* mDiffuseMapOffset = nullptr;
+			float* mDiffuseMapTiling = nullptr;
+			Vector4 mSpecularColor = Vector4(1, 1, 1, 1);
+			Ref<Texture2D> mSpecularMap = nullptr;
+			float* mSpecularMapOffset = nullptr;
+			float* mSpecularMapTiling = nullptr;
+			float mShininess = 0.0f;
+			Ref<Texture2D> mNormalMap = nullptr;
+			float* mNormalMapOffset = nullptr;
+			float* mNormalMapTiling = nullptr;
+			float mBumpValue = 0.0f;
+		};
+
+		void ShowAllMaterials();
 		
-		void CreateUIForAllNodes(int& nodeTreeGuiIndex, const Ref<TS_ENGINE::Node> node);
-		
+		void CreateUIForAllNodes(int& nodeTreeGuiIndex, TS_ENGINE::Node* node);
+
 		void DragHierarchySceneNode(Node* node);
 		void DragContentBrowserItem(const char* filePath, ItemType itemType);
-		
+
 		void DropHierarchySceneNode(Node* targetParentNode);
-		void DropContentBrowserTexture(TextureType textureType);
+		void DropContentBrowserTexture(TextureType textureType, MaterialGui& materialGui, int meshIndex);
 		void DropItemInViewport();
+
 
 		Ref<Texture2D> mMeshEditorIcon;
 		Ref<Texture2D> mMaterialEditorIcon;
@@ -92,13 +95,13 @@ namespace TS_ENGINE {
 		Ref<Texture2D> mContentBrowserShaderFileIcon;
 		Ref<Texture2D> mContentBrowserMiscFileIcon;
 
-		Ref<Node> mSelectedNode;
+		Node* mSelectedNode = nullptr;
 
 		//ImGuizmo params
 		ImGuizmo::OPERATION mTransformOperation = ImGuizmo::OPERATION::TRANSLATE;
-		
-		ImGuizmo::MODE mTransformMode = ImGuizmo::MODE::LOCAL;		
-		
+
+		ImGuizmo::MODE mTransformMode = ImGuizmo::MODE::LOCAL;
+
 		bool mTranslateActive = true;
 		bool mRotateActive = false;
 		bool mScaleActive = false;
@@ -109,42 +112,25 @@ namespace TS_ENGINE {
 		Vector2 mViewportBounds[2];
 
 		const char* mTransformComboItems[2];// = new const char* [2] {"Local", "World"};
-		const char* mMeshNameList[7] = {
+		const char* mMeshNameList[6] = {
 			"Quad",
 			"Cube",
 			"Sphere",
 			"Cone",
 			"Cylinder",
-			"Model",
 			"Empty"
 		};
-		
+
 		const char* mCurrentMeshItem = "Default";
-		
+
 		int mTransformCurrentItem = 0;
 		int mCurrentMeshIndex = 0;
 		std::filesystem::path mCurrentDirectory;
 	public:
-		Vector3 mSelectedNodePosition;
-		Vector3 mSelectedNodeEulerAngles;
-		Vector3 mSelectedNodeScale;
-		
-		//Materail properties
-		Vector4 mAmbientColor;
-		Vector4 mDiffuseColor;
-		Ref<Texture2D> mDiffuseMap;
-		float testFloat = 0.0f;
-		float testFloat1 = 0.0f;
-		float* mDiffuseMapOffset;
-		float* mDiffuseMapTiling;
-		Vector4 mSpecularColor;
-		Ref<Texture2D> mSpecularMap;
-		float* mSpecularMapOffset;
-		float* mSpecularMapTiling;
-		float mShininess;
-		Ref<Texture2D> mNormalMap;
-		float* mNormalMapOffset;
-		float* mNormalMapTiling;
-		float mBumpValue;
+		Vector3 mSelectedNodePosition = Vector3(0, 0, 0);
+		Vector3 mSelectedNodeEulerAngles = Vector3(0, 0, 0);
+		Vector3 mSelectedNodeScale = Vector3(1, 1, 1);
+
+		std::vector<MaterialGui> mMaterialsGui = {};
 	};
 }

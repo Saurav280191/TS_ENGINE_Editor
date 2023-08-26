@@ -21,21 +21,21 @@
 
 //Other object classes
 #include <ModelLoader.h>
-#include <Factory.h>
+//#include <Factory.h>
 
 //Scene management headers
 #include <SceneManager/Node.h>
 #include <SceneManager/Scene.h>
-#include <SceneManager/SceneSerializer.h>
+//#include <SceneManager/SceneSerializer.h>
 #include <SceneManager/SceneManager.h>
 
 //Camera headers
-#include "Editor/EditorCamera.h"
+#include <Renderer/Camera/EditorCamera.h>
 #include "Editor/SceneGui.h"
 
 
 #include <imgui.h>
-#define IMGUI_DEFINE_MATH_OPERATORS
+//#define IMGUI_DEFINE_MATH_OPERATORS // Already set in preprocessors
 #include "imgui_internal.h"
 #define IMAPP_IMPL
 #include "ImGuizmo.h"
@@ -57,28 +57,28 @@ public:
 	void ShowPanels();
 #pragma endregion
 
-	virtual void OnEvent(TS_ENGINE::Event& e) override;
-
-	void PickGameObject();
-	void UpdateCameraRT(Ref<TS_ENGINE::Camera> camera, float deltaTime, bool isEditorCamera = false);
+	virtual void OnEvent(TS_ENGINE::Event& e) override;	
 private:
 	bool OnKeyPressed(TS_ENGINE::KeyPressedEvent& e);
 	bool OnMouseButtonPressed(TS_ENGINE::MouseButtonPressedEvent& e);
-	void OnOverlayRender();
-
+	void OnOverlayRender();	
+	void PickGameObject();
+	TS_ENGINE::Node* PickNodeByEntityID(int entityID);
+	void PickNode(TS_ENGINE::Node* node, int entityID);
+private:
 	ImGuiWindowFlags defaultWindowFlags;
 
 	Ref<TS_ENGINE::Scene> mScene1;
 	Ref<TS_ENGINE::SceneGui> mSceneGui;
 	float mAspectRatio;
 	
-	Ref<EditorCamera> mEditorCamera;
-	Ref<TS_ENGINE::SceneCamera> mCurrentSceneCamera;
+	Ref<TS_ENGINE::EditorCamera> mEditorCamera;	
 
 	ImVec2 mViewportPanelPos;
 	ImVec2 mViewportPanelSize;
 
 	bool mMouseClicked = false;
+	TS_ENGINE::Node* mMatchingNode = nullptr;
 
 	bool mIsCurrentMaterialLit = false;
 
