@@ -24,7 +24,7 @@ namespace TS_ENGINE {
 		void ShowHierarchyWindow(Ref<TS_ENGINE::Scene> scene);
 		void ShowContentBrowser();
 
-		Node* GetSelectedNode() { return mSelectedNode; }
+		Ref<Node> GetSelectedNode() { return mSelectedNode; }
 
 		void SwitchToTranslateMode();
 		void SwitchToRotateMode();
@@ -33,7 +33,7 @@ namespace TS_ENGINE {
 		ImGuizmo::OPERATION GetTransformOperation() { return mTransformOperation; }
 		ImGuizmo::MODE GetTransformMode() { return mTransformMode; }
 
-		void SetSelectedNode(TS_ENGINE::Node* node);
+		void SetSelectedNode(Ref<Node> node);
 
 		ImVec2 GetViewportPos() { return mViewportPos; }
 
@@ -77,12 +77,12 @@ namespace TS_ENGINE {
 
 		void ShowAllMaterials();
 		
-		void CreateUIForAllNodes(int& nodeTreeGuiIndex, TS_ENGINE::Node* node);
+		void CreateUIForAllNodes(int& nodeTreeGuiIndex, Ref<Node> node);
 
-		void DragHierarchySceneNode(Node* node);
+		void DragHierarchySceneNode(Ref<Node> node);
 		void DragContentBrowserItem(const char* filePath, ItemType itemType);
 
-		void DropHierarchySceneNode(Node* targetParentNode);
+		void DropHierarchySceneNode(Ref<Node> targetParentNode);
 		void DropContentBrowserTexture(TextureType textureType, MaterialGui& materialGui, int meshIndex);
 		void DropItemInViewport();
 
@@ -95,7 +95,7 @@ namespace TS_ENGINE {
 		Ref<Texture2D> mContentBrowserShaderFileIcon;
 		Ref<Texture2D> mContentBrowserMiscFileIcon;
 
-		Node* mSelectedNode = nullptr;
+		Ref<Node> mSelectedNode = nullptr;
 
 		//ImGuizmo params
 		ImGuizmo::OPERATION mTransformOperation = ImGuizmo::OPERATION::TRANSLATE;

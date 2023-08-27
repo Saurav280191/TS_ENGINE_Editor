@@ -79,7 +79,7 @@ void EditorLayer::OnUpdate(float deltaTime)
 	}
 }
 
-void EditorLayer::PickNode(TS_ENGINE::Node* node, int entityID)
+void EditorLayer::PickNode(Ref<TS_ENGINE::Node> node, int entityID)
 {
 	if (node->GetMeshes().size() > 0)
 	{
@@ -98,9 +98,9 @@ void EditorLayer::PickNode(TS_ENGINE::Node* node, int entityID)
 	}
 }
 
-TS_ENGINE::Node* EditorLayer::PickNodeByEntityID(int entityID)
+Ref<TS_ENGINE::Node> EditorLayer::PickNodeByEntityID(int entityID)
 {
-	PickNode(mScene1->GetSceneNode().get(), entityID);
+	PickNode(mScene1->GetSceneNode(), entityID);
 	return mMatchingNode;
 }
 
@@ -132,13 +132,13 @@ void EditorLayer::PickGameObject()
 
 			if (entityID != -1)
 			{
-				TS_ENGINE::Node* hoveredOnNode = nullptr;
+				Ref<TS_ENGINE::Node> hoveredOnNode = nullptr;
 
 				if (entityID != mScene1->GetSkyboxEntityID())// Avoid skybox selection
 				{
 					//Check if scene camera's GUI was selected
 					if (mScene1->GetCurrentSceneCamera()->IsSceneCameraGuiSelected(entityID))
-						hoveredOnNode = mScene1->GetCurrentSceneCamera()->GetNode().get();
+						hoveredOnNode = mScene1->GetCurrentSceneCamera()->GetNode();
 					else
 						hoveredOnNode = PickNodeByEntityID(entityID);
 

@@ -698,22 +698,22 @@ namespace TS_ENGINE {
 			{
 				nodeTreeGuiIndex++;
 
-				DragHierarchySceneNode(scene->GetSceneNode().get());
-				DropHierarchySceneNode(scene->GetSceneNode().get());
+				DragHierarchySceneNode(scene->GetSceneNode());
+				DropHierarchySceneNode(scene->GetSceneNode());
 
-				if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+				if (ImGui::IsItemClicked())
 				{
-					SetSelectedNode(scene->GetSceneNode().get());
+					SetSelectedNode(scene->GetSceneNode());
 				}
 
-				CreateUIForAllNodes(nodeTreeGuiIndex, scene->GetSceneNode().get());
+				CreateUIForAllNodes(nodeTreeGuiIndex, scene->GetSceneNode());
 				ImGui::TreePop();
 			}
 		}
 		ImGui::End();
 	}
 
-	void SceneGui::CreateUIForAllNodes(int& nodeTreeGuiIndex, TS_ENGINE::Node* node)
+	void SceneGui::CreateUIForAllNodes(int& nodeTreeGuiIndex, Ref<Node> node)
 	{
 		ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
 
@@ -721,7 +721,7 @@ namespace TS_ENGINE {
 		{
 			ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 
-			TS_ENGINE::Node* nodeChild = node->GetChildAt(i);
+			Ref<Node> nodeChild = node->GetChildAt(i);
 
 			ImGuiTreeNodeFlags node_flags = base_flags;
 
@@ -750,7 +750,7 @@ namespace TS_ENGINE {
 					DragHierarchySceneNode(nodeChild);
 					DropHierarchySceneNode(nodeChild);
 
-					if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+					if (ImGui::IsItemClicked())
 					{
 						SetSelectedNode(nodeChild);
 					}
@@ -772,7 +772,7 @@ namespace TS_ENGINE {
 						DragHierarchySceneNode(nodeChild);
 						DropHierarchySceneNode(nodeChild);
 
-						if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+						if (ImGui::IsItemClicked())
 						{
 							SetSelectedNode(nodeChild);
 						}
@@ -782,11 +782,11 @@ namespace TS_ENGINE {
 		}
 	}
 
-	void SceneGui::DragHierarchySceneNode(Node* node)
+	void SceneGui::DragHierarchySceneNode(Ref<Node> node)
 	{
 		if (ImGui::BeginDragDropSource())
 		{
-			ImGui::SetDragDropPayload("_TREENODE", node, sizeof(Node));
+			ImGui::SetDragDropPayload("_TREENODE", node.get(), sizeof(Node));
 			ImGui::Text("Dragging: %s", node->GetName().c_str());
 			ImGui::EndDragDropSource();
 		}
@@ -796,16 +796,16 @@ namespace TS_ENGINE {
 		if (ImGui::BeginDragDropSource())
 		{
 			if (itemType == ItemType::TEXTURE)
-				ImGui::SetDragDropPayload("_CONTENTBROWSER_TEXTURE", filePath, strlen(filePath) * sizeof(const char*));
+				ImGui::SetDragDropPayload("_CONTENTBROWSER_TEXTURE", filePath, size_t(strlen(filePath) * (sizeof(char*) + 1)));
 			else if (itemType == ItemType::MODEL)
-				ImGui::SetDragDropPayload("_CONTENTBROWSER_MODEL", filePath, strlen(filePath) * sizeof(const char*));
+				ImGui::SetDragDropPayload("_CONTENTBROWSER_MODEL", filePath, size_t(strlen(filePath) * (sizeof(char*) + 1)));
 
 			ImGui::Text("Dragging: %s", filePath);
 			ImGui::EndDragDropSource();
 		}
 	}
 
-	void SceneGui::DropHierarchySceneNode(Node* targetParentNode)
+	void SceneGui::DropHierarchySceneNode(Ref<Node> targetParentNode)
 	{
 		if (ImGui::BeginDragDropTarget())
 		{
@@ -830,7 +830,7 @@ namespace TS_ENGINE {
 			else if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_MODEL"))
 			{
 				const char* draggedModelPath = reinterpret_cast<const char*>(payload->Data);				
-				Factory::GetInstance()->InstantiateModel(draggedModelPath, SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode().get());
+				Factory::GetInstance()->InstantiateModel(draggedModelPath, SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
 			}
 			ImGui::EndDragDropTarget();
 		}
@@ -875,14 +875,14 @@ namespace TS_ENGINE {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_MODEL"))
 			{
 				const char* draggedModelPath = reinterpret_cast<const char*>(payload->Data);
-				Factory::GetInstance()->InstantiateModel(draggedModelPath, SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode().get());
+				Factory::GetInstance()->InstantiateModel(draggedModelPath, SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
 			}
 
 			ImGui::EndDragDropTarget();
 		}
 	}
 
-	void SceneGui::SetSelectedNode(TS_ENGINE::Node* node)
+	void SceneGui::SetSelectedNode(Ref<Node> node)
 	{
 		if (node != mSelectedNode)
 		{

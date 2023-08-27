@@ -63,8 +63,8 @@ private:
 	bool OnMouseButtonPressed(TS_ENGINE::MouseButtonPressedEvent& e);
 	void OnOverlayRender();	
 	void PickGameObject();
-	TS_ENGINE::Node* PickNodeByEntityID(int entityID);
-	void PickNode(TS_ENGINE::Node* node, int entityID);
+	Ref<TS_ENGINE::Node> PickNodeByEntityID(int entityID);
+	void PickNode(Ref<TS_ENGINE::Node> node, int entityID);
 private:
 	ImGuiWindowFlags defaultWindowFlags;
 
@@ -78,7 +78,7 @@ private:
 	ImVec2 mViewportPanelSize;
 
 	bool mMouseClicked = false;
-	TS_ENGINE::Node* mMatchingNode = nullptr;
+	Ref<TS_ENGINE::Node> mMatchingNode = nullptr;
 
 	bool mIsCurrentMaterialLit = false;
 
