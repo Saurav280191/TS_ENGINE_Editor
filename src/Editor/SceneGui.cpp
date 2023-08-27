@@ -1,5 +1,6 @@
 #include "tspch.h"
 #include "SceneGui.h"
+#include <Core/Factory.h>
 
 namespace TS_ENGINE {
 
@@ -697,15 +698,15 @@ namespace TS_ENGINE {
 			{
 				nodeTreeGuiIndex++;
 
-				DragHierarchySceneNode(scene->GetSceneNode());
-				DropHierarchySceneNode(scene->GetSceneNode());
+				DragHierarchySceneNode(scene->GetSceneNode().get());
+				DropHierarchySceneNode(scene->GetSceneNode().get());
 
 				if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
 				{
-					SetSelectedNode(scene->GetSceneNode());
+					SetSelectedNode(scene->GetSceneNode().get());
 				}
 
-				CreateUIForAllNodes(nodeTreeGuiIndex, scene->GetSceneNode());
+				CreateUIForAllNodes(nodeTreeGuiIndex, scene->GetSceneNode().get());
 				ImGui::TreePop();
 			}
 		}
@@ -828,8 +829,8 @@ namespace TS_ENGINE {
 			}
 			else if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_MODEL"))
 			{
-				const char* draggedModelPath = reinterpret_cast<const char*>(payload->Data);
-				//Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::MODEL);//TODO: Add codde to Model creation instead of GameObject
+				const char* draggedModelPath = reinterpret_cast<const char*>(payload->Data);				
+				Factory::GetInstance()->InstantiateModel(draggedModelPath, SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode().get());
 			}
 			ImGui::EndDragDropTarget();
 		}
@@ -874,8 +875,7 @@ namespace TS_ENGINE {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_MODEL"))
 			{
 				const char* draggedModelPath = reinterpret_cast<const char*>(payload->Data);
-				//Ref<Model> model = Factory::GetInstance()->LoadModel(std::string(draggedModelPath));
-				//SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->AddChild(model->GetRootNode());
+				Factory::GetInstance()->InstantiateModel(draggedModelPath, SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode().get());
 			}
 
 			ImGui::EndDragDropTarget();

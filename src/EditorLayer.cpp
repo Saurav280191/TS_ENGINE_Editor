@@ -100,7 +100,7 @@ void EditorLayer::PickNode(TS_ENGINE::Node* node, int entityID)
 
 TS_ENGINE::Node* EditorLayer::PickNodeByEntityID(int entityID)
 {
-	PickNode(mScene1->GetSceneNode(), entityID);
+	PickNode(mScene1->GetSceneNode().get(), entityID);
 	return mMatchingNode;
 }
 
