@@ -83,7 +83,7 @@ void EditorLayer::PickNode(TS_ENGINE::Node* node, int entityID)
 {
 	if (node->GetMeshes().size() > 0)
 	{
-		TS_CORE_TRACE("Checking: {0}", node->GetName());
+		//TS_CORE_TRACE("Checking: {0}", node->GetName());
 
 		if (node->GetEntity()->GetEntityID() == entityID)
 		{
@@ -134,17 +134,24 @@ void EditorLayer::PickGameObject()
 			{
 				TS_ENGINE::Node* hoveredOnNode = nullptr;
 
-				//Check if scene camera's GUI was selected
-				if (mScene1->GetCurrentSceneCamera()->IsSceneCameraGuiSelected(entityID))
-					hoveredOnNode = mScene1->GetCurrentSceneCamera()->GetNode().get();
-				else
-					hoveredOnNode = PickNodeByEntityID(entityID);
-
-				if (hoveredOnNode != nullptr)
+				if (entityID != mScene1->GetSkyboxEntityID())// Avoid skybox selection
 				{
-					//if (mCurrentSceneCamera)
-					//	mCurrentSceneCamera->CheckIfSelected(hoveredOnNode);
-					mSceneGui->SetSelectedNode(hoveredOnNode);
+					//Check if scene camera's GUI was selected
+					if (mScene1->GetCurrentSceneCamera()->IsSceneCameraGuiSelected(entityID))
+						hoveredOnNode = mScene1->GetCurrentSceneCamera()->GetNode().get();
+					else
+						hoveredOnNode = PickNodeByEntityID(entityID);
+
+					if (hoveredOnNode != nullptr)
+					{
+						//if (mCurrentSceneCamera)
+						//	mCurrentSceneCamera->CheckIfSelected(hoveredOnNode);
+						mSceneGui->SetSelectedNode(hoveredOnNode);
+					}
+				}
+				else
+				{
+					mSceneGui->SetSelectedNode(nullptr);//Deselect
 				}
 			}
 			else

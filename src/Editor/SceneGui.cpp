@@ -397,7 +397,7 @@ namespace TS_ENGINE {
 			//Ambient 
 			ImGui::Text("Ambient");
 			float* ambientColor = mesh->GetMaterial()->GetAmbientColor().data;
-			if (ImGui::ColorEdit4("##AmbientColor", ambientColor))
+			if (ImGui::ColorEdit4((std::string("##AmbientColor") + std::to_string(meshIndex)).c_str(), ambientColor))
 			{
 				materialGui.mAmbientColor = Vector4(ambientColor[0], ambientColor[1], ambientColor[2], ambientColor[3]);
 				mesh->GetMaterial()->SetAmbientColor(materialGui.mAmbientColor);
@@ -409,7 +409,7 @@ namespace TS_ENGINE {
 			ImGui::Text("Diffuse");
 			// Color
 			float* diffuseColor = mesh->GetMaterial()->GetDiffuseColor().data;
-			if (ImGui::ColorEdit4("##DiffuseColor", diffuseColor))
+			if (ImGui::ColorEdit4((std::string("##DiffuseColor") + std::to_string(meshIndex)).c_str(), diffuseColor))
 			{
 				materialGui.mDiffuseColor = Vector4(diffuseColor[0], diffuseColor[1], diffuseColor[2], diffuseColor[3]);
 				mesh->GetMaterial()->SetDiffuseColor(materialGui.mDiffuseColor);
@@ -432,7 +432,7 @@ namespace TS_ENGINE {
 			//Offset and tiling
 			ImGui::SetNextItemWidth(100.0f);
 			ImVec2 diffuseMapOffsetUiPos = ImGui::GetCursorPos();
-			if (ImGui::DragFloat2("##DiffuseMapOffset", materialGui.mDiffuseMapOffset))
+			if (ImGui::DragFloat2((std::string("##DiffuseMapOffset") + std::to_string(meshIndex)).c_str(), materialGui.mDiffuseMapOffset))
 			{
 				mesh->GetMaterial()->SetDiffuseMapOffset(Vector2(materialGui.mDiffuseMapOffset[0], materialGui.mDiffuseMapOffset[1]));
 			}
@@ -440,7 +440,7 @@ namespace TS_ENGINE {
 			ImGui::Text("Offset");
 			ImGui::SetCursorPos(ImVec2(diffuseMapOffsetUiPos.x + 0.0f, diffuseMapOffsetUiPos.y + 26.0f));
 			ImGui::SetNextItemWidth(100.0f);
-			if (ImGui::DragFloat2("##DiffuseMapTiling", materialGui.mDiffuseMapTiling))
+			if (ImGui::DragFloat2((std::string("##DiffuseMapTiling") + std::to_string(meshIndex)).c_str(), materialGui.mDiffuseMapTiling))
 			{
 				mesh->GetMaterial()->SetDiffuseMapTiling(Vector2(materialGui.mDiffuseMapTiling[0], materialGui.mDiffuseMapTiling[1]));
 			}
@@ -453,7 +453,7 @@ namespace TS_ENGINE {
 			ImGui::Text("Specular");
 			// Color
 			float* specularColor = mesh->GetMaterial()->GetSpecularColor().data;
-			if (ImGui::ColorEdit4("##SpecularColor", specularColor))
+			if (ImGui::ColorEdit4((std::string("##SpecularColor") + std::to_string(meshIndex)).c_str(), specularColor))
 			{
 				materialGui.mSpecularColor = Vector4(specularColor[0], specularColor[1], specularColor[2], specularColor[3]);
 				mesh->GetMaterial()->SetSpecularColor(materialGui.mSpecularColor);
@@ -476,7 +476,7 @@ namespace TS_ENGINE {
 			//Offset and tiling
 			ImGui::SetNextItemWidth(100.0f);
 			ImVec2 specularMapOffsetUiPos = ImGui::GetCursorPos();
-			if (ImGui::DragFloat2("##SpecularMapOffset", materialGui.mSpecularMapOffset))
+			if (ImGui::DragFloat2((std::string("##SpecularMapOffset") + std::to_string(meshIndex)).c_str(), materialGui.mSpecularMapOffset))
 			{
 				mesh->GetMaterial()->SetSpecularMapOffset(Vector2(materialGui.mSpecularMapOffset[0], materialGui.mSpecularMapOffset[1]));
 			}
@@ -484,7 +484,7 @@ namespace TS_ENGINE {
 			ImGui::Text("Offset");
 			ImGui::SetCursorPos(specularMapOffsetUiPos + ImVec2(0.0f, 26.0f));
 			ImGui::SetNextItemWidth(100.0f);
-			if (ImGui::DragFloat2("##SpecularMapTiling", materialGui.mSpecularMapTiling))
+			if (ImGui::DragFloat2((std::string("##SpecularMapTiling") + std::to_string(meshIndex)).c_str(), materialGui.mSpecularMapTiling))
 			{
 				mesh->GetMaterial()->SetSpecularMapTiling(Vector2(materialGui.mSpecularMapTiling[0], materialGui.mSpecularMapTiling[1]));
 			}
@@ -494,7 +494,7 @@ namespace TS_ENGINE {
 			ImGui::Spacing();
 
 			// Shininess Slider
-			if (ImGui::SliderFloat("Shininess", &materialGui.mShininess, 0, 20.0f))
+			if (ImGui::SliderFloat((std::string("##Shininess") + std::to_string(meshIndex)).c_str(), &materialGui.mShininess, 0, 20.0f))
 			{
 				mesh->GetMaterial()->SetBumpValue(materialGui.mShininess);
 			}
@@ -504,9 +504,9 @@ namespace TS_ENGINE {
 			// Normal
 			ImGui::Text("Normal");
 			//Texture						
-			if (mesh->GetMaterial()->GetSpecularMap())
+			if (mesh->GetMaterial()->GetNormalMap())
 			{
-				ImGui::ImageButton((void*)(intptr_t)mesh->GetMaterial()->GetSpecularMap()->GetRendererID(), ImVec2(40, 40));
+				ImGui::ImageButton((void*)(intptr_t)mesh->GetMaterial()->GetNormalMap()->GetRendererID(), ImVec2(40, 40));
 				DropContentBrowserTexture(TextureType::NORMAL, materialGui, meshIndex);
 			}
 			else
@@ -518,7 +518,7 @@ namespace TS_ENGINE {
 			//Offset and tiling
 			ImGui::SetNextItemWidth(100.0f);
 			ImVec2 normalMapOffsetUiPos = ImGui::GetCursorPos();
-			if (ImGui::DragFloat2("##NormalMapOffset", materialGui.mNormalMapOffset))
+			if (ImGui::DragFloat2((std::string("##NormalMapOffset") + std::to_string(meshIndex)).c_str(), materialGui.mNormalMapOffset))
 			{
 				mesh->GetMaterial()->SetNormalMapOffset(Vector2(materialGui.mNormalMapOffset[0], materialGui.mNormalMapOffset[1]));
 			}
@@ -526,7 +526,7 @@ namespace TS_ENGINE {
 			ImGui::Text("Offset");
 			ImGui::SetCursorPos(normalMapOffsetUiPos + ImVec2(0.0f, 26.0f));
 			ImGui::SetNextItemWidth(100.0f);
-			if (ImGui::DragFloat2("##NormalMapTiling", materialGui.mNormalMapTiling))
+			if (ImGui::DragFloat2((std::string("##NormalMapTiling") + std::to_string(meshIndex)).c_str(), materialGui.mNormalMapTiling))
 			{
 				mesh->GetMaterial()->SetNormalMapTiling(Vector2(materialGui.mNormalMapTiling[0], materialGui.mNormalMapTiling[1]));
 			}
@@ -536,7 +536,7 @@ namespace TS_ENGINE {
 			ImGui::Spacing();
 
 			// Bump Slider
-			if (ImGui::SliderFloat("Bump", &materialGui.mBumpValue, 0, 20.0f))
+			if (ImGui::SliderFloat((std::string("##Bump") + std::to_string(meshIndex)).c_str(), &materialGui.mBumpValue, 0, 20.0f))
 			{
 				mesh->GetMaterial()->SetBumpValue(materialGui.mBumpValue);
 			}
