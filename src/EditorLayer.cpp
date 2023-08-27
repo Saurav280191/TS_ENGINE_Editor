@@ -144,8 +144,6 @@ void EditorLayer::PickGameObject()
 
 					if (hoveredOnNode != nullptr)
 					{
-						//if (mCurrentSceneCamera)
-						//	mCurrentSceneCamera->CheckIfSelected(hoveredOnNode);
 						mSceneGui->SetSelectedNode(hoveredOnNode);
 					}
 				}
