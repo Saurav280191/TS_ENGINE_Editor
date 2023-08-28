@@ -62,6 +62,10 @@ namespace TS_ENGINE {
 	{
 		ImGui::Begin("Viewport", 0, ImGuiWindowFlags_NoDecoration);// | ImGuiWindowFlags_NoDocking);
 		{
+			if (ImGui::IsWindowHovered())
+			{
+				IsViewportActiveWindow = true;
+			}
 			ImVec2 cameraFramebufferWindowSize = ImGui::GetWindowSize();
 
 			mViewportPos = ImGui::GetWindowPos();
@@ -137,6 +141,7 @@ namespace TS_ENGINE {
 			}
 		}
 		ImGui::End();
+
 	}
 
 	void SceneGui::ShowStatsWindow(ImVec2 statsPanelPos, ImVec2 statsPanelSize)
@@ -192,7 +197,8 @@ namespace TS_ENGINE {
 
 				ImGui::Checkbox(" ", &GetSelectedNode()->m_Enabled);
 				ImGui::SameLine();
-				ImGui::Text(GetSelectedNode()->GetName().c_str());
+
+				ImGui::InputText("##NodeNameText", mSelectedNodeNameBuffer, sizeof(mSelectedNodeNameBuffer));
 
 #pragma region Transform Component
 				ImGui::BeginChild("Transform", ImVec2(ImGui::GetWindowSize().x - 30.0f, 128.0f), true);
@@ -383,166 +389,10 @@ namespace TS_ENGINE {
 	void SceneGui::ShowAllMaterials()
 	{
 		for (int meshIndex = 0; meshIndex < mSelectedNode->GetMeshes().size(); meshIndex++)
-		{			
+		{
 			Ref<Mesh> mesh = mSelectedNode->GetMeshes()[meshIndex];
-			MaterialGui materialGui = mMaterialsGui[meshIndex];
-			
-			ImGui::Separator();
-
-			//Material name
-			//ImGui::Spacing();
-			ImGui::Text(mesh->GetMaterial()->GetName().c_str());
-			ImGui::Separator();
-			//ImGui::Spacing();
-
-			//Ambient 
-			ImGui::Text("Ambient");
-			float* ambientColor = mesh->GetMaterial()->GetAmbientColor().data;
-			if (ImGui::ColorEdit4((std::string("##AmbientColor") + std::to_string(meshIndex)).c_str(), ambientColor))
-			{
-				materialGui.mAmbientColor = Vector4(ambientColor[0], ambientColor[1], ambientColor[2], ambientColor[3]);
-				mesh->GetMaterial()->SetAmbientColor(materialGui.mAmbientColor);
-			}
-
-			ImGui::Spacing();
-
-			// Diffuse 
-			ImGui::Text("Diffuse");
-			// Color
-			float* diffuseColor = mesh->GetMaterial()->GetDiffuseColor().data;
-			if (ImGui::ColorEdit4((std::string("##DiffuseColor") + std::to_string(meshIndex)).c_str(), diffuseColor))
-			{
-				materialGui.mDiffuseColor = Vector4(diffuseColor[0], diffuseColor[1], diffuseColor[2], diffuseColor[3]);
-				mesh->GetMaterial()->SetDiffuseColor(materialGui.mDiffuseColor);
-			}
-
-			ImGui::Spacing();
-
-			// Texture
-			if (mesh->GetMaterial()->GetDiffuseMap())
-			{				
-				ImGui::ImageButton((void*)(intptr_t)mesh->GetMaterial()->GetDiffuseMap()->GetRendererID(), ImVec2(40, 40));
-				DropContentBrowserTexture(TextureType::DIFFUSE, materialGui, meshIndex);
-			}
-			else
-			{				
-				ImGui::ImageButton((void*)(intptr_t)0, ImVec2(40, 40));
-				DropContentBrowserTexture(TextureType::DIFFUSE, materialGui, meshIndex);
-			}
-			ImGui::SameLine();
-			//Offset and tiling
-			ImGui::SetNextItemWidth(100.0f);
-			ImVec2 diffuseMapOffsetUiPos = ImGui::GetCursorPos();
-			if (ImGui::DragFloat2((std::string("##DiffuseMapOffset") + std::to_string(meshIndex)).c_str(), materialGui.mDiffuseMapOffset))
-			{
-				mesh->GetMaterial()->SetDiffuseMapOffset(Vector2(materialGui.mDiffuseMapOffset[0], materialGui.mDiffuseMapOffset[1]));
-			}
-			ImGui::SameLine();
-			ImGui::Text("Offset");
-			ImGui::SetCursorPos(ImVec2(diffuseMapOffsetUiPos.x + 0.0f, diffuseMapOffsetUiPos.y + 26.0f));
-			ImGui::SetNextItemWidth(100.0f);
-			if (ImGui::DragFloat2((std::string("##DiffuseMapTiling") + std::to_string(meshIndex)).c_str(), materialGui.mDiffuseMapTiling))
-			{
-				mesh->GetMaterial()->SetDiffuseMapTiling(Vector2(materialGui.mDiffuseMapTiling[0], materialGui.mDiffuseMapTiling[1]));
-			}
-			ImGui::SameLine();
-			ImGui::Text("Tiling");
-
-			ImGui::Spacing();
-
-			// Specular 
-			ImGui::Text("Specular");
-			// Color
-			float* specularColor = mesh->GetMaterial()->GetSpecularColor().data;
-			if (ImGui::ColorEdit4((std::string("##SpecularColor") + std::to_string(meshIndex)).c_str(), specularColor))
-			{
-				materialGui.mSpecularColor = Vector4(specularColor[0], specularColor[1], specularColor[2], specularColor[3]);
-				mesh->GetMaterial()->SetSpecularColor(materialGui.mSpecularColor);
-			}
-
-			ImGui::Spacing();
-
-			// Texture
-			if (mesh->GetMaterial()->GetSpecularMap())
-			{
-				ImGui::ImageButton((void*)(intptr_t)mesh->GetMaterial()->GetSpecularMap()->GetRendererID(), ImVec2(40, 40));
-				DropContentBrowserTexture(TextureType::SPECULAR, materialGui, meshIndex);
-			}
-			else
-			{
-				ImGui::ImageButton((void*)(intptr_t)0, ImVec2(40, 40));
-				DropContentBrowserTexture(TextureType::SPECULAR, materialGui, meshIndex);
-			}
-			ImGui::SameLine();
-			//Offset and tiling
-			ImGui::SetNextItemWidth(100.0f);
-			ImVec2 specularMapOffsetUiPos = ImGui::GetCursorPos();
-			if (ImGui::DragFloat2((std::string("##SpecularMapOffset") + std::to_string(meshIndex)).c_str(), materialGui.mSpecularMapOffset))
-			{
-				mesh->GetMaterial()->SetSpecularMapOffset(Vector2(materialGui.mSpecularMapOffset[0], materialGui.mSpecularMapOffset[1]));
-			}
-			ImGui::SameLine();
-			ImGui::Text("Offset");
-			ImGui::SetCursorPos(specularMapOffsetUiPos + ImVec2(0.0f, 26.0f));
-			ImGui::SetNextItemWidth(100.0f);
-			if (ImGui::DragFloat2((std::string("##SpecularMapTiling") + std::to_string(meshIndex)).c_str(), materialGui.mSpecularMapTiling))
-			{
-				mesh->GetMaterial()->SetSpecularMapTiling(Vector2(materialGui.mSpecularMapTiling[0], materialGui.mSpecularMapTiling[1]));
-			}
-			ImGui::SameLine();
-			ImGui::Text("Tiling");
-
-			ImGui::Spacing();
-
-			// Shininess Slider
-			if (ImGui::SliderFloat((std::string("##Shininess") + std::to_string(meshIndex)).c_str(), &materialGui.mShininess, 0, 20.0f))
-			{
-				mesh->GetMaterial()->SetBumpValue(materialGui.mShininess);
-			}
-
-			ImGui::Spacing();
-
-			// Normal
-			ImGui::Text("Normal");
-			//Texture						
-			if (mesh->GetMaterial()->GetNormalMap())
-			{
-				ImGui::ImageButton((void*)(intptr_t)mesh->GetMaterial()->GetNormalMap()->GetRendererID(), ImVec2(40, 40));
-				DropContentBrowserTexture(TextureType::NORMAL, materialGui, meshIndex);
-			}
-			else
-			{
-				ImGui::ImageButton((void*)(intptr_t)0, ImVec2(40, 40));
-				DropContentBrowserTexture(TextureType::NORMAL, materialGui, meshIndex);
-			}
-			ImGui::SameLine();
-			//Offset and tiling
-			ImGui::SetNextItemWidth(100.0f);
-			ImVec2 normalMapOffsetUiPos = ImGui::GetCursorPos();
-			if (ImGui::DragFloat2((std::string("##NormalMapOffset") + std::to_string(meshIndex)).c_str(), materialGui.mNormalMapOffset))
-			{
-				mesh->GetMaterial()->SetNormalMapOffset(Vector2(materialGui.mNormalMapOffset[0], materialGui.mNormalMapOffset[1]));
-			}
-			ImGui::SameLine();
-			ImGui::Text("Offset");
-			ImGui::SetCursorPos(normalMapOffsetUiPos + ImVec2(0.0f, 26.0f));
-			ImGui::SetNextItemWidth(100.0f);
-			if (ImGui::DragFloat2((std::string("##NormalMapTiling") + std::to_string(meshIndex)).c_str(), materialGui.mNormalMapTiling))
-			{
-				mesh->GetMaterial()->SetNormalMapTiling(Vector2(materialGui.mNormalMapTiling[0], materialGui.mNormalMapTiling[1]));
-			}
-			ImGui::SameLine();
-			ImGui::Text("Tiling");
-
-			ImGui::Spacing();
-
-			// Bump Slider
-			if (ImGui::SliderFloat((std::string("##Bump") + std::to_string(meshIndex)).c_str(), &materialGui.mBumpValue, 0, 20.0f))
-			{
-				mesh->GetMaterial()->SetBumpValue(materialGui.mBumpValue);
-			}
-
-			//ImGui::EndChild();
+			Ref<Material> material = mesh->GetMaterial();
+			material->ShowMaterialUI(meshIndex);
 		}
 	}
 
@@ -691,10 +541,10 @@ namespace TS_ENGINE {
 		{
 			ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 
-			ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+			ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_OpenOnArrow;
 			int nodeTreeGuiIndex = 0;
 
-			if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, base_flags | ImGuiTreeNodeFlags_OpenOnArrow, scene->GetSceneNode()->GetName().c_str()))
+			if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, scene->GetSceneNode()->GetName().c_str()))
 			{
 				nodeTreeGuiIndex++;
 
@@ -715,7 +565,32 @@ namespace TS_ENGINE {
 
 	void SceneGui::CreateUIForAllNodes(int& nodeTreeGuiIndex, Ref<Node> node)
 	{
-		ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+		if (ImGui::BeginPopup("NodePopUp"))
+		{
+			mNodePopedUp = true;
+
+			if (ImGui::Button("Duplicate"))
+			{		
+				mSelectedNode = nullptr;
+				mHoveringOnNode->GetParentNode()->AddChild(mHoveringOnNode->Duplicate());
+				//TS_CORE_TRACE("Duplicating {0}", mHoveringOnNode->GetName().c_str());
+				ImGui::CloseCurrentPopup();
+			}
+
+			if (ImGui::Button("Delete"))
+			{
+				mSelectedNode = nullptr;
+				mHoveringOnNode->Destroy();
+				//TS_CORE_TRACE("Deleting {0}", mHoveringOnNode->GetName().c_str());
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+		else
+		{
+			mNodePopedUp = false;
+		}
 
 		for (int i = 0; i < node->GetChildCount(); i++)
 		{
@@ -723,7 +598,7 @@ namespace TS_ENGINE {
 
 			Ref<Node> nodeChild = node->GetChildAt(i);
 
-			ImGuiTreeNodeFlags node_flags = base_flags;
+			ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
 
 #pragma region allChildrenHiddenCondition
 			static bool allChildrenNodesHidden = true;
@@ -745,7 +620,14 @@ namespace TS_ENGINE {
 			{
 				if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, nodeChild->GetName().c_str()))
 				{
-					nodeTreeGuiIndex++;
+					if (!mNodePopedUp && ImGui::IsItemHovered())
+					{
+						//TS_CORE_TRACE("Hovering on {0}", nodeChild->GetName().c_str());
+						mHoveringOnNode = nodeChild;
+					}
+
+					nodeTreeGuiIndex++;					
+					ImGui::OpenPopupOnItemClick("NodePopUp", ImGuiPopupFlags_MouseButtonRight);
 
 					DragHierarchySceneNode(nodeChild);
 					DropHierarchySceneNode(nodeChild);
@@ -767,7 +649,14 @@ namespace TS_ENGINE {
 				{
 					if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, nodeChild->GetName().c_str()))
 					{
+						if (!mNodePopedUp && ImGui::IsItemHovered())
+						{
+							//TS_CORE_TRACE("Hovering on {0}", nodeChild->GetName().c_str());
+							mHoveringOnNode = nodeChild;
+						}
+
 						nodeTreeGuiIndex++;
+						ImGui::OpenPopupOnItemClick("NodePopUp", ImGuiPopupFlags_MouseButtonRight);
 
 						DragHierarchySceneNode(nodeChild);
 						DropHierarchySceneNode(nodeChild);
@@ -829,45 +718,13 @@ namespace TS_ENGINE {
 			}
 			else if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_MODEL"))
 			{
-				const char* draggedModelPath = reinterpret_cast<const char*>(payload->Data);				
+				const char* draggedModelPath = reinterpret_cast<const char*>(payload->Data);
 				Factory::GetInstance()->InstantiateModel(draggedModelPath, SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
 			}
 			ImGui::EndDragDropTarget();
 		}
 	}
-	void SceneGui::DropContentBrowserTexture(TextureType textureType, MaterialGui& materialGui, int meshIndex)
-	{
-		Ref<Material> material = mSelectedNode->GetMeshes()[meshIndex]->GetMaterial();
 
-		if (ImGui::BeginDragDropTarget())
-		{
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_TEXTURE"))
-			{
-				const char* draggedTexturePath = reinterpret_cast<const char*>(payload->Data);
-				TS_CORE_INFO("Dropped {0} on {1}", draggedTexturePath, "DiffuseTextureDropZone");
-
-				Ref<Texture2D> texture = Texture2D::Create(draggedTexturePath);
-
-				if (textureType == TextureType::DIFFUSE)
-				{
-					materialGui.mDiffuseMap = texture;
-					material->SetDiffuseMap(texture);
-				}
-				else if (textureType == TextureType::SPECULAR)
-				{
-					materialGui.mSpecularMap = texture;
-					material->SetSpecularMap(texture);
-				}
-				else if (textureType == TextureType::NORMAL)
-				{
-					materialGui.mNormalMap = texture;
-					material->SetNormalMap(texture);
-				}
-			}
-
-			ImGui::EndDragDropTarget();
-		}
-	}
 	void SceneGui::DropItemInViewport()
 	{
 		if (ImGui::BeginDragDropTarget())
@@ -887,6 +744,8 @@ namespace TS_ENGINE {
 		if (node != mSelectedNode)
 		{
 			mSelectedNode = node;
+			if(mSelectedNode)
+				mSelectedNodeNameBuffer = (char*)mSelectedNode->GetName().c_str();
 			mJustSelected = true;
 
 			//if (node && node->HasAttachedObject())
@@ -922,12 +781,10 @@ namespace TS_ENGINE {
 			// Mesh Renderer
 			if (mSelectedNode)
 			{
-				mMaterialsGui.clear();
-
 				for (int i = 0; i < mSelectedNode->GetMeshes().size(); i++)
 				{
-					MaterialGui materialGui;
-
+					Material::MaterialGui materialGui;
+					
 					materialGui.mAmbientColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetAmbientColor();
 					materialGui.mDiffuseColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseColor();
 					materialGui.mDiffuseMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMap();
@@ -942,8 +799,8 @@ namespace TS_ENGINE {
 					materialGui.mNormalMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapOffset().y };
 					materialGui.mNormalMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapTiling().y };
 					materialGui.mBumpValue = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetBumpValue();
-
-					mMaterialsGui.push_back(materialGui);
+					
+					mSelectedNode->GetMeshes()[i]->GetMaterial()->SetMaterialGui(materialGui);
 				}
 			}
 		}

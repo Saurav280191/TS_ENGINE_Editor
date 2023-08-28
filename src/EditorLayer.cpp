@@ -1,6 +1,6 @@
 #include "EditorLayer.h"
 //#include <imgui_demo.cpp>
-//#include <Factory.h>
+#include <Factory.h>
 #include <Core/Log.h>
 
 #include <imgui_impl_opengl3.h>
@@ -65,6 +65,9 @@ void EditorLayer::OnUpdate(float deltaTime)
 
 	mScene1->Render(mCurrentShader, deltaTime);
 
+	if(mSceneGui->IsViewportActiveWindow) 
+		mEditorCamera->Controls(deltaTime);
+	 
 	//Editor camera pass
 	{
 		mScene1->UpdateCameraRT(mEditorCamera, mCurrentShader, deltaTime, true);
@@ -243,17 +246,17 @@ void EditorLayer::ShowMainMenuBar()
 			{
 				if (ImGui::MenuItem("Quad"))
 				{
-					//TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::QUAD);
+					TS_ENGINE::Factory::GetInstance()->InstantiateQuad("New Quad", mScene1->GetSceneNode());
 				}
 
 				if (ImGui::MenuItem("Cube"))
 				{
-					//TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::CUBE);
+					TS_ENGINE::Factory::GetInstance()->InstantiateCube("New Cube", mScene1->GetSceneNode());					
 				}
 
 				if (ImGui::MenuItem("Sphere"))
 				{
-					//TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::SPHERE);
+					TS_ENGINE::Factory::GetInstance()->InstantiateSphere("New Sphere", mScene1->GetSceneNode());
 				}
 
 				/*if (ImGui::MenuItem("Model"))
@@ -351,6 +354,7 @@ void EditorLayer::ShowPanels()
 	ImVec2 statsPanelSize = ImVec2(200.0f, 150.0f);
 #pragma endregion
 
+		mSceneGui->IsViewportActiveWindow = false;
 		mSceneGui->ShowViewportWindow(mEditorCamera, mScene1->GetCurrentSceneCamera());
 		mSceneGui->ShowInspectorWindow();
 		mSceneGui->ShowHierarchyWindow(mScene1);

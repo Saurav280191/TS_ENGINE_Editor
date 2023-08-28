@@ -12,7 +12,14 @@ namespace TS_ENGINE {
 
 	class SceneGui
 	{
-	public:
+	public:		
+		enum ItemType
+		{
+			TEXTURE,
+			MODEL,
+			MATERIAL
+		};		
+
 		SceneGui();
 		virtual ~SceneGui() = default;
 
@@ -41,40 +48,14 @@ namespace TS_ENGINE {
 
 		Vector2* GetViewportBounds() { return mViewportBounds; }
 
-	private:
-		enum ItemType
-		{
-			TEXTURE,
-			MODEL,
-			MATERIAL
-		};
-		enum TextureType
-		{
-			DIFFUSE,
-			SPECULAR,
-			NORMAL
-		};
-		//Material properties
-		struct MaterialGui
-		{
-			Vector4 mAmbientColor = Vector4(1, 1, 1, 1);
-			Vector4 mDiffuseColor = Vector4(1, 1, 1, 1);
-			Ref<Texture2D> mDiffuseMap = nullptr;
-			float testFloat = 0.0f;
-			float testFloat1 = 0.0f;
-			float* mDiffuseMapOffset = nullptr;
-			float* mDiffuseMapTiling = nullptr;
-			Vector4 mSpecularColor = Vector4(1, 1, 1, 1);
-			Ref<Texture2D> mSpecularMap = nullptr;
-			float* mSpecularMapOffset = nullptr;
-			float* mSpecularMapTiling = nullptr;
-			float mShininess = 0.0f;
-			Ref<Texture2D> mNormalMap = nullptr;
-			float* mNormalMapOffset = nullptr;
-			float* mNormalMapTiling = nullptr;
-			float mBumpValue = 0.0f;
-		};
+	public:
+		Vector3 mSelectedNodePosition = Vector3(0, 0, 0);
+		Vector3 mSelectedNodeEulerAngles = Vector3(0, 0, 0);
+		Vector3 mSelectedNodeScale = Vector3(1, 1, 1);
+		
+		bool IsViewportActiveWindow = false;
 
+	private:
 		void ShowAllMaterials();
 		
 		void CreateUIForAllNodes(int& nodeTreeGuiIndex, Ref<Node> node);
@@ -82,10 +63,10 @@ namespace TS_ENGINE {
 		void DragHierarchySceneNode(Ref<Node> node);
 		void DragContentBrowserItem(const char* filePath, ItemType itemType);
 
-		void DropHierarchySceneNode(Ref<Node> targetParentNode);
-		void DropContentBrowserTexture(TextureType textureType, MaterialGui& materialGui, int meshIndex);
+		void DropHierarchySceneNode(Ref<Node> targetParentNode);		
 		void DropItemInViewport();
-
+		
+		char* mSelectedNodeNameBuffer = new char[256];	
 
 		Ref<Texture2D> mMeshEditorIcon;
 		Ref<Texture2D> mMaterialEditorIcon;
@@ -94,12 +75,14 @@ namespace TS_ENGINE {
 		Ref<Texture2D> mContentBrowserImageFileIcon;
 		Ref<Texture2D> mContentBrowserShaderFileIcon;
 		Ref<Texture2D> mContentBrowserMiscFileIcon;
-
+	
+	private:
 		Ref<Node> mSelectedNode = nullptr;
+		Ref<Node> mHoveringOnNode = nullptr;
+		bool mNodePopedUp = false;
 
 		//ImGuizmo params
 		ImGuizmo::OPERATION mTransformOperation = ImGuizmo::OPERATION::TRANSLATE;
-
 		ImGuizmo::MODE mTransformMode = ImGuizmo::MODE::LOCAL;
 
 		bool mTranslateActive = true;
@@ -126,11 +109,5 @@ namespace TS_ENGINE {
 		int mTransformCurrentItem = 0;
 		int mCurrentMeshIndex = 0;
 		std::filesystem::path mCurrentDirectory;
-	public:
-		Vector3 mSelectedNodePosition = Vector3(0, 0, 0);
-		Vector3 mSelectedNodeEulerAngles = Vector3(0, 0, 0);
-		Vector3 mSelectedNodeScale = Vector3(1, 1, 1);
-
-		std::vector<MaterialGui> mMaterialsGui = {};
 	};
 }
