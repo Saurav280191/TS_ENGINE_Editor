@@ -620,15 +620,15 @@ namespace TS_ENGINE {
 			{
 				if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, nodeChild->GetEntity()->GetName().c_str()))
 				{
-					if (!mNodePopedUp && ImGui::IsItemHovered())
+					//Node context pop up
 					{
-						//TS_CORE_TRACE("Hovering on {0}", nodeChild->GetName().c_str());
-						mHoveringOnNode = nodeChild;
+						if (!mNodePopedUp && ImGui::IsItemHovered())
+						{
+							mHoveringOnNode = nodeChild;
+						}
+
+						ImGui::OpenPopupOnItemClick("NodePopUp", ImGuiPopupFlags_MouseButtonRight);
 					}
-
-					nodeTreeGuiIndex++;
-
-					ImGui::OpenPopupOnItemClick("NodePopUp", ImGuiPopupFlags_MouseButtonRight);
 
 					DragHierarchySceneNode(nodeChild);
 					DropHierarchySceneNode(nodeChild);
@@ -638,6 +638,8 @@ namespace TS_ENGINE {
 						SetSelectedNode(nodeChild);
 					}
 
+					nodeTreeGuiIndex++;
+					
 					CreateUIForAllNodes(nodeTreeGuiIndex, nodeChild);
 					ImGui::TreePop();
 				}
@@ -650,15 +652,6 @@ namespace TS_ENGINE {
 				{
 					if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, nodeChild->GetEntity()->GetName().c_str()))
 					{
-						if (!mNodePopedUp && ImGui::IsItemHovered())
-						{
-							//TS_CORE_TRACE("Hovering on {0}", nodeChild->GetName().c_str());
-							mHoveringOnNode = nodeChild;
-						}
-
-						nodeTreeGuiIndex++;
-						ImGui::OpenPopupOnItemClick("NodePopUp", ImGuiPopupFlags_MouseButtonRight);
-
 						DragHierarchySceneNode(nodeChild);
 						DropHierarchySceneNode(nodeChild);
 
@@ -666,8 +659,19 @@ namespace TS_ENGINE {
 						{
 							SetSelectedNode(nodeChild);
 						}
+
+						nodeTreeGuiIndex++;
 					}
 				}
+			}
+
+			//Node context pop up
+			{
+				if (!mNodePopedUp && ImGui::IsItemHovered())
+				{
+					mHoveringOnNode = nodeChild;
+				}
+				ImGui::OpenPopupOnItemClick("NodePopUp", ImGuiPopupFlags_MouseButtonRight);
 			}
 		}
 	}
