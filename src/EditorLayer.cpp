@@ -47,6 +47,7 @@ void EditorLayer::OnAttach()
 	mEditorCamera->GetNode()->GetTransform()->SetLocalEulerAngles(-18.102f, 0.066f, 0.0f);
 	mEditorCamera->CreateFramebuffer(1920, 1080);//Create framebuffer for editorCamera
 	mEditorCamera->Initialize();
+	mEditorCamera->GetNode()->InitializeTransformMatrices();
 
 	//Create and set current scene in SceneManager
 	mScene1 = CreateRef<TS_ENGINE::Scene>("Scene1", mEditorCamera);	
@@ -90,7 +91,7 @@ void EditorLayer::PickNode(Ref<TS_ENGINE::Node> node, int entityID)
 
 		if (node->GetEntity()->GetEntityID() == entityID)
 		{
-			TS_CORE_TRACE("{0} has matching entityID", node->GetName());
+			TS_CORE_TRACE("{0} has matching entityID", node->GetEntity()->GetName().c_str());
 			mMatchingNode = node;
 		}
 	}

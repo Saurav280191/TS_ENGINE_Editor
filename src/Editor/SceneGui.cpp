@@ -544,7 +544,7 @@ namespace TS_ENGINE {
 			ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_OpenOnArrow;
 			int nodeTreeGuiIndex = 0;
 
-			if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, scene->GetSceneNode()->GetName().c_str()))
+			if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, scene->GetSceneNode()->GetEntity()->GetName().c_str()))
 			{
 				nodeTreeGuiIndex++;
 
@@ -618,7 +618,7 @@ namespace TS_ENGINE {
 
 			if (nodeChild->GetChildCount() > 0)
 			{
-				if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, nodeChild->GetName().c_str()))
+				if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, nodeChild->GetEntity()->GetName().c_str()))
 				{
 					if (!mNodePopedUp && ImGui::IsItemHovered())
 					{
@@ -626,7 +626,8 @@ namespace TS_ENGINE {
 						mHoveringOnNode = nodeChild;
 					}
 
-					nodeTreeGuiIndex++;					
+					nodeTreeGuiIndex++;
+
 					ImGui::OpenPopupOnItemClick("NodePopUp", ImGuiPopupFlags_MouseButtonRight);
 
 					DragHierarchySceneNode(nodeChild);
@@ -647,7 +648,7 @@ namespace TS_ENGINE {
 
 				if (nodeChild->IsVisibleInEditor())
 				{
-					if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, nodeChild->GetName().c_str()))
+					if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, nodeChild->GetEntity()->GetName().c_str()))
 					{
 						if (!mNodePopedUp && ImGui::IsItemHovered())
 						{
@@ -676,7 +677,7 @@ namespace TS_ENGINE {
 		if (ImGui::BeginDragDropSource())
 		{
 			ImGui::SetDragDropPayload("_TREENODE", node.get(), sizeof(Node));
-			ImGui::Text("Dragging: %s", node->GetName().c_str());
+			ImGui::Text("Dragging: %s", node->GetEntity()->GetName().c_str());
 			ImGui::EndDragDropSource();
 		}
 	}
@@ -685,9 +686,9 @@ namespace TS_ENGINE {
 		if (ImGui::BeginDragDropSource())
 		{
 			if (itemType == ItemType::TEXTURE)
-				ImGui::SetDragDropPayload("_CONTENTBROWSER_TEXTURE", filePath, size_t(strlen(filePath) * (sizeof(char*) + 1)));
+				ImGui::SetDragDropPayload("_CONTENTBROWSER_TEXTURE", filePath, (strlen(filePath) + 1) * (sizeof(const char*)));
 			else if (itemType == ItemType::MODEL)
-				ImGui::SetDragDropPayload("_CONTENTBROWSER_MODEL", filePath, size_t(strlen(filePath) * (sizeof(char*) + 1)));
+				ImGui::SetDragDropPayload("_CONTENTBROWSER_MODEL", filePath, (strlen(filePath) + 1) * (sizeof(const char*)));
 
 			ImGui::Text("Dragging: %s", filePath);
 			ImGui::EndDragDropSource();
@@ -701,20 +702,24 @@ namespace TS_ENGINE {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_TREENODE"))
 			{
 				Node* draggingNode = reinterpret_cast<Node*>(payload->Data);
-				TS_CORE_INFO("Dropped {0} on {1}", draggingNode->GetName().c_str(), targetParentNode->GetName().c_str());
+				TS_CORE_INFO("Dropped {0} on {1}", draggingNode->GetEntity()->GetName().c_str(), targetParentNode->GetEntity()->GetName().c_str());
 
-				{//This code snippet multiplies the inverse transform matrix of old parent to node's transform to negate/undo the multiplication done earlier to handle proper transforms
-					Matrix4 oldParentTransformMatrix = targetParentNode->GetTransform()->m_TransformationMatrix;
+				{
 					Matrix4 transformMatrix = draggingNode->GetTransform()->m_TransformationMatrix;
-					Matrix4 newTransformMatrix = glm::inverse(oldParentTransformMatrix) * transformMatrix;
+					Matrix4 newTransformMatrix = glm::inverse(targetParentNode->GetTransform()->m_TransformationMatrix) * transformMatrix;					
+					//Matrix4 newTransformMatrix = glm::inverse(draggingNode->GetTransform()->m_TransformationMatrix) * targetParentNode->GetTransform()->m_TransformationMatrix;// Ideal way
+
 					auto dd = Utility::Decompose(newTransformMatrix);
 
 					draggingNode->GetTransform()->m_Pos = dd->translation;
 					draggingNode->GetTransform()->m_EulerAngles = dd->eulerAngles * Vector3(57.2958f);
 					draggingNode->GetTransform()->m_Scale = dd->scale;
+
+					Matrix4 modelMatrix = draggingNode->GetTransform()->GetTransformationMatrix();
+					draggingNode->UpdateTransformationMatrices(modelMatrix);
 				}
 
-				draggingNode->SetParent(targetParentNode);
+				draggingNode->ChangeParent(targetParentNode);
 			}
 			else if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_MODEL"))
 			{
@@ -745,7 +750,7 @@ namespace TS_ENGINE {
 		{
 			mSelectedNode = node;
 			if(mSelectedNode)
-				mSelectedNodeNameBuffer = (char*)mSelectedNode->GetName().c_str();
+				mSelectedNodeNameBuffer = (char*)mSelectedNode->GetEntity()->GetName().c_str();
 			mJustSelected = true;
 
 			//if (node && node->HasAttachedObject())
