@@ -43,15 +43,31 @@ namespace TS_ENGINE {
 	{
 		if (mSelectedNode)
 		{
-			Matrix4 modelMatrix = mSelectedNode->GetTransform()->GetTransformationMatrix();
-			ImGuizmo::Manipulate(view, projection, mTransformOperation, mTransformMode, glm::value_ptr(modelMatrix));
+			Matrix4 globalTransformationMatrix = mSelectedNode->GetTransform()->GetGlobalTransformationMatrix();
+			ImGuizmo::Manipulate(view, projection, mTransformOperation, mTransformMode, glm::value_ptr(globalTransformationMatrix));
 
 			if (ImGuizmo::IsUsing() || mJustSelected)
 			{
-				mSelectedNode->UpdateTransformationMatrices(modelMatrix);
-				Vector3 eulerAngles;
-				Utility::DecomposeTransform(modelMatrix, mSelectedNodePosition, eulerAngles, mSelectedNodeScale);
-				mSelectedNodeEulerAngles = eulerAngles * Vector3(57.2958f);//To Degree
+				mSelectedNode->GetTransform()->SetGlobalTransformationMatrix(globalTransformationMatrix);
+				Matrix4 localTransformationMatrix = Matrix4(1);
+
+				if (mSelectedNode->GetParentNode())
+					localTransformationMatrix = glm::inverse(mSelectedNode->GetParentNode()->GetTransform()->GetGlobalTransformationMatrix()) * globalTransformationMatrix;
+				else
+					localTransformationMatrix = globalTransformationMatrix;
+
+				mSelectedNode->GetTransform()->SetLocalTransformationMatrix(localTransformationMatrix);
+
+				// Set mSelectedNodePosition, mSelectedNodeEulerAngles and mSelectedNodeScale for DragFloat GUI
+				{
+					Vector3 eulerAngles;
+					Utility::DecomposeTransform(localTransformationMatrix, mSelectedNodeLocalPosition, eulerAngles, mSelectedNodeLocalScale);
+					mSelectedNodeLocalEulerAngles = eulerAngles * Vector3(57.2958f);//To Degree
+				}
+
+				mSelectedNode->GetTransform()->SetLocalTransforms(mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles, mSelectedNodeLocalScale);
+
+				mSelectedNode->UpdateTransformationMatrices(Matrix4(1));
 
 				mJustSelected = false;
 			}
@@ -248,31 +264,37 @@ namespace TS_ENGINE {
 					mTransformOperation = ImGuizmo::OPERATION::SCALE;
 				}
 
-				float* pos = (float*)glm::value_ptr(mSelectedNodePosition);
+				//float* pos = (float*)glm::value_ptr(mSelectedNodeLocalPosition);
 				//mSelectedNodeEulerAngles = TS_ENGINE::MyMath::ClampEulerAngles(mSelectedNodeEulerAngles);//Will clamp the euler angles between 0 - 360
-				float* eulerAngles = (float*)glm::value_ptr(mSelectedNodeEulerAngles);
-				float* scale = (float*)glm::value_ptr(mSelectedNodeScale);
+				//float* eulerAngles = (float*)glm::value_ptr(mSelectedNodeLocalEulerAngles);
+				//float* scale = (float*)glm::value_ptr(mSelectedNodeLocalScale);
 
 				//Postion		
-				if (ImGui::DragFloat3("Position", pos))
+				if (ImGui::DragFloat3("Position", glm::value_ptr(mSelectedNodeLocalPosition), 0.1f))
 				{
-					mSelectedNode->GetTransform()->m_EulerAngles = Vector3(eulerAngles[0], eulerAngles[1], eulerAngles[2]);
-					mSelectedNode->GetTransform()->m_Scale = Vector3(scale[0], scale[1], scale[2]);
-					mSelectedNode->SetPosition(pos);
+					//mSelectedNode->GetTransform()->m_EulerAngles = Vector3(eulerAngles[0], eulerAngles[1], eulerAngles[2]);
+					//mSelectedNode->GetTransform()->m_Scale = Vector3(scale[0], scale[1], scale[2]);
+					//mSelectedNode->SetPosition(pos);
+					mSelectedNode->GetTransform()->SetLocalPosition(mSelectedNodeLocalPosition);
+					mSelectedNode->InitializeTransformMatrices();
 				}
 				//EulerAngles
-				if (ImGui::DragFloat3("Rotation", eulerAngles))
+				if (ImGui::DragFloat3("Rotation", glm::value_ptr(mSelectedNodeLocalEulerAngles), 0.1f))
 				{
-					mSelectedNode->GetTransform()->m_Pos = Vector3(pos[0], pos[1], pos[2]);
-					mSelectedNode->GetTransform()->m_Scale = Vector3(scale[0], scale[1], scale[2]);
-					mSelectedNode->SetEulerAngles(eulerAngles);
+					//mSelectedNode->GetTransform()->m_Pos = Vector3(pos[0], pos[1], pos[2]);
+					//mSelectedNode->GetTransform()->m_Scale = Vector3(scale[0], scale[1], scale[2]);
+					//mSelectedNode->SetEulerAngles(eulerAngles);
+					mSelectedNode->GetTransform()->SetLocalEulerAngles(mSelectedNodeLocalEulerAngles);
+					mSelectedNode->InitializeTransformMatrices();
 				}
 				//Scale
-				if (ImGui::DragFloat3("Scale", scale))
+				if (ImGui::DragFloat3("Scale", glm::value_ptr(mSelectedNodeLocalScale), 0.1f))
 				{
-					mSelectedNode->GetTransform()->m_Pos = Vector3(pos[0], pos[1], pos[2]);
-					mSelectedNode->GetTransform()->m_EulerAngles = Vector3(eulerAngles[0], eulerAngles[1], eulerAngles[2]);
-					mSelectedNode->SetScale(scale);
+					//mSelectedNode->GetTransform()->m_Pos = Vector3(pos[0], pos[1], pos[2]);
+					//mSelectedNode->GetTransform()->m_EulerAngles = Vector3(eulerAngles[0], eulerAngles[1], eulerAngles[2]);
+					//mSelectedNode->SetScale(scale);
+					mSelectedNode->GetTransform()->SetLocalScale(mSelectedNodeLocalScale);
+					mSelectedNode->InitializeTransformMatrices();
 				}
 
 				ImGui::EndChild();
@@ -345,17 +367,29 @@ namespace TS_ENGINE {
 #pragma endregion
 
 #pragma region Material Editor
-							ImGui::BeginChild("Material Editor", ImVec2(ImGui::GetWindowSize().x - 30.0f, mSelectedNode->GetMeshes().size() * 420.0f), true);
+							ImGui::BeginChild("Material Editor", ImVec2(ImGui::GetWindowSize().x - 30.0f, 0), true);
+							{
+								float materialIconPosY = ImGui::GetCursorPosY();
+								ImGui::Image((void*)(intptr_t)mMaterialEditorIcon->GetRendererID(), ImVec2(20, 20));
+								ImGui::SameLine();
+								ImGui::SetCursorPosY(materialIconPosY + 3.5f);
 
-							float materialIconPosY = ImGui::GetCursorPosY();
-							ImGui::Image((void*)(intptr_t)mMaterialEditorIcon->GetRendererID(), ImVec2(20, 20));
-							ImGui::SameLine();
-							ImGui::SetCursorPosY(materialIconPosY + 3.5f);
-							ImGui::Text("Material Editor");
+								ImGui::Text("Material Editor");
+								ImGui::Separator();
 
-							ShowAllMaterials();
+								//Show all materials
+								ImGui::BeginChild("##Material Editor");
+								{
+									for (int meshIndex = 0; meshIndex < mSelectedNode->GetMeshes().size(); meshIndex++)
+									{
+										//Material tree will be collapsed when there are more than 1 meshes in the node
+										mSelectedNode->GetMeshes()[meshIndex]->GetMaterial()->ShowGUI(meshIndex, mSelectedNode->GetMeshes().size() < 2);
+									}
+									ImGui::EndChild();
+								}
 
-							ImGui::EndChild();
+								ImGui::EndChild();
+							}
 #pragma endregion
 						}
 						//break;
@@ -383,16 +417,6 @@ namespace TS_ENGINE {
 
 			}
 			ImGui::End();
-		}
-	}
-
-	void SceneGui::ShowAllMaterials()
-	{
-		for (int meshIndex = 0; meshIndex < mSelectedNode->GetMeshes().size(); meshIndex++)
-		{
-			Ref<Mesh> mesh = mSelectedNode->GetMeshes()[meshIndex];
-			Ref<Material> material = mesh->GetMaterial();
-			material->ShowMaterialUI(meshIndex);
 		}
 	}
 
@@ -565,31 +589,34 @@ namespace TS_ENGINE {
 
 	void SceneGui::CreateUIForAllNodes(int& nodeTreeGuiIndex, Ref<Node> node)
 	{
-		if (ImGui::BeginPopup("NodePopUp"))
+		//Node context menu
 		{
-			mNodePopedUp = true;
-
-			if (ImGui::Button("Duplicate"))
-			{		
-				mSelectedNode = nullptr;
-				mHoveringOnNode->GetParentNode()->AddChild(mHoveringOnNode->Duplicate());
-				//TS_CORE_TRACE("Duplicating {0}", mHoveringOnNode->GetName().c_str());
-				ImGui::CloseCurrentPopup();
-			}
-
-			if (ImGui::Button("Delete"))
+			if (ImGui::BeginPopup("NodePopUp"))
 			{
-				mSelectedNode = nullptr;
-				mHoveringOnNode->Destroy();
-				//TS_CORE_TRACE("Deleting {0}", mHoveringOnNode->GetName().c_str());
-				ImGui::CloseCurrentPopup();
-			}
+				mNodePopedUp = true;
 
-			ImGui::EndPopup();
-		}
-		else
-		{
-			mNodePopedUp = false;
+				if (ImGui::Button("Duplicate"))
+				{
+					mSelectedNode = nullptr;
+					mHoveringOnNode->GetParentNode()->AddChild(mHoveringOnNode->Duplicate());
+					//TS_CORE_TRACE("Duplicating {0}", mHoveringOnNode->GetName().c_str());
+					ImGui::CloseCurrentPopup();
+				}
+
+				if (ImGui::Button("Delete"))
+				{
+					mSelectedNode = nullptr;
+					mHoveringOnNode->Destroy();
+					//TS_CORE_TRACE("Deleting {0}", mHoveringOnNode->GetName().c_str());
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndPopup();
+			}
+			else
+			{
+				mNodePopedUp = false;
+			}
 		}
 
 		for (int i = 0; i < node->GetChildCount(); i++)
@@ -620,7 +647,7 @@ namespace TS_ENGINE {
 			{
 				if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, nodeChild->GetEntity()->GetName().c_str()))
 				{
-					//Node context pop up
+					//Node context menu pop up
 					{
 						if (!mNodePopedUp && ImGui::IsItemHovered())
 						{
@@ -639,7 +666,7 @@ namespace TS_ENGINE {
 					}
 
 					nodeTreeGuiIndex++;
-					
+
 					CreateUIForAllNodes(nodeTreeGuiIndex, nodeChild);
 					ImGui::TreePop();
 				}
@@ -652,6 +679,15 @@ namespace TS_ENGINE {
 				{
 					if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, nodeChild->GetEntity()->GetName().c_str()))
 					{
+						//Node context menu pop up
+						{
+							if (!mNodePopedUp && ImGui::IsItemHovered())
+							{
+								mHoveringOnNode = nodeChild;
+							}
+							ImGui::OpenPopupOnItemClick("NodePopUp", ImGuiPopupFlags_MouseButtonRight);
+						}
+
 						DragHierarchySceneNode(nodeChild);
 						DropHierarchySceneNode(nodeChild);
 
@@ -665,14 +701,6 @@ namespace TS_ENGINE {
 				}
 			}
 
-			//Node context pop up
-			{
-				if (!mNodePopedUp && ImGui::IsItemHovered())
-				{
-					mHoveringOnNode = nodeChild;
-				}
-				ImGui::OpenPopupOnItemClick("NodePopUp", ImGuiPopupFlags_MouseButtonRight);
-			}
 		}
 	}
 
@@ -685,6 +713,7 @@ namespace TS_ENGINE {
 			ImGui::EndDragDropSource();
 		}
 	}
+
 	void SceneGui::DragContentBrowserItem(const char* filePath, ItemType itemType)
 	{
 		if (ImGui::BeginDragDropSource())
@@ -709,17 +738,17 @@ namespace TS_ENGINE {
 				TS_CORE_INFO("Dropped {0} on {1}", draggingNode->GetEntity()->GetName().c_str(), targetParentNode->GetEntity()->GetName().c_str());
 
 				{
-					Matrix4 transformMatrix = draggingNode->GetTransform()->m_TransformationMatrix;
-					Matrix4 newTransformMatrix = glm::inverse(targetParentNode->GetTransform()->m_TransformationMatrix) * transformMatrix;					
+					Matrix4 transformMatrix = draggingNode->GetTransform()->GetGlobalTransformationMatrix();
+					Matrix4 newTransformMatrix = glm::inverse(targetParentNode->GetTransform()->GetGlobalTransformationMatrix()) * transformMatrix;
 					//Matrix4 newTransformMatrix = glm::inverse(draggingNode->GetTransform()->m_TransformationMatrix) * targetParentNode->GetTransform()->m_TransformationMatrix;// Ideal way
 
 					auto dd = Utility::Decompose(newTransformMatrix);
 
 					draggingNode->GetTransform()->m_Pos = dd->translation;
-					draggingNode->GetTransform()->m_EulerAngles = dd->eulerAngles * Vector3(57.2958f);
+					draggingNode->GetTransform()->m_EulerAngles = dd->eulerAngles;
 					draggingNode->GetTransform()->m_Scale = dd->scale;
 
-					Matrix4 modelMatrix = draggingNode->GetTransform()->GetTransformationMatrix();
+					Matrix4 modelMatrix = draggingNode->GetTransform()->GetGlobalTransformationMatrix();
 					draggingNode->UpdateTransformationMatrices(modelMatrix);
 				}
 
@@ -753,8 +782,17 @@ namespace TS_ENGINE {
 		if (node != mSelectedNode)
 		{
 			mSelectedNode = node;
-			if(mSelectedNode)
+
+			if (node)
+			{
+				Quaternion rot;
+				Utility::DecomposeMtx(node->GetTransform()->GetLocalTransformationMatrix(), mSelectedNodeLocalPosition, rot, mSelectedNodeLocalScale);
+				mSelectedNodeLocalEulerAngles = glm::degrees(glm::eulerAngles(rot));
+			}
+
+			if (mSelectedNode)
 				mSelectedNodeNameBuffer = (char*)mSelectedNode->GetEntity()->GetName().c_str();
+			
 			mJustSelected = true;
 
 			//if (node && node->HasAttachedObject())
@@ -793,7 +831,7 @@ namespace TS_ENGINE {
 				for (int i = 0; i < mSelectedNode->GetMeshes().size(); i++)
 				{
 					Material::MaterialGui materialGui;
-					
+
 					materialGui.mAmbientColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetAmbientColor();
 					materialGui.mDiffuseColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseColor();
 					materialGui.mDiffuseMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMap();
@@ -808,7 +846,7 @@ namespace TS_ENGINE {
 					materialGui.mNormalMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapOffset().y };
 					materialGui.mNormalMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapTiling().y };
 					materialGui.mBumpValue = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetBumpValue();
-					
+
 					mSelectedNode->GetMeshes()[i]->GetMaterial()->SetMaterialGui(materialGui);
 				}
 			}

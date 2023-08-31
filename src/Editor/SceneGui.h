@@ -49,15 +49,13 @@ namespace TS_ENGINE {
 		Vector2* GetViewportBounds() { return mViewportBounds; }
 
 	public:
-		Vector3 mSelectedNodePosition = Vector3(0, 0, 0);
-		Vector3 mSelectedNodeEulerAngles = Vector3(0, 0, 0);
-		Vector3 mSelectedNodeScale = Vector3(1, 1, 1);
+		Vector3 mSelectedNodeLocalPosition = Vector3(0, 0, 0);
+		Vector3 mSelectedNodeLocalEulerAngles = Vector3(0, 0, 0);
+		Vector3 mSelectedNodeLocalScale = Vector3(1, 1, 1);
 		
 		bool IsViewportActiveWindow = false;
 
-	private:
-		void ShowAllMaterials();
-		
+	private:	
 		void CreateUIForAllNodes(int& nodeTreeGuiIndex, Ref<Node> node);
 
 		void DragHierarchySceneNode(Ref<Node> node);

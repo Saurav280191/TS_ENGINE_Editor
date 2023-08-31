@@ -77,7 +77,9 @@ void EditorLayer::OnUpdate(float deltaTime)
 		OnOverlayRender();
 		
 		if (!ImGuizmo::IsOver())
+		{
 			PickGameObject();
+		}
 
 		mEditorCamera->GetFramebuffer()->Unbind();
 	}
