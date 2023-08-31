@@ -13,8 +13,9 @@
 #include <Platform/OpenGL/OpenGLVertexArray.h>
 
 EditorLayer::EditorLayer() :
-	Layer("SandboxLayer")//,
+	Layer("SandboxLayer"),
 	//mBatchedGameObject(NULL)
+	mIsControlPressed(false)
 {
 	
 }
@@ -66,7 +67,7 @@ void EditorLayer::OnUpdate(float deltaTime)
 
 	mScene1->Render(mCurrentShader, deltaTime);
 
-	if(mSceneGui->IsViewportActiveWindow) 
+	if(mSceneGui->IsViewportActiveWindow && !mIsControlPressed)
 		mEditorCamera->Controls(deltaTime);
 	 
 	//Editor camera pass
@@ -369,8 +370,21 @@ void EditorLayer::ShowPanels()
 void EditorLayer::OnEvent(TS_ENGINE::Event& e)
 {
 	TS_ENGINE::EventDispatcher dispatcher(e);
+	dispatcher.Dispatch<TS_ENGINE::KeyPressedEvent>(TS_BIND_EVENT_FN(EditorLayer::OnKey, true));
 	dispatcher.Dispatch<TS_ENGINE::KeyPressedEvent>(TS_BIND_EVENT_FN(EditorLayer::OnKeyPressed));
+	dispatcher.Dispatch<TS_ENGINE::KeyReleasedEvent>(TS_BIND_EVENT_FN(EditorLayer::OnKeyReleased));
 	dispatcher.Dispatch<TS_ENGINE::MouseButtonPressedEvent>(TS_BIND_EVENT_FN(EditorLayer::OnMouseButtonPressed));
+}
+
+bool EditorLayer::OnKey(TS_ENGINE::KeyPressedEvent& e)
+{
+	switch (e.GetKeyCode())
+	{
+	case TS_ENGINE::Key::LeftControl:
+
+		break;
+	}
+	return false;
 }
 
 bool EditorLayer::OnKeyPressed(TS_ENGINE::KeyPressedEvent& e)
@@ -387,6 +401,16 @@ bool EditorLayer::OnKeyPressed(TS_ENGINE::KeyPressedEvent& e)
 		//SpawnNewObject();
 		break;
 	case TS_ENGINE::Key::Delete:
+		mSceneGui->DeleteSelectedNode();
+		break;
+	case TS_ENGINE::Key::LeftControl:
+		mIsControlPressed = true;
+		break;
+	case TS_ENGINE::Key::D:
+		if (mIsControlPressed)
+		{
+			mSceneGui->DuplicatedSelectedNode();
+		}
 		break;
 	case TS_ENGINE::Key::Q:
 		mSceneGui->SwitchToTranslateMode();
@@ -396,10 +420,20 @@ bool EditorLayer::OnKeyPressed(TS_ENGINE::KeyPressedEvent& e)
 		break;
 	case TS_ENGINE::Key::R:
 		mSceneGui->SwitchToScaleMode();
-
 		break;
 	}
 
+	return false;
+}
+
+bool EditorLayer::OnKeyReleased(TS_ENGINE::KeyReleasedEvent& e)
+{
+	switch (e.GetKeyCode())
+	{
+	case TS_ENGINE::Key::LeftControl:
+		mIsControlPressed = false;
+		break;
+	}
 	return false;
 }
 

@@ -852,4 +852,21 @@ namespace TS_ENGINE {
 			}
 		}
 	}
+
+	void SceneGui::DeleteSelectedNode()
+	{
+		if (mSelectedNode)
+		{
+			mSelectedNode->Destroy();
+			mSelectedNode = nullptr;
+		}
+	}
+
+	void SceneGui::DuplicatedSelectedNode()
+	{
+		if (mSelectedNode)
+		{
+			mSelectedNode->GetParentNode()->AddChild(mSelectedNode->Duplicate());
+		}
+	}
 }

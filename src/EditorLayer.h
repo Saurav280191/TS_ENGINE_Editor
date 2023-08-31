@@ -59,13 +59,16 @@ public:
 
 	virtual void OnEvent(TS_ENGINE::Event& e) override;	
 private:
+	bool OnKey(TS_ENGINE::KeyPressedEvent& e);
 	bool OnKeyPressed(TS_ENGINE::KeyPressedEvent& e);
+	bool OnKeyReleased(TS_ENGINE::KeyReleasedEvent& e);
 	bool OnMouseButtonPressed(TS_ENGINE::MouseButtonPressedEvent& e);
 	void OnOverlayRender();	
 	void PickGameObject();
 	Ref<TS_ENGINE::Node> PickNodeByEntityID(int entityID);
 	void PickNode(Ref<TS_ENGINE::Node> node, int entityID);
 private:
+	bool mIsControlPressed = false;
 	ImGuiWindowFlags defaultWindowFlags;
 
 	Ref<TS_ENGINE::Scene> mScene1;

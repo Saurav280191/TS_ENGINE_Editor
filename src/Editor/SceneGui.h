@@ -48,6 +48,9 @@ namespace TS_ENGINE {
 
 		Vector2* GetViewportBounds() { return mViewportBounds; }
 
+		void DeleteSelectedNode();
+		void DuplicatedSelectedNode();
+
 	public:
 		Vector3 mSelectedNodeLocalPosition = Vector3(0, 0, 0);
 		Vector3 mSelectedNodeLocalEulerAngles = Vector3(0, 0, 0);
