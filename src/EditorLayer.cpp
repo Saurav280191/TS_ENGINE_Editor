@@ -263,6 +263,16 @@ void EditorLayer::ShowMainMenuBar()
 					TS_ENGINE::Factory::GetInstance()->InstantiateSphere("New Sphere", mScene1->GetSceneNode());
 				}
 
+				if (ImGui::MenuItem("Cylinder"))
+				{
+					TS_ENGINE::Factory::GetInstance()->InstantiateCylinder("New Cylinder", mScene1->GetSceneNode());
+				}
+
+				if (ImGui::MenuItem("Cone"))
+				{
+					TS_ENGINE::Factory::GetInstance()->InstantiateCone("New Cone", mScene1->GetSceneNode());
+				}
+
 				/*if (ImGui::MenuItem("Model"))
 				{
 					TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::MODEL);

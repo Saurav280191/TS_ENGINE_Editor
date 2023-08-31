@@ -344,21 +344,20 @@ namespace TS_ENGINE {
 
 									if (ImGui::Selectable(mMeshNameList[n], is_selected))
 									{
-										mCurrentMeshItem = mMeshNameList[n];
-										TS_CORE_INFO("Changing mesh to: {0}", mCurrentMeshItem);
-										//TS_ENGINE::Factory::GetInstance()->ChangeMeshForNode(mSelectedNode, n);
+										if (std::string(mMeshNameList[n]) == "Model")
+										{
+											TS_CORE_TRACE("Upcoming feature. An option to set model path and refresh will be added!");// TODO
+										}
+										else
+										{
+											mCurrentMeshItem = mMeshNameList[n];
+											TS_CORE_INFO("Changing mesh to: {0}", mCurrentMeshItem);
+											mSelectedNode->ChangeMesh((PrimitiveType)(n + 1));// n + 1 because we are skipping index 0 which is for Line
+										}
 
-										//"Quad",
-										//"Cube",
-										//"Sphere",
-										//"Cone",
-										//"Cylinder",
-										//"Model",
-										//"Empty"
+										if (is_selected)
+											ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
 									}
-
-									if (is_selected)
-										ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
 								}
 								ImGui::EndCombo();
 							}
@@ -783,71 +782,74 @@ namespace TS_ENGINE {
 		{
 			mSelectedNode = node;
 
-			if (node)
+			//Set mSelectedNode transforms
 			{
-				Quaternion rot;
-				Utility::DecomposeMtx(node->GetTransform()->GetLocalTransformationMatrix(), mSelectedNodeLocalPosition, rot, mSelectedNodeLocalScale);
-				mSelectedNodeLocalEulerAngles = glm::degrees(glm::eulerAngles(rot));
+				if (node)
+				{
+					Quaternion rot;
+					Utility::DecomposeMtx(node->GetTransform()->GetLocalTransformationMatrix(), mSelectedNodeLocalPosition, rot, mSelectedNodeLocalScale);
+					mSelectedNodeLocalEulerAngles = glm::degrees(glm::eulerAngles(rot));
+				}
+
+				if (mSelectedNode)
+					mSelectedNodeNameBuffer = (char*)mSelectedNode->GetEntity()->GetName().c_str();
+
+				mJustSelected = true;
 			}
 
-			if (mSelectedNode)
-				mSelectedNodeNameBuffer = (char*)mSelectedNode->GetEntity()->GetName().c_str();
-			
-			mJustSelected = true;
-
-			//if (node && node->HasAttachedObject())
-			//{
-			//	if (Ref<Object> object = node->GetAttachedObject())
-			//	{
-			//		//Mesh container
-			//		switch (object->GetPrimitiveType())
-			//		{
-			//		case PrimitiveType::QUAD:
-			//			mCurrentMeshItem = "Quad";
-			//			break;
-			//		case PrimitiveType::CUBE:
-			//			mCurrentMeshItem = "Cube";
-			//			break;
-			//		case PrimitiveType::SPHERE:
-			//			mCurrentMeshItem = "Sphere";
-			//			break;
-			//		case PrimitiveType::CONE:
-			//			mCurrentMeshItem = "Cone";
-			//			break;
-			//		case PrimitiveType::CYLINDER:
-			//			mCurrentMeshItem = "Cylinder";
-			//			break;
-			//		/*case PrimitiveType::MODEL:
-			//			mCurrentMeshItem = "Model";
-			//			break;*/
-			//		case PrimitiveType::EMPTY:
-			//			mCurrentMeshItem = "Empty";
-			//			break;
-			//		}
-
-			// Mesh Renderer
-			if (mSelectedNode)
+			if (mSelectedNode && mSelectedNode->HasMeshes())
 			{
-				for (int i = 0; i < mSelectedNode->GetMeshes().size(); i++)
+				//Mesh container
 				{
-					Material::MaterialGui materialGui;
+					switch (mSelectedNode->GetMeshes()[0]->GetPrimitiveType())
+					{
+					case PrimitiveType::LINE:
+						mCurrentMeshItem = "Line";
+						break;
+					case PrimitiveType::QUAD:
+						mCurrentMeshItem = "Quad";
+						break;
+					case PrimitiveType::CUBE:
+						mCurrentMeshItem = "Cube";
+						break;
+					case PrimitiveType::SPHERE:
+						mCurrentMeshItem = "Sphere";
+						break;
+					case PrimitiveType::CYLINDER:
+						mCurrentMeshItem = "Cylinder";
+						break;
+					case PrimitiveType::CONE:
+						mCurrentMeshItem = "Cone";
+						break;
+					case PrimitiveType::MODEL:
+						mCurrentMeshItem = "Model";
+						break;
+					}
+				}
 
-					materialGui.mAmbientColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetAmbientColor();
-					materialGui.mDiffuseColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseColor();
-					materialGui.mDiffuseMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMap();
-					materialGui.mDiffuseMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapOffset().y };
-					materialGui.mDiffuseMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapTiling().y };
-					materialGui.mSpecularColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularColor();
-					materialGui.mSpecularMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMap();
-					materialGui.mSpecularMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapOffset().y };
-					materialGui.mSpecularMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapTiling().y };
-					materialGui.mShininess = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetShininess();
-					materialGui.mNormalMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMap();
-					materialGui.mNormalMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapOffset().y };
-					materialGui.mNormalMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapTiling().y };
-					materialGui.mBumpValue = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetBumpValue();
+				// Mesh Renderer
+				{
+					for (int i = 0; i < mSelectedNode->GetMeshes().size(); i++)
+					{
+						Material::MaterialGui materialGui;
 
-					mSelectedNode->GetMeshes()[i]->GetMaterial()->SetMaterialGui(materialGui);
+						materialGui.mAmbientColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetAmbientColor();
+						materialGui.mDiffuseColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseColor();
+						materialGui.mDiffuseMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMap();
+						materialGui.mDiffuseMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapOffset().y };
+						materialGui.mDiffuseMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapTiling().y };
+						materialGui.mSpecularColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularColor();
+						materialGui.mSpecularMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMap();
+						materialGui.mSpecularMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapOffset().y };
+						materialGui.mSpecularMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapTiling().y };
+						materialGui.mShininess = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetShininess();
+						materialGui.mNormalMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMap();
+						materialGui.mNormalMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapOffset().y };
+						materialGui.mNormalMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapTiling().y };
+						materialGui.mBumpValue = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetBumpValue();
+
+						mSelectedNode->GetMeshes()[i]->GetMaterial()->SetMaterialGui(materialGui);
+					}
 				}
 			}
 		}

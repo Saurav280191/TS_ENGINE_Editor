@@ -97,12 +97,13 @@ namespace TS_ENGINE {
 
 		const char* mTransformComboItems[2];// = new const char* [2] {"Local", "World"};
 		const char* mMeshNameList[6] = {
+			//"Line",//TODO: Line need to have it's own component like LineRenderer
 			"Quad",
 			"Cube",
 			"Sphere",
-			"Cone",
 			"Cylinder",
-			"Empty"
+			"Cone",
+			"Model"
 		};
 
 		const char* mCurrentMeshItem = "Default";
