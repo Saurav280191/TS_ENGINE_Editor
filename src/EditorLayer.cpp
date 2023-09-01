@@ -43,7 +43,7 @@ void EditorLayer::OnAttach()
 	mEditorCamera = CreateRef<TS_ENGINE::EditorCamera>("EditorCamera");
 
 	mAspectRatio = (float)TS_ENGINE::Application::Get().GetWindow().GetWidth() / (float)TS_ENGINE::Application::Get().GetWindow().GetHeight();
-	mEditorCamera->SetPerspective(TS_ENGINE::Camera::Perspective(45.0f, mAspectRatio, 0.1f, 1000.0f));
+	mEditorCamera->SetPerspective(TS_ENGINE::Camera::Perspective(60.0f, mAspectRatio, 0.1f, 1000.0f));
 	mEditorCamera->GetNode()->GetTransform()->SetLocalPosition(-0.738f, 5.788f, 14.731f);
 	mEditorCamera->GetNode()->GetTransform()->SetLocalEulerAngles(-18.102f, 0.066f, 0.0f);
 	mEditorCamera->CreateFramebuffer(1920, 1080);//Create framebuffer for editorCamera

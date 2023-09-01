@@ -13,6 +13,8 @@ namespace TS_ENGINE {
 
 		mMeshEditorIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\MeshEditor.png");
 		//mMeshEditorIcon->SetVerticalFlip(false);
+		mCameraIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\Camera.png");
+		//mCameraIcon->SetVerticalFlip(false);
 		mMaterialEditorIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\LitMaterialIcon.png");
 		//mMaterialEditorIcon->SetVerticalFlip(false);
 
@@ -300,117 +302,215 @@ namespace TS_ENGINE {
 				ImGui::EndChild();
 #pragma endregion 
 
-				if (mSelectedNode != NULL && mSelectedNode->GetMeshes().size() > 0)
+				if (mSelectedNode != NULL)
 				{
-					//switch (mSelectedNode->GetEntityType())
+					if (mSelectedNode->GetEntity()->GetEntityType() == EntityType::CAMERA)
 					{
-						//case TS_ENGINE::EntityType::GAMEOBJECT:
+#pragma region Camera Editor
+						ImGui::BeginChild("Camera", ImVec2(ImGui::GetWindowSize().x - 30.0f, 180.0f), true);
+
+						float meshEditorIconPosY = ImGui::GetCursorPosY();
+						ImGui::Image((void*)(intptr_t)mCameraIcon->GetRendererID(), ImVec2(30, 30), ImVec2(0, 1), ImVec2(1, 0));
+						ImGui::SameLine();
+
+						ImGui::SameLine();
+						ImGui::SetCursorPosY(meshEditorIconPosY + 7.0f);
+						ImGui::Text("Camera");
+						ImGui::Separator();
+
+						ImGui::Spacing();
+						ImGui::SetNextItemWidth(100);
+						float headerTextY = ImGui::GetCursorPosY();
+						ImGui::Text("Projection");
+						ImGui::SameLine();
+
+						ImGui::SetCursorPosY(headerTextY - 2.5f);
+						// Projection selector GUI
+						if (ImGui::BeginCombo("##Projection", mCurrentProjection))
 						{
-#pragma region Mesh Editor
-							ImGui::BeginChild("Mesh Container", ImVec2(ImGui::GetWindowSize().x - 30.0f, 75.0f), true);
-
-							float meshEditorIconPosY = ImGui::GetCursorPosY();
-							ImGui::Image((void*)(intptr_t)mMeshEditorIcon->GetRendererID(), ImVec2(20, 20));
-							ImGui::SameLine();
-
-							ImGui::SameLine();
-							ImGui::SetCursorPosY(meshEditorIconPosY + 3.5f);
-							ImGui::Text("Mesh Container");
-
-							/*if (ImGui::ListBox("Mesh", &mCurrentMeshIndex, mMeshNameList, 2, 1))
+							for (int n = 0; n < IM_ARRAYSIZE(mProjectionList); n++)
 							{
-								switch (mCurrentMeshIndex)
+								bool is_selected = (mCurrentProjection == mProjectionList[n]); 
+
+								if (ImGui::Selectable(mProjectionList[n], is_selected))
 								{
-								case 0:
-
-									break;
-								case 1:
-
-									break;
+									mCurrentProjection = mProjectionList[n];
+									TS_CORE_INFO("Changing camera type to: {0}", mCurrentProjection);									
+									mSelectedNode->GetSceneCamera()->SetProjectionType((Camera::ProjectionType)n);
+									mSelectedNode->GetSceneCamera()->RefreshFrustrumGUI();
+									if (is_selected)
+										ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
 								}
-							}*/
+							}
+							ImGui::EndCombo();
+						}
+
+						ImGui::Separator();
+						ImGui::Spacing();
+
+						// Perspective camera GUI
+						if (mSelectedNode->GetSceneCamera()->GetProjectionType() == Camera::ProjectionType::PERSPECTIVE)
+						{
+							ImGui::Text("Field Of View");
+							ImGui::SameLine();
+							float fov = mSelectedNode->GetSceneCamera()->GetPerspective().fov;
+							ImGui::SetCursorPosX(165);
+							if(ImGui::SliderFloat("##Field Of View", &fov, 30.0f, 90.0f))
+							{
+								mSelectedNode->GetSceneCamera()->SetFieldOfView(fov);
+								mSelectedNode->GetSceneCamera()->RefreshFrustrumGUI();
+							}
+							ImGui::Separator();
 							ImGui::Spacing();
-							ImGui::SetNextItemWidth(100);
-							float meshHeaderTextY = ImGui::GetCursorPosY();
-							ImGui::Text("Mesh");
+
+							ImGui::Text("Clipping Planes");
 							ImGui::SameLine();
-
-							ImGui::SetCursorPosY(meshHeaderTextY - 2.5f);
-							if (ImGui::BeginCombo("##Mesh", mCurrentMeshItem))
+							ImGui::Spacing();
+							ImGui::SameLine();
+							float nearTextPosX = ImGui::GetCursorPosX();
+							ImGui::Text("Near");
+							ImGui::SameLine();
+							float zNear = mSelectedNode->GetSceneCamera()->GetPerspective().zNear;
+							if (ImGui::DragFloat("##Near", &zNear, 0.1f, 0.1f, mSelectedNode->GetSceneCamera()->GetPerspective().zFar - 1))// 0.1  to FarPlane - 1
 							{
-								for (int n = 0; n < IM_ARRAYSIZE(mMeshNameList); n++)
-								{
-									bool is_selected = (mCurrentMeshItem == mMeshNameList[n]); // You can store your selection however you want, outside or inside your objects
-
-									if (ImGui::Selectable(mMeshNameList[n], is_selected))
-									{
-										if (std::string(mMeshNameList[n]) == "Model")
-										{
-											TS_CORE_TRACE("Upcoming feature. An option to set model path and refresh will be added!");// TODO
-										}
-										else
-										{
-											mCurrentMeshItem = mMeshNameList[n];
-											TS_CORE_INFO("Changing mesh to: {0}", mCurrentMeshItem);
-											mSelectedNode->ChangeMesh((PrimitiveType)(n + 1));// n + 1 because we are skipping index 0 which is for Line
-										}
-
-										if (is_selected)
-											ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
-									}
-								}
-								ImGui::EndCombo();
+								mSelectedNode->GetSceneCamera()->SetNearPlane(zNear);
+								mSelectedNode->GetSceneCamera()->RefreshFrustrumGUI();
+							}
+							
+							ImGui::SetCursorPosX(nearTextPosX);
+							ImGui::Text("Far ");
+							ImGui::SameLine();
+							float zFar = mSelectedNode->GetSceneCamera()->GetPerspective().zFar;
+							if (ImGui::DragFloat("##Far", &zFar, 0.1f, 0.1f, 1000.0f))// 0.1  to 1000
+							{
+								mSelectedNode->GetSceneCamera()->SetFarPlane(zFar);
+								mSelectedNode->GetSceneCamera()->RefreshFrustrumGUI();
 							}
 
-							ImGui::EndChild();
+							ImGui::Separator();
+							ImGui::Spacing();
+						}
+						// Orthographics camera GUI
+						else if (mSelectedNode->GetSceneCamera()->GetProjectionType() == Camera::ProjectionType::ORTHOGRAPHIC)
+						{
+							ImGui::Text("Size");
+							ImGui::SameLine();
+							float size = mSelectedNode->GetSceneCamera()->GetOrthographic().top;
+							ImGui::SetCursorPosX(165);
+							if (ImGui::DragFloat("##Size", &size, 0.1f, 0.1f, 50.0f))
+							{
+								mSelectedNode->GetSceneCamera()->SetOrthographicSize(size);
+								mSelectedNode->GetSceneCamera()->RefreshFrustrumGUI();
+							}
+
+							ImGui::Separator();
+							ImGui::Spacing();
+
+							ImGui::Text("Clipping Planes");
+							ImGui::SameLine();
+							ImGui::Spacing();
+							ImGui::SameLine();
+							float nearTextPosX = ImGui::GetCursorPosX();
+							ImGui::Text("Near");
+							ImGui::SameLine();
+							float zNear = mSelectedNode->GetSceneCamera()->GetOrthographic().zNear;
+							if (ImGui::DragFloat("##Near", &zNear, 0.1f, 0.1f, mSelectedNode->GetSceneCamera()->GetOrthographic().zFar - 1))// 0.1  to FarPlane - 1
+							{
+								mSelectedNode->GetSceneCamera()->SetNearPlane(zNear);
+								mSelectedNode->GetSceneCamera()->RefreshFrustrumGUI();
+							}
+
+							ImGui::SetCursorPosX(nearTextPosX);
+							ImGui::Text("Far ");
+							ImGui::SameLine();
+							float zFar = mSelectedNode->GetSceneCamera()->GetOrthographic().zFar;
+							if (ImGui::DragFloat("##Far", &zFar, 0.1f, 0.1f, 1000.0f))// 0.1  to 1000
+							{
+								mSelectedNode->GetSceneCamera()->SetFarPlane(zFar);
+								mSelectedNode->GetSceneCamera()->RefreshFrustrumGUI();
+							}
+
+							ImGui::Separator();
+							ImGui::Spacing();
+						}
+
+						ImGui::EndChild();
+#pragma endregion
+					}
+					else if (mSelectedNode->GetMeshes().size() > 0)
+					{
+#pragma region Mesh Editor
+						ImGui::BeginChild("Mesh Container", ImVec2(ImGui::GetWindowSize().x - 30.0f, 75.0f), true);
+
+						float meshEditorIconPosY = ImGui::GetCursorPosY();
+						ImGui::Image((void*)(intptr_t)mMeshEditorIcon->GetRendererID(), ImVec2(20, 20));
+						ImGui::SameLine();
+
+						ImGui::SameLine();
+						ImGui::SetCursorPosY(meshEditorIconPosY + 3.5f);
+						ImGui::Text("Mesh Container");
+
+						ImGui::Spacing();
+						ImGui::SetNextItemWidth(100);
+						float meshHeaderTextY = ImGui::GetCursorPosY();
+						ImGui::Text("Mesh");
+						ImGui::SameLine();
+
+						ImGui::SetCursorPosY(meshHeaderTextY - 2.5f);
+						if (ImGui::BeginCombo("##Mesh", mCurrentMeshItem))
+						{
+							for (int n = 0; n < IM_ARRAYSIZE(mMeshNameList); n++)
+							{
+								bool is_selected = (mCurrentMeshItem == mMeshNameList[n]); // You can store your selection however you want, outside or inside your objects
+
+								if (ImGui::Selectable(mMeshNameList[n], is_selected))
+								{
+									if (std::string(mMeshNameList[n]) == "Model")
+									{
+										TS_CORE_TRACE("Upcoming feature. An option to set model path and refresh will be added!");// TODO
+									}
+									else
+									{
+										mCurrentMeshItem = mMeshNameList[n];
+										TS_CORE_INFO("Changing mesh to: {0}", mCurrentMeshItem);
+										mSelectedNode->ChangeMesh((PrimitiveType)(n + 1));// n + 1 because we are skipping index 0 which is for Line
+									}
+
+									if (is_selected)
+										ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+								}
+							}
+							ImGui::EndCombo();
+						}
+
+						ImGui::EndChild();
 #pragma endregion
 
 #pragma region Material Editor
-							ImGui::BeginChild("Material Editor", ImVec2(ImGui::GetWindowSize().x - 30.0f, 0), true);
+						ImGui::BeginChild("Material Editor", ImVec2(ImGui::GetWindowSize().x - 30.0f, 0), true);
+						{
+							float materialIconPosY = ImGui::GetCursorPosY();
+							ImGui::Image((void*)(intptr_t)mMaterialEditorIcon->GetRendererID(), ImVec2(20, 20));
+							ImGui::SameLine();
+							ImGui::SetCursorPosY(materialIconPosY + 3.5f);
+
+							ImGui::Text("Material Editor");
+							ImGui::Separator();
+
+							//Show all materials
+							ImGui::BeginChild("##Material Editor");
 							{
-								float materialIconPosY = ImGui::GetCursorPosY();
-								ImGui::Image((void*)(intptr_t)mMaterialEditorIcon->GetRendererID(), ImVec2(20, 20));
-								ImGui::SameLine();
-								ImGui::SetCursorPosY(materialIconPosY + 3.5f);
-
-								ImGui::Text("Material Editor");
-								ImGui::Separator();
-
-								//Show all materials
-								ImGui::BeginChild("##Material Editor");
+								for (int meshIndex = 0; meshIndex < mSelectedNode->GetMeshes().size(); meshIndex++)
 								{
-									for (int meshIndex = 0; meshIndex < mSelectedNode->GetMeshes().size(); meshIndex++)
-									{
-										//Material tree will be collapsed when there are more than 1 meshes in the node
-										mSelectedNode->GetMeshes()[meshIndex]->GetMaterial()->ShowGUI(meshIndex, mSelectedNode->GetMeshes().size() < 2);
-									}
-									ImGui::EndChild();
+									//Material tree will be collapsed when there are more than 1 meshes in the node
+									mSelectedNode->GetMeshes()[meshIndex]->GetMaterial()->ShowGUI(meshIndex, mSelectedNode->GetMeshes().size() < 2);
 								}
-
 								ImGui::EndChild();
 							}
-#pragma endregion
+
+							ImGui::EndChild();
 						}
-						//break;
-
-						//case TS_ENGINE::EntityType::CAMERA:
-						//{
-							//TODO
-						//}
-						//break;
-
-						//case TS_ENGINE::EntityType::LIGHT:
-						//{
-							//TODO
-						//}
-						//break;
-
-						//case TS_ENGINE::EntityType::DEFAULT:
-						//{
-
-						//}
-						//break;
-
+#pragma endregion
 					}
 				}
 
@@ -828,11 +928,24 @@ namespace TS_ENGINE {
 					mJustSelected = true;
 				}
 
-				// Scene camera selected
+				// Set current scene's current camera. Update Camera properties in GUI
 				{
 					if (mSelectedNode->GetEntity()->GetEntityType() == EntityType::CAMERA)
 					{
 						SceneManager::GetInstance()->GetCurrentScene()->SetCurrentSceneCamera(mSelectedNode->GetSceneCamera());
+						
+						if (mSelectedNode->GetSceneCamera()->GetProjectionType() == Camera::ProjectionType::PERSPECTIVE)
+						{
+							mCurrentProjection = "Perspective";
+						}
+						else if (mSelectedNode->GetSceneCamera()->GetProjectionType() == Camera::ProjectionType::ORTHOGRAPHIC)
+						{
+							mCurrentProjection = "Orthographic";
+						}
+						else
+						{
+							mCurrentProjection = "Default";
+						}
 					}
 				}
 

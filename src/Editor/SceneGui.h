@@ -70,6 +70,7 @@ namespace TS_ENGINE {
 		char* mSelectedNodeNameBuffer = new char[256];	
 
 		Ref<Texture2D> mMeshEditorIcon;
+		Ref<Texture2D> mCameraIcon;
 		Ref<Texture2D> mMaterialEditorIcon;
 		Ref<Texture2D> mContentBrowserDirectoryIcon;
 		Ref<Texture2D> mContentBrowserModelFileIcon;
@@ -105,8 +106,13 @@ namespace TS_ENGINE {
 			"Cone",
 			"Model"
 		};
-
 		const char* mCurrentMeshItem = "Default";
+		
+		const char* mProjectionList[2] = {
+			"Perspective",
+			"Orthographic"
+		};
+		const char* mCurrentProjection = "Default";
 
 		int mTransformCurrentItem = 0;
 		int mCurrentMeshIndex = 0;
