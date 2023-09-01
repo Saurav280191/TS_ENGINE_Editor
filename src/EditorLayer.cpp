@@ -51,13 +51,13 @@ void EditorLayer::OnAttach()
 	mEditorCamera->GetNode()->InitializeTransformMatrices();
 
 	//Create and set current scene in SceneManager
-	mScene1 = CreateRef<TS_ENGINE::Scene>("Scene1", mEditorCamera);	
+	Ref<TS_ENGINE::Scene> mScene1 = CreateRef<TS_ENGINE::Scene>("Scene1", mEditorCamera);	
 	TS_ENGINE::SceneManager::GetInstance()->SetCurrentScene(mScene1);
 }
 
 void EditorLayer::OnDetach()
 {
-	mScene1.reset();
+	TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene().reset();
 }
 
 void EditorLayer::OnUpdate(float deltaTime)
@@ -65,14 +65,14 @@ void EditorLayer::OnUpdate(float deltaTime)
 	mDeltaTime = deltaTime;
 	TS_ENGINE::Application::Get().ResetStats();
 
-	mScene1->Render(mCurrentShader, deltaTime);
+	TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->Render(mCurrentShader, deltaTime);
 
 	if(mSceneGui->IsViewportActiveWindow && !mIsControlPressed)
 		mEditorCamera->Controls(deltaTime);
 	 
 	//Editor camera pass
 	{
-		mScene1->UpdateCameraRT(mEditorCamera, mCurrentShader, deltaTime, true);
+		TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->UpdateCameraRT(mEditorCamera, mCurrentShader, deltaTime, true);
 
 		//Render after all gameObjects rendered to show as an overlay.
 		OnOverlayRender();
@@ -107,7 +107,7 @@ void EditorLayer::PickNode(Ref<TS_ENGINE::Node> node, int entityID)
 
 Ref<TS_ENGINE::Node> EditorLayer::PickNodeByEntityID(int entityID)
 {
-	PickNode(mScene1->GetSceneNode(), entityID);
+	PickNode(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode(), entityID);
 	return mMatchingNode;
 }
 
@@ -141,11 +141,23 @@ void EditorLayer::PickGameObject()
 			{
 				Ref<TS_ENGINE::Node> hoveredOnNode = nullptr;
 
-				if (entityID != mScene1->GetSkyboxEntityID())// Avoid skybox selection
+				if (entityID != TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSkyboxEntityID())// Avoid skybox selection
 				{
+					bool clickedOnSceneCamera = false;
+					Ref<TS_ENGINE::SceneCamera> clickedSceneCamera = nullptr;
+					for (auto& sceneCamera : TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneCameras())
+					{						
+						if (sceneCamera->IsSceneCameraGuiSelected(entityID))
+						{
+							clickedOnSceneCamera = true;
+							clickedSceneCamera = sceneCamera;
+							break;
+						}
+					}
+
 					//Check if scene camera's GUI was selected
-					if (mScene1->GetCurrentSceneCamera()->IsSceneCameraGuiSelected(entityID))
-						hoveredOnNode = mScene1->GetCurrentSceneCamera()->GetNode();
+					if (clickedOnSceneCamera)
+						hoveredOnNode = clickedSceneCamera->GetNode();
 					else
 						hoveredOnNode = PickNodeByEntityID(entityID);
 
@@ -250,27 +262,27 @@ void EditorLayer::ShowMainMenuBar()
 			{
 				if (ImGui::MenuItem("Quad"))
 				{
-					TS_ENGINE::Factory::GetInstance()->InstantiateQuad("New Quad", mScene1->GetSceneNode());
+					TS_ENGINE::Factory::GetInstance()->InstantiateQuad("New Quad", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
 				}
 
 				if (ImGui::MenuItem("Cube"))
 				{
-					TS_ENGINE::Factory::GetInstance()->InstantiateCube("New Cube", mScene1->GetSceneNode());					
+					TS_ENGINE::Factory::GetInstance()->InstantiateCube("New Cube", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
 				}
 
 				if (ImGui::MenuItem("Sphere"))
 				{
-					TS_ENGINE::Factory::GetInstance()->InstantiateSphere("New Sphere", mScene1->GetSceneNode());
+					TS_ENGINE::Factory::GetInstance()->InstantiateSphere("New Sphere", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
 				}
 
 				if (ImGui::MenuItem("Cylinder"))
 				{
-					TS_ENGINE::Factory::GetInstance()->InstantiateCylinder("New Cylinder", mScene1->GetSceneNode());
+					TS_ENGINE::Factory::GetInstance()->InstantiateCylinder("New Cylinder", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
 				}
 
 				if (ImGui::MenuItem("Cone"))
 				{
-					TS_ENGINE::Factory::GetInstance()->InstantiateCone("New Cone", mScene1->GetSceneNode());
+					TS_ENGINE::Factory::GetInstance()->InstantiateCone("New Cone", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
 				}
 
 				/*if (ImGui::MenuItem("Model"))
@@ -369,9 +381,9 @@ void EditorLayer::ShowPanels()
 #pragma endregion
 
 		mSceneGui->IsViewportActiveWindow = false;
-		mSceneGui->ShowViewportWindow(mEditorCamera, mScene1->GetCurrentSceneCamera());
+		mSceneGui->ShowViewportWindow(mEditorCamera, TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetCurrentSceneCamera());
 		mSceneGui->ShowInspectorWindow();
-		mSceneGui->ShowHierarchyWindow(mScene1);
+		mSceneGui->ShowHierarchyWindow(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene());
 		mSceneGui->ShowContentBrowser();
 }
 
@@ -461,7 +473,7 @@ bool EditorLayer::OnMouseButtonPressed(TS_ENGINE::MouseButtonPressedEvent& e)
 void EditorLayer::OnOverlayRender()
 {
 	//This should render only for editor camera framebuffer
-	mScene1->GetCurrentSceneCamera()->RenderGui(mCurrentShader, mDeltaTime);//Render Scene camera's GUI
+	TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->ShowSceneCameraGUI(mCurrentShader, mDeltaTime);
 }
 
 //Vector2 GetGridPosFromIndex(size_t index, size_t width)

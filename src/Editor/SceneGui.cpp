@@ -597,15 +597,44 @@ namespace TS_ENGINE {
 				if (ImGui::Button("Duplicate"))
 				{
 					mSelectedNode = nullptr;
-					mHoveringOnNode->GetParentNode()->AddChild(mHoveringOnNode->Duplicate());
-					//TS_CORE_TRACE("Duplicating {0}", mHoveringOnNode->GetName().c_str());
+
+					if (mHoveringOnNode->GetEntity()->GetEntityType() == EntityType::CAMERA)
+					{
+						Factory::GetInstance()->InstantitateDuplicateSceneCamera(mHoveringOnNode->GetSceneCamera());
+					}
+					else// Other nodes
+					{
+						mHoveringOnNode->GetParentNode()->AddChild(mHoveringOnNode->Duplicate());
+						//TS_CORE_TRACE("Duplicating {0}", mHoveringOnNode->GetName().c_str());
+					}
+
 					ImGui::CloseCurrentPopup();
 				}
 
 				if (ImGui::Button("Delete"))
 				{
-					mSelectedNode = nullptr;
-					mHoveringOnNode->Destroy();
+					//Switch to another scene camera if mSelectedNode is scene camera node before deleting
+					if (mHoveringOnNode->GetEntity()->GetEntityType() == EntityType::CAMERA)
+					{
+						TS_CORE_INFO("Total scene cameras are: {0}", SceneManager::GetInstance()->GetCurrentScene()->GetNumSceneCameras());
+
+						if (SceneManager::GetInstance()->GetCurrentScene()->GetNumSceneCameras() > 1)
+						{
+							SceneManager::GetInstance()->GetCurrentScene()->RemoveSceneCamera(mHoveringOnNode->GetSceneCamera());
+							SceneManager::GetInstance()->GetCurrentScene()->SwitchToAnotherSceneCamera(mHoveringOnNode->GetSceneCamera());
+							mSelectedNode = nullptr;
+							mHoveringOnNode->Destroy();
+						}
+						else// Other nodes
+						{
+							TS_CORE_ERROR("Can't delete the last scene camera");
+						}
+					}
+					else
+					{
+						mSelectedNode = nullptr;
+						mHoveringOnNode->Destroy();
+					}
 					//TS_CORE_TRACE("Deleting {0}", mHoveringOnNode->GetName().c_str());
 					ImGui::CloseCurrentPopup();
 				}
@@ -782,73 +811,87 @@ namespace TS_ENGINE {
 		{
 			mSelectedNode = node;
 
-			//Set mSelectedNode transforms
+			if (mSelectedNode != nullptr)
 			{
-				if (node)
+				// Set mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles and mSelectedNodeLocalScale after selection
 				{
-					Quaternion rot;
-					Utility::DecomposeMtx(node->GetTransform()->GetLocalTransformationMatrix(), mSelectedNodeLocalPosition, rot, mSelectedNodeLocalScale);
-					mSelectedNodeLocalEulerAngles = glm::degrees(glm::eulerAngles(rot));
+					if (mSelectedNode)
+					{
+						Quaternion rot;
+						Utility::DecomposeMtx(mSelectedNode->GetTransform()->GetLocalTransformationMatrix(), mSelectedNodeLocalPosition, rot, mSelectedNodeLocalScale);
+						mSelectedNodeLocalEulerAngles = glm::degrees(glm::eulerAngles(rot));
+					}
+
+					if (mSelectedNode)
+						mSelectedNodeNameBuffer = (char*)mSelectedNode->GetEntity()->GetName().c_str();
+
+					mJustSelected = true;
 				}
 
-				if (mSelectedNode)
-					mSelectedNodeNameBuffer = (char*)mSelectedNode->GetEntity()->GetName().c_str();
-
-				mJustSelected = true;
-			}
-
-			if (mSelectedNode && mSelectedNode->HasMeshes())
-			{
-				//Mesh container
+				// Scene camera selected
 				{
-					switch (mSelectedNode->GetMeshes()[0]->GetPrimitiveType())
+					if (mSelectedNode->GetEntity()->GetEntityType() == EntityType::CAMERA)
 					{
-					case PrimitiveType::LINE:
-						mCurrentMeshItem = "Line";
-						break;
-					case PrimitiveType::QUAD:
-						mCurrentMeshItem = "Quad";
-						break;
-					case PrimitiveType::CUBE:
-						mCurrentMeshItem = "Cube";
-						break;
-					case PrimitiveType::SPHERE:
-						mCurrentMeshItem = "Sphere";
-						break;
-					case PrimitiveType::CYLINDER:
-						mCurrentMeshItem = "Cylinder";
-						break;
-					case PrimitiveType::CONE:
-						mCurrentMeshItem = "Cone";
-						break;
-					case PrimitiveType::MODEL:
-						mCurrentMeshItem = "Model";
-						break;
+						SceneManager::GetInstance()->GetCurrentScene()->SetCurrentSceneCamera(mSelectedNode->GetSceneCamera());
 					}
 				}
 
-				// Mesh Renderer
+				// Update Mesh container and Mesh renderer after selection
 				{
-					for (int i = 0; i < mSelectedNode->GetMeshes().size(); i++)
+					if (mSelectedNode && mSelectedNode->HasMeshes())
 					{
-						Material::MaterialGui materialGui;
+						//Mesh container
+						{
+							switch (mSelectedNode->GetMeshes()[0]->GetPrimitiveType())
+							{
+							case PrimitiveType::LINE:
+								mCurrentMeshItem = "Line";
+								break;
+							case PrimitiveType::QUAD:
+								mCurrentMeshItem = "Quad";
+								break;
+							case PrimitiveType::CUBE:
+								mCurrentMeshItem = "Cube";
+								break;
+							case PrimitiveType::SPHERE:
+								mCurrentMeshItem = "Sphere";
+								break;
+							case PrimitiveType::CYLINDER:
+								mCurrentMeshItem = "Cylinder";
+								break;
+							case PrimitiveType::CONE:
+								mCurrentMeshItem = "Cone";
+								break;
+							case PrimitiveType::MODEL:
+								mCurrentMeshItem = "Model";
+								break;
+							}
+						}
 
-						materialGui.mAmbientColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetAmbientColor();
-						materialGui.mDiffuseColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseColor();
-						materialGui.mDiffuseMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMap();
-						materialGui.mDiffuseMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapOffset().y };
-						materialGui.mDiffuseMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapTiling().y };
-						materialGui.mSpecularColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularColor();
-						materialGui.mSpecularMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMap();
-						materialGui.mSpecularMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapOffset().y };
-						materialGui.mSpecularMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapTiling().y };
-						materialGui.mShininess = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetShininess();
-						materialGui.mNormalMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMap();
-						materialGui.mNormalMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapOffset().y };
-						materialGui.mNormalMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapTiling().y };
-						materialGui.mBumpValue = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetBumpValue();
+						// Mesh Renderer
+						{
+							for (int i = 0; i < mSelectedNode->GetMeshes().size(); i++)
+							{
+								Material::MaterialGui materialGui;
 
-						mSelectedNode->GetMeshes()[i]->GetMaterial()->SetMaterialGui(materialGui);
+								materialGui.mAmbientColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetAmbientColor();
+								materialGui.mDiffuseColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseColor();
+								materialGui.mDiffuseMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMap();
+								materialGui.mDiffuseMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapOffset().y };
+								materialGui.mDiffuseMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapTiling().y };
+								materialGui.mSpecularColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularColor();
+								materialGui.mSpecularMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMap();
+								materialGui.mSpecularMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapOffset().y };
+								materialGui.mSpecularMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapTiling().y };
+								materialGui.mShininess = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetShininess();
+								materialGui.mNormalMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMap();
+								materialGui.mNormalMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapOffset().y };
+								materialGui.mNormalMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapTiling().y };
+								materialGui.mBumpValue = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetBumpValue();
+
+								mSelectedNode->GetMeshes()[i]->GetMaterial()->SetMaterialGui(materialGui);
+							}
+						}
 					}
 				}
 			}
@@ -859,8 +902,28 @@ namespace TS_ENGINE {
 	{
 		if (mSelectedNode)
 		{
-			mSelectedNode->Destroy();
-			mSelectedNode = nullptr;
+			// Switch to another scene camera if mSelectedNode is scene camera node
+			if (mSelectedNode->GetEntity()->GetEntityType() == EntityType::CAMERA)
+			{
+				TS_CORE_INFO("Total scene cameras are: {0}", SceneManager::GetInstance()->GetCurrentScene()->GetNumSceneCameras());
+
+				if (SceneManager::GetInstance()->GetCurrentScene()->GetNumSceneCameras() > 1)
+				{
+					SceneManager::GetInstance()->GetCurrentScene()->RemoveSceneCamera(mSelectedNode->GetSceneCamera());
+					SceneManager::GetInstance()->GetCurrentScene()->SwitchToAnotherSceneCamera(mSelectedNode->GetSceneCamera());
+					mSelectedNode->Destroy();
+					mSelectedNode = nullptr;
+				}
+				else
+				{
+					TS_CORE_ERROR("Can't delete the last scene camera");
+				}
+			}
+			else// Other nodes
+			{
+				mSelectedNode->Destroy();
+				mSelectedNode = nullptr;
+			}
 		}
 	}
 
@@ -868,7 +931,14 @@ namespace TS_ENGINE {
 	{
 		if (mSelectedNode)
 		{
-			mSelectedNode->GetParentNode()->AddChild(mSelectedNode->Duplicate());
+			if (mSelectedNode->GetEntity()->GetEntityType() == EntityType::CAMERA)
+			{
+				Factory::GetInstance()->InstantitateDuplicateSceneCamera(mSelectedNode->GetSceneCamera());
+			}
+			else// Other nodes
+			{
+				mSelectedNode->GetParentNode()->AddChild(mSelectedNode->Duplicate());
+			}
 		}
 	}
 }

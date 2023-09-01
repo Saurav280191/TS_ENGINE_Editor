@@ -71,7 +71,6 @@ private:
 	bool mIsControlPressed = false;
 	ImGuiWindowFlags defaultWindowFlags;
 
-	Ref<TS_ENGINE::Scene> mScene1;
 	Ref<TS_ENGINE::SceneGui> mSceneGui;
 	float mAspectRatio;
 	
