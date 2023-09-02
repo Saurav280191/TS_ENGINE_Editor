@@ -76,7 +76,7 @@ namespace TS_ENGINE {
 		}
 	}
 
-	void SceneGui::ShowViewportWindow(Ref<TS_ENGINE::Camera> editorCamera, Ref<TS_ENGINE::Camera> currentSceneCamera)
+	void SceneGui::ShowViewportWindow()
 	{
 		ImGui::Begin("Viewport", 0, ImGuiWindowFlags_NoDecoration);// | ImGuiWindowFlags_NoDocking);
 		{
@@ -91,22 +91,28 @@ namespace TS_ENGINE {
 			mViewportBounds[0] = { ImGui::GetWindowPos().x, ImGui::GetWindowPos().y };
 			mViewportBounds[1] = { ImGui::GetWindowPos().x + ImGui::GetWindowSize().x, ImGui::GetWindowPos().y + ImGui::GetWindowSize().y };
 
-			//Resize editor camera's frambuffer size
-			if (TS_ENGINE::FramebufferSpecification spec = editorCamera->GetFramebuffer()->GetSpecification();
-				cameraFramebufferWindowSize.x > 0.0f && cameraFramebufferWindowSize.y > 0.0f && // zero sized framebuffer is invalid
-				(spec.Width != cameraFramebufferWindowSize.x || spec.Height != cameraFramebufferWindowSize.y))
+			if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 			{
-				editorCamera->GetFramebuffer()->Resize((uint32_t)cameraFramebufferWindowSize.x, (uint32_t)cameraFramebufferWindowSize.y);
-			}
+				if (Ref<EditorCamera> editorCamera = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetEditorCamera())
+				{
+					//Resize editor camera's frambuffer size
+					if (TS_ENGINE::FramebufferSpecification spec = editorCamera->GetFramebuffer()->GetSpecification();
+						cameraFramebufferWindowSize.x > 0.0f && cameraFramebufferWindowSize.y > 0.0f && // zero sized framebuffer is invalid
+						(spec.Width != cameraFramebufferWindowSize.x || spec.Height != cameraFramebufferWindowSize.y))
+					{
+						editorCamera->GetFramebuffer()->Resize((uint32_t)cameraFramebufferWindowSize.x, (uint32_t)cameraFramebufferWindowSize.y);
+					}
 
-			//Camera framebuffer output image
-			{
-				uint64_t editorCameraRenderTextureID = editorCamera->GetFramebuffer()->GetColorAttachmentRendererID();
-				//TS_CORE_INFO("Editor camera framebuffer size {0}, {1} ", 
-				//	editorCamera->GetFramebuffer()->GetSpecification().Width, editorCamera->GetFramebuffer()->GetSpecification().Height);
+					//Camera framebuffer output image
+					{
+						uint64_t editorCameraRenderTextureID = editorCamera->GetFramebuffer()->GetColorAttachmentRendererID();
+						//TS_CORE_INFO("Editor camera framebuffer size {0}, {1} ", 
+						//	editorCamera->GetFramebuffer()->GetSpecification().Width, editorCamera->GetFramebuffer()->GetSpecification().Height);
 
-				ImGui::Image(reinterpret_cast<void*>(editorCameraRenderTextureID), cameraFramebufferWindowSize, ImVec2(0, 1), ImVec2(1, 0));
-				DropItemInViewport();
+						ImGui::Image(reinterpret_cast<void*>(editorCameraRenderTextureID), cameraFramebufferWindowSize, ImVec2(0, 1), ImVec2(1, 0));
+						DropItemInViewport();
+					}
+				}
 			}
 
 			//ImGuizmo
@@ -123,10 +129,13 @@ namespace TS_ENGINE {
 				const float* projection = nullptr;
 				const float* view = nullptr;
 
-				if (editorCamera)
+				if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 				{
-					projection = glm::value_ptr(editorCamera->GetProjectionMatrix());
-					view = glm::value_ptr(editorCamera->GetViewMatrix());
+					if (Ref<EditorCamera> editorCamera = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetEditorCamera())
+					{
+						projection = glm::value_ptr(editorCamera->GetProjectionMatrix());
+						view = glm::value_ptr(editorCamera->GetViewMatrix());
+					}
 				}
 
 				float* identityMatrix = (float*)glm::value_ptr(Matrix4(1));
@@ -139,23 +148,26 @@ namespace TS_ENGINE {
 			}
 
 			//Scene camera frambuffer image
-			if (currentSceneCamera)
+			if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 			{
-				ImVec2 sceneCameraFramebufferViewportWindowSize = ImVec2(200.0f * TS_ENGINE::Application::Get().GetWindow().GetAspectRatio(), 200.0f);
-				ImVec2 sceneCameraFramebufferViewportWindowPos = ImGui::GetWindowSize() - sceneCameraFramebufferViewportWindowSize - ImVec2(10, 10);
+				if (Ref<SceneCamera> currentSceneCamera = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetCurrentSceneCamera())
+				{
+					ImVec2 sceneCameraFramebufferViewportWindowSize = ImVec2(200.0f * TS_ENGINE::Application::Get().GetWindow().GetAspectRatio(), 200.0f);
+					ImVec2 sceneCameraFramebufferViewportWindowPos = ImGui::GetWindowSize() - sceneCameraFramebufferViewportWindowSize - ImVec2(10, 10);
 
-				ImGui::SetCursorPos(sceneCameraFramebufferViewportWindowPos);
+					ImGui::SetCursorPos(sceneCameraFramebufferViewportWindowPos);
 
-				uint64_t textureID = currentSceneCamera->GetFramebuffer()->GetColorAttachmentRendererID();
-				ImGui::Image(reinterpret_cast<void*>(textureID), sceneCameraFramebufferViewportWindowSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+					uint64_t textureID = currentSceneCamera->GetFramebuffer()->GetColorAttachmentRendererID();
+					ImGui::Image(reinterpret_cast<void*>(textureID), sceneCameraFramebufferViewportWindowSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 
-				// Calculate border coordinates
-				ImVec2 borderMin = sceneCameraFramebufferViewportWindowPos + ImVec2(0, 20);
-				ImVec2 borderMax = sceneCameraFramebufferViewportWindowPos + sceneCameraFramebufferViewportWindowSize + ImVec2(0, 20);
+					// Calculate border coordinates
+					ImVec2 borderMin = sceneCameraFramebufferViewportWindowPos + ImVec2(0, 20);
+					ImVec2 borderMax = sceneCameraFramebufferViewportWindowPos + sceneCameraFramebufferViewportWindowSize + ImVec2(0, 20);
 
-				// Draw the border
-				ImDrawList* drawList = ImGui::GetWindowDrawList();
-				drawList->AddRect(borderMin, borderMax, IM_COL32(255, 255, 255, 255), 0.0f, 0, 3.0f);
+					// Draw the border
+					ImDrawList* drawList = ImGui::GetWindowDrawList();
+					drawList->AddRect(borderMin, borderMax, IM_COL32(255, 255, 255, 255), 0.0f, 0, 3.0f);
+				}
 			}
 		}
 		ImGui::End();
@@ -330,12 +342,12 @@ namespace TS_ENGINE {
 						{
 							for (int n = 0; n < IM_ARRAYSIZE(mProjectionList); n++)
 							{
-								bool is_selected = (mCurrentProjection == mProjectionList[n]); 
+								bool is_selected = (mCurrentProjection == mProjectionList[n]);
 
 								if (ImGui::Selectable(mProjectionList[n], is_selected))
 								{
 									mCurrentProjection = mProjectionList[n];
-									TS_CORE_INFO("Changing camera type to: {0}", mCurrentProjection);									
+									TS_CORE_INFO("Changing camera type to: {0}", mCurrentProjection);
 									mSelectedNode->GetSceneCamera()->SetProjectionType((Camera::ProjectionType)n);
 									mSelectedNode->GetSceneCamera()->RefreshFrustrumGUI();
 									if (is_selected)
@@ -355,7 +367,7 @@ namespace TS_ENGINE {
 							ImGui::SameLine();
 							float fov = mSelectedNode->GetSceneCamera()->GetPerspective().fov;
 							ImGui::SetCursorPosX(165);
-							if(ImGui::SliderFloat("##Field Of View", &fov, 30.0f, 90.0f))
+							if (ImGui::SliderFloat("##Field Of View", &fov, 30.0f, 90.0f))
 							{
 								mSelectedNode->GetSceneCamera()->SetFieldOfView(fov);
 								mSelectedNode->GetSceneCamera()->RefreshFrustrumGUI();
@@ -376,7 +388,7 @@ namespace TS_ENGINE {
 								mSelectedNode->GetSceneCamera()->SetNearPlane(zNear);
 								mSelectedNode->GetSceneCamera()->RefreshFrustrumGUI();
 							}
-							
+
 							ImGui::SetCursorPosX(nearTextPosX);
 							ImGui::Text("Far ");
 							ImGui::SameLine();
@@ -658,7 +670,7 @@ namespace TS_ENGINE {
 		mTransformOperation = ImGuizmo::OPERATION::SCALE;
 	}
 
-	void SceneGui::ShowHierarchyWindow(Ref<TS_ENGINE::Scene> scene)
+	void SceneGui::ShowHierarchyWindow()
 	{
 		ImGui::Begin("Hierarchy");
 		{
@@ -667,20 +679,23 @@ namespace TS_ENGINE {
 			ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_OpenOnArrow;
 			int nodeTreeGuiIndex = 0;
 
-			if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, scene->GetSceneNode()->GetEntity()->GetName().c_str()))
+			if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 			{
-				nodeTreeGuiIndex++;
-
-				DragHierarchySceneNode(scene->GetSceneNode());
-				DropHierarchySceneNode(scene->GetSceneNode());
-
-				if (ImGui::IsItemClicked())
+				if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName().c_str()))
 				{
-					SetSelectedNode(scene->GetSceneNode());
-				}
+					nodeTreeGuiIndex++;
 
-				CreateUIForAllNodes(nodeTreeGuiIndex, scene->GetSceneNode());
-				ImGui::TreePop();
+					DragHierarchySceneNode(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+					DropHierarchySceneNode(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+
+					if (ImGui::IsItemClicked())
+					{
+						SetSelectedNode(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+					}
+
+					CreateUIForAllNodes(nodeTreeGuiIndex, TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+					ImGui::TreePop();
+				}
 			}
 		}
 		ImGui::End();
@@ -933,7 +948,7 @@ namespace TS_ENGINE {
 					if (mSelectedNode->GetEntity()->GetEntityType() == EntityType::CAMERA)
 					{
 						SceneManager::GetInstance()->GetCurrentScene()->SetCurrentSceneCamera(mSelectedNode->GetSceneCamera());
-						
+
 						if (mSelectedNode->GetSceneCamera()->GetProjectionType() == Camera::ProjectionType::PERSPECTIVE)
 						{
 							mCurrentProjection = "Perspective";

@@ -25,10 +25,10 @@ namespace TS_ENGINE {
 
 		void ShowTransformGizmos(const float* view, const float* projection);
 
-		void ShowViewportWindow(Ref<TS_ENGINE::Camera> editorCamera, Ref<TS_ENGINE::Camera> currentSceneCamera);
+		void ShowViewportWindow();
 		void ShowStatsWindow(ImVec2 statsPanelPos, ImVec2 statsPanelSize);
 		void ShowInspectorWindow();
-		void ShowHierarchyWindow(Ref<TS_ENGINE::Scene> scene);
+		void ShowHierarchyWindow();
 		void ShowContentBrowser();
 
 		Ref<Node> GetSelectedNode() { return mSelectedNode; }
