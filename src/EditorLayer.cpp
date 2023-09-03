@@ -285,61 +285,66 @@ void EditorLayer::ShowMainMenuBar()
 			ImGui::EndMenu();
 		}*/
 
-		if (ImGui::BeginMenu("Create"))
+		if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 		{
-			if (ImGui::BeginMenu("Primitive"))
+			if (ImGui::BeginMenu("Create"))
 			{
-				if (ImGui::MenuItem("Quad"))
+				if (ImGui::BeginMenu("Primitive"))
 				{
-					TS_ENGINE::Factory::GetInstance()->InstantiateQuad("New Quad", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+					if (ImGui::MenuItem("Quad"))
+					{
+						TS_ENGINE::Factory::GetInstance()->InstantiateQuad("New Quad", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+					}
+
+					if (ImGui::MenuItem("Cube"))
+					{
+						TS_ENGINE::Factory::GetInstance()->InstantiateCube("New Cube", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+					}
+
+					if (ImGui::MenuItem("Sphere"))
+					{
+						TS_ENGINE::Factory::GetInstance()->InstantiateSphere("New Sphere", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+					}
+
+					if (ImGui::MenuItem("Cylinder"))
+					{
+						TS_ENGINE::Factory::GetInstance()->InstantiateCylinder("New Cylinder", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+					}
+
+					if (ImGui::MenuItem("Cone"))
+					{
+						TS_ENGINE::Factory::GetInstance()->InstantiateCone("New Cone", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+					}
+
+					/*if (ImGui::MenuItem("Model"))
+					{
+						TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::MODEL);
+					}*/
+
+					ImGui::EndMenu();
 				}
-
-				if (ImGui::MenuItem("Cube"))
+				
+				if (ImGui::BeginMenu("Light"))
 				{
-					TS_ENGINE::Factory::GetInstance()->InstantiateCube("New Cube", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+					if (ImGui::MenuItem("Directional"))
+					{
+
+					}
+
+					if (ImGui::MenuItem("Point"))
+					{
+
+					}
+
+					if (ImGui::MenuItem("Spot"))
+					{
+
+					}
+					ImGui::EndMenu();
 				}
-
-				if (ImGui::MenuItem("Sphere"))
-				{
-					TS_ENGINE::Factory::GetInstance()->InstantiateSphere("New Sphere", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
-				}
-
-				if (ImGui::MenuItem("Cylinder"))
-				{
-					TS_ENGINE::Factory::GetInstance()->InstantiateCylinder("New Cylinder", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
-				}
-
-				if (ImGui::MenuItem("Cone"))
-				{
-					TS_ENGINE::Factory::GetInstance()->InstantiateCone("New Cone", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
-				}
-
-				/*if (ImGui::MenuItem("Model"))
-				{
-					TS_ENGINE::Factory::GetInstance()->CreateGameObject(TS_ENGINE::PrimitiveType::MODEL);
-				}*/
-
+				
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Light"))
-			{
-				if (ImGui::MenuItem("Directional"))
-				{
-
-				}
-
-				if (ImGui::MenuItem("Point"))
-				{
-
-				}
-
-				if (ImGui::MenuItem("Spot"))
-				{
-
-				}
-				ImGui::EndMenu();
-			}
-			ImGui::EndMenu();
 		}
 
 		ImGui::EndMainMenuBar();
