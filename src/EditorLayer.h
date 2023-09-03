@@ -73,8 +73,8 @@ private:
 
 	Ref<TS_ENGINE::SceneGui> mSceneGui;
 	//float mAspectRatio;
-	//Ref<TS_ENGINE::EditorCamera> mEditorCamera;	
-
+	//Ref<TS_ENGINE::EditorCamera> mEditorCamera;
+	
 	ImVec2 mViewportPanelPos;
 	ImVec2 mViewportPanelSize;
 

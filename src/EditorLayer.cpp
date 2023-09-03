@@ -134,18 +134,16 @@ void EditorLayer::PickGameObject()
 	{
 		//Picking code
 		auto [mx, my] = ImGui::GetMousePos();
+		
+		mx -= mSceneGui->GetViewportImageRect()->x;
+		my -= mSceneGui->GetViewportImageRect()->y;
 
-		mx -= mSceneGui->GetViewportBounds()[0].x;
-		my -= mSceneGui->GetViewportBounds()[0].y;
+		my = mSceneGui->GetViewportImageRect()->h - my;
 
-		glm::vec2 viewportSize = mSceneGui->GetViewportBounds()[1] - mSceneGui->GetViewportBounds()[0];
+		int mouseX = (int)mx - 8;//TODO: Offset (-8, 38) is needed for proper picking. Need to find the root cause of this issue.
+		int mouseY = (int)my + 38;//This is probably because the viewport has borders
 
-		my = viewportSize.y - my;
-
-		int mouseX = (int)mx - 8;//TODO: Offset (-8, 26) is needed for proper picking. Need to find the root cause of this issue.
-		int mouseY = (int)my + 26;
-
-		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
+		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)mSceneGui->GetViewportImageRect()->w && mouseY < (int)mSceneGui->GetViewportImageRect()->h)
 		{
 			//Vector4 pixelColor = mEditorCamera->GetFramebuffer()->ReadPixelColor(0, mouseX, mouseY);
 			//mPickedColor = ImVec4(pixelColor.x / 255.0f, pixelColor.y / 255.0f, pixelColor.z / 255.0f, pixelColor.z / 255.0f);
@@ -239,7 +237,16 @@ void EditorLayer::ShowMainMenuBar()
 			}
 			if (ImGui::MenuItem("Save", "CTRL+S"))
 			{
-				TS_ENGINE::SceneManager::GetInstance()->SaveCurrentScene();
+				if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
+				{
+					TS_ENGINE::SceneManager::GetInstance()->SaveCurrentScene();
+					std::string sceneName = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName();
+					mSceneGui->TakeSnapshot("..\\..\\..\\Resources\\SavedSceneThumbnails\\" + sceneName + ".png");
+				}
+				else
+				{
+					TS_CORE_ERROR("Current scene is not set!");
+				}
 			}
 			ImGui::EndMenu();
 		}
@@ -452,6 +459,33 @@ bool EditorLayer::OnKeyPressed(TS_ENGINE::KeyPressedEvent& e)
 		if (mIsControlPressed)
 		{
 			mSceneGui->DuplicatedSelectedNode();
+		}
+		break;
+	case TS_ENGINE::Key::N:
+		if (mIsControlPressed)
+		{
+			TS_ENGINE::SceneManager::GetInstance()->CreateNewScene();
+		}
+		break;
+	case TS_ENGINE::Key::O:
+		if (mIsControlPressed)
+		{
+			
+		}
+		break;
+	case TS_ENGINE::Key::S:
+		if (mIsControlPressed)
+		{
+			if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
+			{
+				TS_ENGINE::SceneManager::GetInstance()->SaveCurrentScene();
+				std::string sceneName = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName();
+				mSceneGui->TakeSnapshot("..\\..\\..\\Resources\\SavedSceneThumbnails\\" + sceneName + ".png");
+			}
+			else
+			{
+				TS_CORE_ERROR("Current scene is not set!");
+			}
 		}
 		break;
 	case TS_ENGINE::Key::Q:

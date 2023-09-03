@@ -30,6 +30,8 @@ namespace TS_ENGINE {
 		void ShowInspectorWindow();
 		void ShowHierarchyWindow();
 		void ShowContentBrowser();
+		
+		void TakeSnapshot(const std::string& snapshotPath);
 
 		Ref<Node> GetSelectedNode() { return mSelectedNode; }
 
@@ -46,7 +48,7 @@ namespace TS_ENGINE {
 
 		ImVec2 GetViewportSize() { return mViewportSize; }
 
-		Vector2* GetViewportBounds() { return mViewportBounds; }
+		Ref<Rect> GetViewportImageRect() { return mViewportImageRect; }
 
 		void DeleteSelectedNode();
 		void DuplicatedSelectedNode();
@@ -67,6 +69,8 @@ namespace TS_ENGINE {
 		void DropHierarchySceneNode(Ref<Node> targetParentNode);		
 		void DropItemInViewport();
 		
+		void CaptureSnapshot(Ref<Rect> rect, std::string path);
+		
 		char* mSelectedNodeNameBuffer = new char[256];	
 
 		Ref<Texture2D> mMeshEditorIcon;
@@ -77,6 +81,8 @@ namespace TS_ENGINE {
 		Ref<Texture2D> mContentBrowserImageFileIcon;
 		Ref<Texture2D> mContentBrowserShaderFileIcon;
 		Ref<Texture2D> mContentBrowserMiscFileIcon;
+		Ref<Texture2D> mSceneFileIcon;
+		std::unordered_map<std::string, Ref<Texture2D>> mSavedSceneThumbnails;
 	
 	private:
 		Ref<Node> mSelectedNode = nullptr;
@@ -94,7 +100,10 @@ namespace TS_ENGINE {
 
 		ImVec2 mViewportPos;
 		ImVec2 mViewportSize;
-		Vector2 mViewportBounds[2];
+		Ref<Rect> mViewportImageRect;
+
+		bool mTakeSnap = false;
+		std::string mSnapshotPath = "";
 
 		const char* mTransformComboItems[2];// = new const char* [2] {"Local", "World"};
 		const char* mMeshNameList[6] = {
