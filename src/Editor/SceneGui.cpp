@@ -323,8 +323,10 @@ namespace TS_ENGINE {
 				ImGui::Checkbox(" ", &GetSelectedNode()->m_Enabled);
 				ImGui::SameLine();
 
-				ImGui::InputText("##NodeNameText", mSelectedNodeNameBuffer, IM_ARRAYSIZE(mSelectedNodeNameBuffer));
-
+				if(ImGui::InputText("##NodeNameText", mSelectedNodeNameBuffer, IM_ARRAYSIZE(mSelectedNodeNameBuffer)))
+				{
+					mSelectedNode->GetEntity()->SetName(mSelectedNodeNameBuffer);
+				}
 #pragma region Transform Component
 				ImGui::BeginChild("Transform", ImVec2(ImGui::GetWindowSize().x - 30.0f, 128.0f), true);
 
