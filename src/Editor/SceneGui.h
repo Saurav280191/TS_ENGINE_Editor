@@ -17,7 +17,8 @@ namespace TS_ENGINE {
 		{
 			TEXTURE,
 			MODEL,
-			MATERIAL
+			MATERIAL,
+			SCENE
 		};		
 
 		SceneGui();
