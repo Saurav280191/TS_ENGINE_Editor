@@ -9,6 +9,8 @@ namespace TS_ENGINE {
 
 	SceneGui::SceneGui()
 	{
+		mEditorCameraRenderTextureID = 0;
+
 		mTransformComboItems[0] = "Local";
 		mTransformComboItems[1] = "World";
 
@@ -114,8 +116,6 @@ namespace TS_ENGINE {
 			mViewportPos = ImGui::GetWindowPos();
 			mViewportSize = ImGui::GetWindowSize();
 
-			uint64_t editorCameraRenderTextureID = 0;
-
 			if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 			{
 				if (Ref<EditorCamera> editorCamera = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetEditorCamera())
@@ -128,7 +128,7 @@ namespace TS_ENGINE {
 						editorCamera->GetFramebuffer()->Resize((uint32_t)cameraFramebufferWindowSize.x, (uint32_t)cameraFramebufferWindowSize.y);
 						//TS_CORE_INFO("Editor camera framebuffer size {0}, {1} ", 
 						//	editorCamera->GetFramebuffer()->GetSpecification().Width, editorCamera->GetFramebuffer()->GetSpecification().Height);						
-						editorCameraRenderTextureID = editorCamera->GetFramebuffer()->GetColorAttachmentRendererID();
+						mEditorCameraRenderTextureID = editorCamera->GetFramebuffer()->GetColorAttachmentRendererID();
 					}
 				}
 			}
@@ -136,7 +136,7 @@ namespace TS_ENGINE {
 			//Camera framebuffer output image
 			{
 				mViewportImageRect = CreateRef<Rect>(mViewportPos.x, mViewportPos.y, mViewportSize.x, mViewportSize.y - 35);
-				ImGui::Image(reinterpret_cast<void*>(editorCameraRenderTextureID), ImVec2(mViewportImageRect->w, mViewportImageRect->h), ImVec2(0, 1), ImVec2(1, 0));
+				ImGui::Image(reinterpret_cast<void*>(mEditorCameraRenderTextureID), ImVec2(mViewportImageRect->w, mViewportImageRect->h), ImVec2(0, 1), ImVec2(1, 0));
 				ImVec2 imageMin = ImGui::GetItemRectMin();
 				ImVec2 imageMax = ImGui::GetItemRectMax();
 				ImVec2 size = imageMax - imageMin;

@@ -74,6 +74,7 @@ namespace TS_ENGINE {
 		void CaptureSnapshot(Ref<Rect> rect, std::string path);
 	
 	private:
+		uint64_t mEditorCameraRenderTextureID = 0;
 		char mSelectedNodeNameBuffer[256] = "";
 		char mNewSceneText[256] = "NewScene";
 
