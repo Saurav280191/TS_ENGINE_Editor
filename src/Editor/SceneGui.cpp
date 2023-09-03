@@ -211,6 +211,42 @@ namespace TS_ENGINE {
 
 	}
 
+	void SceneGui::ShowNewSceneWindow()
+	{
+		ImGuiStyle& style = ImGui::GetStyle();
+		style.Colors[ImGuiCol_Border] = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
+
+		ImGui::SetNextWindowPos(ImVec2(Application::Get().GetWindow().GetWidth() / 2 - 200.0f, Application::Get().GetWindow().GetHeight() / 2 - 150.0f));
+		ImGui::SetNextWindowSize(ImVec2(200, 100));
+		
+		ImGui::Begin("New Scene", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
+		{		
+			ImGui::SetNextItemWidth(200.0f);
+			ImGui::SetCursorPosY(35.0f);
+			ImGui::InputText("##NewSceneName", mNewSceneText, IM_ARRAYSIZE(mNewSceneText));
+			ImGui::Spacing();
+			
+			ImGui::SetCursorPos(ImVec2(50.0f, 70.0f));
+			if (ImGui::Button("CANCEL"))
+			{
+				m_ShowNewSceneWindow = false;
+			}
+			
+			ImGui::SameLine();
+			
+			if(ImGui::Button("  OK  "))
+			{
+				SceneManager::GetInstance()->CreateNewScene(mNewSceneText);
+				m_ShowNewSceneWindow = false;				
+			}
+			
+			ImGui::End();
+		}
+
+		style.Colors[ImGuiCol_Border] = ImVec4(0.430000007f, 0.430000007f, 0.5f, 0.5f);
+		//style.WindowBorderSize = 1.0f;		
+	}
+
 	void SceneGui::TakeSnapshot(const std::string& snapshotPath)
 	{
 		mSnapshotPath = snapshotPath;
@@ -286,7 +322,7 @@ void SceneGui::ShowInspectorWindow()
 			ImGui::Checkbox(" ", &GetSelectedNode()->m_Enabled);
 			ImGui::SameLine();
 
-			ImGui::InputText("##NodeNameText", mSelectedNodeNameBuffer, sizeof(mSelectedNodeNameBuffer));
+			ImGui::InputText("##NodeNameText", mSelectedNodeNameBuffer, IM_ARRAYSIZE(mSelectedNodeNameBuffer));
 
 #pragma region Transform Component
 			ImGui::BeginChild("Transform", ImVec2(ImGui::GetWindowSize().x - 30.0f, 128.0f), true);
@@ -1012,7 +1048,13 @@ void SceneGui::SetSelectedNode(Ref<Node> node)
 				}
 
 				if (mSelectedNode)
-					mSelectedNodeNameBuffer = (char*)mSelectedNode->GetEntity()->GetName().c_str();
+				{
+					// Copy the constant string into textBuffer
+					strncpy(mSelectedNodeNameBuffer, mSelectedNode->GetEntity()->GetName().c_str(), sizeof(mSelectedNodeNameBuffer));
+
+					// Ensure null-termination (if the string is shorter than the buffer)
+					mSelectedNodeNameBuffer[sizeof(mSelectedNodeNameBuffer) - 1] = '\0';
+				}
 
 				mJustSelected = true;
 			}

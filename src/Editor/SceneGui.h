@@ -30,6 +30,7 @@ namespace TS_ENGINE {
 		void ShowInspectorWindow();
 		void ShowHierarchyWindow();
 		void ShowContentBrowser();
+		void ShowNewSceneWindow();
 		
 		void TakeSnapshot(const std::string& snapshotPath);
 
@@ -59,7 +60,7 @@ namespace TS_ENGINE {
 		Vector3 mSelectedNodeLocalScale = Vector3(1, 1, 1);
 		
 		bool IsViewportActiveWindow = false;
-
+		bool m_ShowNewSceneWindow = false;
 	private:	
 		void CreateUIForAllNodes(int& nodeTreeGuiIndex, Ref<Node> node);
 
@@ -70,8 +71,10 @@ namespace TS_ENGINE {
 		void DropItemInViewport();
 		
 		void CaptureSnapshot(Ref<Rect> rect, std::string path);
-		
-		char* mSelectedNodeNameBuffer = new char[256];	
+	
+	private:
+		char mSelectedNodeNameBuffer[256] = "";
+		char mNewSceneText[256] = "NewScene";
 
 		Ref<Texture2D> mMeshEditorIcon;
 		Ref<Texture2D> mCameraIcon;
@@ -84,10 +87,9 @@ namespace TS_ENGINE {
 		Ref<Texture2D> mSceneFileIcon;
 		std::unordered_map<std::string, Ref<Texture2D>> mSavedSceneThumbnails;
 	
-	private:
 		Ref<Node> mSelectedNode = nullptr;
 		Ref<Node> mHoveringOnNode = nullptr;
-		bool mNodePopedUp = false;
+		bool mNodePopedUp = false;		
 
 		//ImGuizmo params
 		ImGuizmo::OPERATION mTransformOperation = ImGuizmo::OPERATION::TRANSLATE;

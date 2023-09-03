@@ -208,7 +208,7 @@ void EditorLayer::OnImGuiRender()
 	ImGuiStyle& style = ImGui::GetStyle();
 	float minWinSizeX = style.WindowMinSize.x;
 	style.WindowMinSize.x = minWinSizeX;
-	style.WindowBorderSize = 0.0f;
+	style.WindowBorderSize = 1.0f;
 
 	defaultWindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
 
@@ -229,12 +229,14 @@ void EditorLayer::ShowMainMenuBar()
 		{
 			if (ImGui::MenuItem("NewScene", "CTRL+N"))
 			{
-				TS_ENGINE::SceneManager::GetInstance()->CreateNewScene();
+				if (!mSceneGui->m_ShowNewSceneWindow)
+					mSceneGui->m_ShowNewSceneWindow = true;
+				//TS_ENGINE::SceneManager::GetInstance()->CreateNewScene();
 			}
-			if (ImGui::MenuItem("Open", "CTRL+O"))
+			/*if (ImGui::MenuItem("Open", "CTRL+O"))
 			{
 
-			}
+			}*/
 			if (ImGui::MenuItem("Save", "CTRL+S"))
 			{
 				if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
@@ -412,6 +414,9 @@ void EditorLayer::ShowPanels()
 	mSceneGui->ShowInspectorWindow();
 	mSceneGui->ShowHierarchyWindow();
 	mSceneGui->ShowContentBrowser();
+	
+	if (mSceneGui->m_ShowNewSceneWindow)
+		mSceneGui->ShowNewSceneWindow();
 }
 
 #pragma endregion
@@ -464,7 +469,9 @@ bool EditorLayer::OnKeyPressed(TS_ENGINE::KeyPressedEvent& e)
 	case TS_ENGINE::Key::N:
 		if (mIsControlPressed)
 		{
-			TS_ENGINE::SceneManager::GetInstance()->CreateNewScene();
+			if(!mSceneGui->m_ShowNewSceneWindow)
+				mSceneGui->m_ShowNewSceneWindow = true;
+			//TS_ENGINE::SceneManager::GetInstance()->CreateNewScene();
 		}
 		break;
 	case TS_ENGINE::Key::O:
