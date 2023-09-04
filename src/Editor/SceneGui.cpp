@@ -267,6 +267,20 @@ namespace TS_ENGINE {
 		image->height = rect->h;
 
 		image->WritePixelsToFile(path);
+
+		// Set current pixels to corresponding texture in mSavedSceneThumbnails map
+		const char* sceneName = SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName().c_str();
+		auto it = mSavedSceneThumbnails.find(sceneName);
+		
+		Ref<Texture2D> latestSceneSnap = Texture2D::Create(rect->w, rect->h);
+		latestSceneSnap->SetData(pixels.data(), 4 * rect->w * rect->h);
+
+		if (it != mSavedSceneThumbnails.end())
+		{		
+			mSavedSceneThumbnails[sceneName] = latestSceneSnap;
+			//mSavedSceneThumbnails[sceneName]->SetData(pixels.data(), 4 * rect->w * rect->h);// Should not change the data of the existing texture. 
+																							  // If the viewport size changes the width and height of the texture will change.
+		}
 	}
 
 	void SceneGui::ShowStatsWindow(ImVec2 statsPanelPos, ImVec2 statsPanelSize)
