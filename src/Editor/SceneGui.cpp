@@ -1027,10 +1027,13 @@ namespace TS_ENGINE {
 	{
 		if (ImGui::BeginDragDropTarget())
 		{
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_MODEL"))
+			if (SceneManager::GetInstance()->GetCurrentScene())
 			{
-				const char* draggedModelPath = reinterpret_cast<const char*>(payload->Data);
-				Factory::GetInstance()->InstantiateModel(draggedModelPath, SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_MODEL"))
+				{
+					const char* draggedModelPath = reinterpret_cast<const char*>(payload->Data);
+					Factory::GetInstance()->InstantiateModel(draggedModelPath, SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+				}
 			}
 
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_SCENE"))
