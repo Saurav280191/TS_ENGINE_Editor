@@ -594,9 +594,12 @@ namespace TS_ENGINE {
 									}
 									else
 									{
-										mCurrentMeshItem = mMeshNameList[n];
-										TS_CORE_INFO("Changing mesh to: {0}", mCurrentMeshItem);
-										mSelectedNode->ChangeMesh((PrimitiveType)(n + 1));// n + 1 because we are skipping index 0 which is for Line
+										if (mSelectedNode->GetMeshes()[0]->GetPrimitiveType() != PrimitiveType::MODEL)//Avoid changing model's mesh
+										{
+											mCurrentMeshItem = mMeshNameList[n];
+											TS_CORE_INFO("Changing mesh to: {0}", mCurrentMeshItem);
+											mSelectedNode->ChangeMesh((PrimitiveType)(n + 1));// n + 1 because we are skipping index 0 which is for Line
+										}
 									}
 
 									if (is_selected)
