@@ -5,6 +5,7 @@
 namespace TS_ENGINE {
 
 	static std::filesystem::path mAssetsPath = "..\\..\\..\\Assets";
+	static std::filesystem::path mResourcesPath = "..\\..\\..\\Resources";
 	static std::filesystem::path mSavedScenesPath = "..\\..\\..\\Resources\\SavedSceneThumbnails";
 
 	SceneGui::SceneGui()
@@ -17,33 +18,23 @@ namespace TS_ENGINE {
 		mTakeSnap = false;
 		mSnapshotPath = "";
 
-		mMeshEditorIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\MeshEditor.png");
-		//mMeshEditorIcon->SetVerticalFlip(false);
+		mMeshEditorIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\MeshEditor.png");		
 		mCameraIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\Camera.png");
-		//mCameraIcon->SetVerticalFlip(false);
 		mMaterialEditorIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\LitMaterialIcon.png");
-		//mMaterialEditorIcon->SetVerticalFlip(false);
 
-		mContentBrowserDirectoryIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\ContentBrowserDirectoryIcon.png");
-		//mContentBrowserDirectoryIcon->SetVerticalFlip(false);
-		mContentBrowserModelFileIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\ContentBrowserModelFileIcon.png");
-		//mContentBrowserModelFileIcon->SetVerticalFlip(false);
-		mContentBrowserImageFileIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\ContentBrowserImageFileIcon.png");
-		//mContentBrowserImageFileIcon->SetVerticalFlip(false);
-		mContentBrowserShaderFileIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\ContentBrowserShaderFileIcon.png");
-		//mContentBrowserShaderFileIcon->SetVerticalFlip(false);
-		mContentBrowserMiscFileIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\ContentBrowserMiscFileIcon.png");
-		//mContentBrowserMiscFileIcon->SetVerticalFlip(false);
-		mSceneFileIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\SceneIcon.png");
+		mContentBrowserDirectoryIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\ContentBrowserDirectoryIcon.png");
+		mContentBrowserModelFileIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\ContentBrowserModelFileIcon.png");
+		mContentBrowserImageFileIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\ContentBrowserImageFileIcon.png");
+		mContentBrowserShaderFileIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\ContentBrowserShaderFileIcon.png");
+		mContentBrowserMiscFileIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\ContentBrowserMiscFileIcon.png");
+		mSceneFileIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\SceneIcon.png");
 
-		//mUnlockedIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\Unlocked.png");
-		//mUnlockedIcon->SetVerticalFlip(false);
-		//mLockedIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\Locked.png");
-		//mLockedIcon->SetVerticalFlip(false);	
-		//mMeshFilterIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MeshFilterIcon.png");
-		//mMeshRendererIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MeshRendererIcon.png");
-		//mMaterialIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\MaterialIcon.png");
-		//mLitMaterialIcon = TS_ENGINE::Texture2D::Create("Assets\\Textures\\Gui\\LitMaterialIcon.png");
+		//mUnlockedIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\Unlocked.png");
+		//mLockedIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\Locked.png");
+		//mMeshFilterIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\MeshFilterIcon.png");
+		//mMeshRendererIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\MeshRendererIcon.png");
+		//mMaterialIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\MaterialIcon.png");
+		//mLitMaterialIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\LitMaterialIcon.png");
 
 		mCurrentDirectory = mAssetsPath;
 
@@ -647,17 +638,19 @@ namespace TS_ENGINE {
 
 	void SceneGui::ShowContentBrowser()
 	{
-		ImGui::Begin("ContentBrowser", 0, ImGuiWindowFlags_HorizontalScrollbar);
+		ImGui::Begin("ContentBrowser", 0);
 		{
 			if (mCurrentDirectory != std::filesystem::path(mAssetsPath))
 			{
-				if (ImGui::Button("<-"))
+				if (ImGui::Button("<-"))				
 				{
 					mCurrentDirectory = mCurrentDirectory.parent_path();
 				}
-			}
-
-			for (auto& directoryEntry : std::filesystem::directory_iterator(mCurrentDirectory))
+			}			
+			
+			ImGui::BeginChild("ContentBrowserItems", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+			{
+				for (auto& directoryEntry : std::filesystem::directory_iterator(mCurrentDirectory))
 			{
 				const auto& path = directoryEntry.path();
 				auto relativePath = std::filesystem::relative(path, mAssetsPath);
@@ -773,7 +766,8 @@ namespace TS_ENGINE {
 					ImGui::SetCursorScreenPos(cursorPos + ImVec2(buttonSize + spacing, 0));
 				}
 			}
-
+			}
+			ImGui::EndChild();
 		}
 		ImGui::End();
 	}
