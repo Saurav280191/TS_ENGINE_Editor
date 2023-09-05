@@ -4,9 +4,9 @@
 
 namespace TS_ENGINE {
 
-	static std::filesystem::path mAssetsPath = "..\\..\\..\\Assets";
-	static std::filesystem::path mResourcesPath = "..\\..\\..\\Resources";
-	static std::filesystem::path mSavedScenesPath = "..\\..\\..\\Resources\\SavedSceneThumbnails";
+	static std::filesystem::path mAssetsPath = "Assets";
+	static std::filesystem::path mResourcesPath = "Resources";
+	static std::filesystem::path mSavedScenesPath = "Resources\\SavedSceneThumbnails";
 
 	SceneGui::SceneGui()
 	{
