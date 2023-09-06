@@ -707,7 +707,7 @@ namespace TS_ENGINE {
 					ImVec2 imagePos = cursorPos + ImVec2((buttonSize - iconSize) * 0.5f, (buttonSize - iconSize) * 0.5f);
 					ImGui::SetCursorScreenPos(imagePos);
 
-					if (fileExtension == "png" || fileExtension == "jpg")
+					if (fileExtension == "png" || fileExtension == "jpg" || fileExtension == "hdr" || fileExtension == "exr")
 					{
 						DragContentBrowserItem(path.string().c_str(), ItemType::TEXTURE);
 
