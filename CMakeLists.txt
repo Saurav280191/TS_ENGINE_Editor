@@ -86,11 +86,11 @@ ${ShadersSrc} #Shaders Filter
 ${ImGuiSrc} #ImGui Filter
 )
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
-COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Assets
-COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/Assets ${CMAKE_CURRENT_BINARY_DIR}/Assets
-COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/bin/Assets
-COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/Assets ${CMAKE_CURRENT_BINARY_DIR}/bin/Assets)
+#add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
+#COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Assets
+#COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/Assets ${CMAKE_CURRENT_BINARY_DIR}/Assets
+#COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/bin/Assets
+#COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/Assets ${CMAKE_CURRENT_BINARY_DIR}/bin/Assets)
 
 #Add definations
 add_compile_definitions(
