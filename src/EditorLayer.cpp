@@ -25,8 +25,9 @@ void EditorLayer::OnAttach()
 	mSceneGui = CreateRef<TS_ENGINE::SceneGui>();
 
 #pragma region Shader
+	std::string shaderDir = TS_ENGINE::Application::s_AssetsDir.string() + "\\Shaders\\";
 	//mDefaultShader = TS_ENGINE::Shader::Create("Lit", "Lit.vert", "Lit.frag");
-	mDefaultShader = TS_ENGINE::Shader::Create("HDRLighting", "HDRLighting.vert", "HDRLighting.frag");
+	mDefaultShader = TS_ENGINE::Shader::Create("HDRLighting", shaderDir + "HDRLighting.vert", shaderDir + "HDRLighting.frag");
 	//mBatchLitShader = TS_ENGINE::Shader::Create("BatchLit", "BatchLit.vert", "BatchLit.frag");
 	//mHdrLightingShader = TS_ENGINE::Shader::Create("HDRLighting", "HDRLighting.vert", "HDRLighting.frag");
 
@@ -38,21 +39,6 @@ void EditorLayer::OnAttach()
 	mCurrentShader = mDefaultShader;
 	mCurrentShader->Bind();
 #pragma endregion
-
-#pragma region Cameras
-	//mEditorCamera = CreateRef<TS_ENGINE::EditorCamera>("EditorCamera");
-
-	//mAspectRatio = (float)TS_ENGINE::Application::Get().GetWindow().GetWidth() / (float)TS_ENGINE::Application::Get().GetWindow().GetHeight();
-	//mEditorCamera->SetPerspective(TS_ENGINE::Camera::Perspective(60.0f, mAspectRatio, 0.1f, 1000.0f));
-	//mEditorCamera->GetNode()->GetTransform()->SetLocalPosition(-0.738f, 5.788f, 14.731f);
-	//mEditorCamera->GetNode()->GetTransform()->SetLocalEulerAngles(-18.102f, 0.066f, 0.0f);
-	//mEditorCamera->CreateFramebuffer(1920, 1080);//Create framebuffer for editorCamera
-	//mEditorCamera->Initialize();
-	//mEditorCamera->GetNode()->InitializeTransformMatrices();
-
-	//Create and set current scene in SceneManager
-	//Ref<TS_ENGINE::Scene> mScene1 = CreateRef<TS_ENGINE::Scene>("Scene1", mEditorCamera);	
-	//TS_ENGINE::SceneManager::GetInstance()->SetCurrentScene(mScene1);
 }
 
 void EditorLayer::OnDetach()
@@ -243,7 +229,7 @@ void EditorLayer::ShowMainMenuBar()
 				{
 					TS_ENGINE::SceneManager::GetInstance()->SaveCurrentScene();
 					std::string sceneName = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName();
-					mSceneGui->TakeSnapshot("..\\..\\..\\Resources\\SavedSceneThumbnails\\" + sceneName + ".png");
+					mSceneGui->TakeSnapshot(TS_ENGINE::Application::s_ThumbnailsDir.string() + "\\" + sceneName + ".png");
 				}
 				else
 				{
@@ -492,7 +478,7 @@ bool EditorLayer::OnKeyPressed(TS_ENGINE::KeyPressedEvent& e)
 			{
 				TS_ENGINE::SceneManager::GetInstance()->SaveCurrentScene();
 				std::string sceneName = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName();
-				mSceneGui->TakeSnapshot("..\\..\\..\\Resources\\SavedSceneThumbnails\\" + sceneName + ".png");
+				mSceneGui->TakeSnapshot(TS_ENGINE::Application::s_ThumbnailsDir.string() + "\\" + sceneName + ".png");
 			}
 			else
 			{

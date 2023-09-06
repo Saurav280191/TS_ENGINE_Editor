@@ -4,9 +4,9 @@
 
 namespace TS_ENGINE {
 
-	static std::filesystem::path mAssetsPath = "Assets";
-	static std::filesystem::path mResourcesPath = "Resources";
-	static std::filesystem::path mSavedScenesPath = "Resources\\SavedSceneThumbnails";
+	//static std::filesystem::path mAssetsPath = "Assets";
+	//static std::filesystem::path mResourcesPath = "Resources";
+	//static std::filesystem::path mSavedScenesPath = "Resources\\SavedSceneThumbnails";
 
 	SceneGui::SceneGui()
 	{
@@ -18,32 +18,32 @@ namespace TS_ENGINE {
 		mTakeSnap = false;
 		mSnapshotPath = "";
 
-		mMeshEditorIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\MeshEditor.png");		
-		mCameraIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\Camera.png");
-		mMaterialEditorIcon = TS_ENGINE::Texture2D::Create("Resources\\Gui\\LitMaterialIcon.png");
+		mMeshEditorIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\MeshEditor.png");
+		mCameraIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\Camera.png");
+		mMaterialEditorIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\LitMaterialIcon.png");
 
-		mContentBrowserDirectoryIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\ContentBrowserDirectoryIcon.png");
-		mContentBrowserModelFileIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\ContentBrowserModelFileIcon.png");
-		mContentBrowserImageFileIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\ContentBrowserImageFileIcon.png");
-		mContentBrowserShaderFileIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\ContentBrowserShaderFileIcon.png");
-		mContentBrowserMiscFileIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\ContentBrowserMiscFileIcon.png");
-		mSceneFileIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\SceneIcon.png");
+		mContentBrowserDirectoryIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserDirectoryIcon.png");
+		mContentBrowserModelFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserModelFileIcon.png");
+		mContentBrowserImageFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserImageFileIcon.png");
+		mContentBrowserShaderFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserShaderFileIcon.png");
+		mContentBrowserMiscFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserMiscFileIcon.png");
+		mSceneFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\SceneIcon.png");
 
-		//mUnlockedIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\Unlocked.png");
-		//mLockedIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\Locked.png");
-		//mMeshFilterIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\MeshFilterIcon.png");
-		//mMeshRendererIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\MeshRendererIcon.png");
-		//mMaterialIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\MaterialIcon.png");
-		//mLitMaterialIcon = TS_ENGINE::Texture2D::Create(mResourcesPath.string() + "\\Gui\\LitMaterialIcon.png");
+		//mUnlockedIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\Unlocked.png");
+		//mLockedIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\Locked.png");
+		//mMeshFilterIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\MeshFilterIcon.png");
+		//mMeshRendererIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\MeshRendererIcon.png");
+		//mMaterialIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\MaterialIcon.png");
+		//mLitMaterialIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\LitMaterialIcon.png");
 
-		mCurrentDirectory = mAssetsPath;
+		mCurrentDirectory = Application::s_AssetsDir;
 
-		for (auto& directoryEntry : std::filesystem::directory_iterator(mSavedScenesPath))
+		for (auto& directoryEntry : std::filesystem::directory_iterator(Application::s_ThumbnailsDir))
 		{
 			if (!directoryEntry.is_directory())
 			{
 				const auto& path = directoryEntry.path();
-				auto relativePath = std::filesystem::relative(path, mSavedScenesPath);
+				auto relativePath = std::filesystem::relative(path, Application::s_ThumbnailsDir);
 				std::string filenameStr = relativePath.filename().string();
 				std::string fileName = "";
 				std::string fileExtension = "";
@@ -640,7 +640,7 @@ namespace TS_ENGINE {
 	{
 		ImGui::Begin("ContentBrowser", 0);
 		{
-			if (mCurrentDirectory != std::filesystem::path(mAssetsPath))
+			if (mCurrentDirectory != std::filesystem::path(Application::s_AssetsDir))
 			{
 				if (ImGui::Button("<-"))				
 				{
@@ -653,7 +653,7 @@ namespace TS_ENGINE {
 				for (auto& directoryEntry : std::filesystem::directory_iterator(mCurrentDirectory))
 			{
 				const auto& path = directoryEntry.path();
-				auto relativePath = std::filesystem::relative(path, mAssetsPath);
+				auto relativePath = std::filesystem::relative(path, Application::s_AssetsDir);
 				std::string filenameStr = relativePath.filename().string();
 
 				float buttonSize = 128.0f;

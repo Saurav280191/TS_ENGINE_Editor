@@ -11,7 +11,8 @@ public:
 	}
 };
 
-TS_ENGINE::Application* TS_ENGINE::CreateApplication()
+TS_ENGINE::Application* TS_ENGINE::CreateApplication(std::filesystem::path exeDir)
 {
+	Application::SetExecutableDirectory(exeDir);
 	return new Sandbox();
 }
