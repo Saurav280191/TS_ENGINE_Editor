@@ -707,7 +707,7 @@ namespace TS_ENGINE {
 					ImVec2 imagePos = cursorPos + ImVec2((buttonSize - iconSize) * 0.5f, (buttonSize - iconSize) * 0.5f);
 					ImGui::SetCursorScreenPos(imagePos);
 
-					if (fileExtension == "png" || fileExtension == "jpg" || fileExtension == "hdr" || fileExtension == "exr")
+					if (fileExtension == "png" || fileExtension == "jpg" || fileExtension == "jpeg" || fileExtension == "tga" || fileExtension == "hdr")
 					{
 						DragContentBrowserItem(path.string().c_str(), ItemType::TEXTURE);
 
@@ -722,7 +722,11 @@ namespace TS_ENGINE {
 					{
 						ImGui::Image((void*)(intptr_t)mContentBrowserShaderFileIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
 					}
-					else if (fileExtension == "obj" || fileExtension == "stl" || fileExtension == "fbx" || fileExtension == "glb" || fileExtension == "gltf")
+					else if (fileExtension == "obj" || 
+						fileExtension == "stl" || fileExtension == "fbx" ||
+						fileExtension == "FBX" || fileExtension == "glb" ||
+						fileExtension == "gltf" || fileExtension == "blend" || 
+						fileExtension == "3ds")
 					{
 						DragContentBrowserItem(path.string().c_str(), ItemType::MODEL);
 						ImGui::Image((void*)(intptr_t)mContentBrowserModelFileIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
@@ -803,23 +807,15 @@ namespace TS_ENGINE {
 			ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 
 			ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_OpenOnArrow;
-			int nodeTreeGuiIndex = 0;
 
 			if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 			{
-				if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName().c_str()))
+				if (ImGui::TreeNodeEx((void*)(intptr_t)TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetEntityID(), node_flags, TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName().c_str()))
 				{
-					nodeTreeGuiIndex++;
-
 					DragHierarchySceneNode(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
 					DropHierarchySceneNode(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
 
-					if (ImGui::IsItemClicked())
-					{
-						SetSelectedNode(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
-					}
-
-					CreateUIForAllNodes(nodeTreeGuiIndex, TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+					CreateUIForAllNodes(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
 					ImGui::TreePop();
 				}
 			}
@@ -827,7 +823,7 @@ namespace TS_ENGINE {
 		ImGui::End();
 	}
 
-	void SceneGui::CreateUIForAllNodes(int& nodeTreeGuiIndex, Ref<Node> node)
+	void SceneGui::CreateUIForAllNodes(Ref<Node> node)
 	{
 		//Node context menu
 		{
@@ -890,7 +886,7 @@ namespace TS_ENGINE {
 
 		for (int i = 0; i < node->GetChildCount(); i++)
 		{
-			ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+			//ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 
 			Ref<Node> nodeChild = node->GetChildAt(i);
 
@@ -908,13 +904,13 @@ namespace TS_ENGINE {
 				}
 			}
 
-			if (allChildrenNodesHidden)
+			if (allChildrenNodesHidden)// If all children hidden then leaf
 				node_flags |= ImGuiTreeNodeFlags_Leaf;
 #pragma endregion
 
 			if (nodeChild->GetChildCount() > 0)
 			{
-				if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, nodeChild->GetEntity()->GetName().c_str()))
+				if (ImGui::TreeNodeEx((void*)(intptr_t)nodeChild->GetEntity()->GetEntityID(), node_flags, nodeChild->GetEntity()->GetName().c_str()))
 				{
 					//Node context menu pop up
 					{
@@ -934,10 +930,13 @@ namespace TS_ENGINE {
 						SetSelectedNode(nodeChild);
 					}
 
-					nodeTreeGuiIndex++;
-
-					CreateUIForAllNodes(nodeTreeGuiIndex, nodeChild);
+					CreateUIForAllNodes(nodeChild);
 					ImGui::TreePop();
+				}
+
+				if (ImGui::IsItemClicked())
+				{
+					SetSelectedNode(nodeChild);
 				}
 			}
 			else//Tree Leaves
@@ -946,7 +945,7 @@ namespace TS_ENGINE {
 
 				if (nodeChild->IsVisibleInEditor())
 				{
-					if (ImGui::TreeNodeEx((void*)(intptr_t)nodeTreeGuiIndex, node_flags, nodeChild->GetEntity()->GetName().c_str()))
+					if (ImGui::TreeNodeEx((void*)(intptr_t)nodeChild->GetEntity()->GetEntityID(), node_flags, nodeChild->GetEntity()->GetName().c_str()))
 					{
 						//Node context menu pop up
 						{
@@ -964,8 +963,6 @@ namespace TS_ENGINE {
 						{
 							SetSelectedNode(nodeChild);
 						}
-
-						nodeTreeGuiIndex++;
 					}
 				}
 			}
@@ -1050,6 +1047,14 @@ namespace TS_ENGINE {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_SCENE"))
 			{
 				const char* draggedModelPath = reinterpret_cast<const char*>(payload->Data);
+				
+				// Flush current scene
+				if (SceneManager::GetInstance()->GetCurrentScene())
+				{
+					SceneManager::GetInstance()->GetCurrentScene()->Flush();
+				}
+
+				// Load dragged scene
 				SceneManager::GetInstance()->LoadScene(draggedModelPath);
 			}
 

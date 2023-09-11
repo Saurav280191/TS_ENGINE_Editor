@@ -63,7 +63,7 @@ namespace TS_ENGINE {
 		bool IsViewportActiveWindow = false;
 		bool m_ShowNewSceneWindow = false;
 	private:	
-		void CreateUIForAllNodes(int& nodeTreeGuiIndex, Ref<Node> node);
+		void CreateUIForAllNodes(Ref<Node> node);
 
 		void DragHierarchySceneNode(Ref<Node> node);
 		void DragContentBrowserItem(const char* filePath, ItemType itemType);
