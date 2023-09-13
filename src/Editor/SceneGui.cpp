@@ -18,9 +18,10 @@ namespace TS_ENGINE {
 		mTakeSnap = false;
 		mSnapshotPath = "";
 
-		mMeshEditorIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\MeshEditor.png");
-		mCameraIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\Camera.png");
-		mMaterialEditorIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\LitMaterialIcon.png");
+		mUnlockedIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\Unlocked.png");// This is a texture which is not being used in the editor but is important to fix the smart pointer deletion issue. Check the core reason behind it.
+		mMeshEditorIcon = TS_ENGINE::Texture2D::Create(TS_ENGINE::Application::s_ResourcesDir.string() + "\\Gui\\MeshEditor.png");
+		mMaterialEditorIcon = TS_ENGINE::Texture2D::Create(TS_ENGINE::Application::s_ResourcesDir.string() + "\\Gui\\LitMaterialIcon.png");
+		mCameraIcon = TS_ENGINE::Texture2D::Create(TS_ENGINE::Application::s_ResourcesDir.string() + "\\Gui\\Camera.png");
 
 		mContentBrowserDirectoryIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserDirectoryIcon.png");
 		mContentBrowserModelFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserModelFileIcon.png");
@@ -29,7 +30,6 @@ namespace TS_ENGINE {
 		mContentBrowserMiscFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserMiscFileIcon.png");
 		mSceneFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\SceneIcon.png");
 
-		//mUnlockedIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\Unlocked.png");
 		//mLockedIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\Locked.png");
 		//mMeshFilterIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\MeshFilterIcon.png");
 		//mMeshRendererIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\MeshRendererIcon.png");
@@ -57,6 +57,11 @@ namespace TS_ENGINE {
 				}
 			}
 		}
+	}
+
+	SceneGui::~SceneGui()
+	{
+		TS_CORE_INFO("Destroying SceneGui");
 	}
 
 	void SceneGui::ShowTransformGizmos(const float* view, const float* projection)
@@ -177,9 +182,9 @@ namespace TS_ENGINE {
 			}
 
 			//Scene camera frambuffer image
-			if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
+			if (SceneManager::GetInstance()->GetCurrentScene())
 			{
-				if (Ref<SceneCamera> currentSceneCamera = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetCurrentSceneCamera())
+				if (Ref<SceneCamera> currentSceneCamera = SceneManager::GetInstance()->GetCurrentScene()->GetCurrentSceneCamera())
 				{
 					ImVec2 sceneCameraFramebufferViewportWindowSize = ImVec2(200.0f * TS_ENGINE::Application::Get().GetWindow().GetAspectRatio(), 200.0f);
 					ImVec2 sceneCameraFramebufferViewportWindowPos = ImGui::GetWindowSize() - sceneCameraFramebufferViewportWindowSize - ImVec2(10, 15);
@@ -228,7 +233,18 @@ namespace TS_ENGINE {
 
 			if (ImGui::Button("  OK  "))
 			{
+				//Flush old scene data
+				mSelectedNode = nullptr;
+				SceneManager::GetInstance()->FlushCurrentScene();
+
+				//Create New Scene
 				SceneManager::GetInstance()->CreateNewScene(mNewSceneText);
+
+				// Reset new scene pop up text
+				malloc((sizeof(mNewSceneText) + 1) * sizeof(char)); 
+				memset(mNewSceneText, 0, (sizeof(mNewSceneText) + 1) * sizeof(char));
+				strcpy_s(mNewSceneText, 256, "New Scene");
+
 				m_ShowNewSceneWindow = false;
 			}
 
@@ -271,6 +287,10 @@ namespace TS_ENGINE {
 			mSavedSceneThumbnails[sceneName] = latestSceneSnap;
 			//mSavedSceneThumbnails[sceneName]->SetData(pixels.data(), 4 * rect->w * rect->h);// Should not change the data of the existing texture. 
 																							  // If the viewport size changes the width and height of the texture will change.
+		}
+		else// Save thumbnail for the first time
+		{
+			mSavedSceneThumbnails.insert(std::pair<std::string, Ref<Texture2D>>(sceneName, latestSceneSnap));
 		}
 	}
 
@@ -317,7 +337,7 @@ namespace TS_ENGINE {
 		ImGui::End();
 	}
 
-	void SceneGui::ShowInspectorWindow()
+	void SceneGui::ShowInspectorWindow() 
 	{
 		ImGui::Begin("Inspector");
 		{
@@ -808,14 +828,14 @@ namespace TS_ENGINE {
 
 			ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_OpenOnArrow;
 
-			if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
+			if (SceneManager::GetInstance()->GetCurrentScene())
 			{
-				if (ImGui::TreeNodeEx((void*)(intptr_t)TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetEntityID(), node_flags, TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName().c_str()))
+				if (ImGui::TreeNodeEx((void*)(intptr_t)SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetEntityID(), node_flags, SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName().c_str()))
 				{
-					DragHierarchySceneNode(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
-					DropHierarchySceneNode(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+					DragHierarchySceneNode(SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());// Drag
+					DropHierarchySceneNode(SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());// Drop
 
-					CreateUIForAllNodes(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+					CreateUIForAllNodes(SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
 					ImGui::TreePop();
 				}
 			}
@@ -1048,11 +1068,10 @@ namespace TS_ENGINE {
 			{
 				const char* draggedModelPath = reinterpret_cast<const char*>(payload->Data);
 				
+				mSelectedNode = nullptr;
+
 				// Flush current scene
-				if (SceneManager::GetInstance()->GetCurrentScene())
-				{
-					SceneManager::GetInstance()->GetCurrentScene()->Flush();
-				}
+				SceneManager::GetInstance()->FlushCurrentScene();
 
 				// Load dragged scene
 				SceneManager::GetInstance()->LoadScene(draggedModelPath);

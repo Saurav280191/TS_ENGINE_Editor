@@ -22,7 +22,7 @@ namespace TS_ENGINE {
 		};		
 
 		SceneGui();
-		virtual ~SceneGui() = default;
+		 ~SceneGui();
 
 		void ShowTransformGizmos(const float* view, const float* projection);
 
@@ -78,9 +78,10 @@ namespace TS_ENGINE {
 		char mSelectedNodeNameBuffer[256] = "";
 		char mNewSceneText[256] = "NewScene";
 
-		Ref<Texture2D> mMeshEditorIcon;
-		Ref<Texture2D> mCameraIcon;
-		Ref<Texture2D> mMaterialEditorIcon;
+		Ref<Texture2D> mUnlockedIcon;
+		Ref<TS_ENGINE::Texture2D> mMeshEditorIcon;
+		Ref<TS_ENGINE::Texture2D> mMaterialEditorIcon;
+		Ref<TS_ENGINE::Texture2D> mCameraIcon;
 		Ref<Texture2D> mContentBrowserDirectoryIcon;
 		Ref<Texture2D> mContentBrowserModelFileIcon;
 		Ref<Texture2D> mContentBrowserImageFileIcon;
