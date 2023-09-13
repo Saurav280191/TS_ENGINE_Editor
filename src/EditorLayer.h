@@ -95,9 +95,8 @@ private:
 
 	Ref<TS_ENGINE::Light> mDirectionalLight;
 
-	bool mOrthographicProjectionActive;
-		
-
+	bool mOrthographicProjectionActive;	
+	
 	//ImVec4 mPickedColor;
 	//TS_ENGINE::GameObject* mBatchedGameObject;
 	//bool mBatched = false;

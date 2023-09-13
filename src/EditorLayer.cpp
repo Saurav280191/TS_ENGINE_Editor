@@ -59,7 +59,7 @@ void EditorLayer::OnUpdate(float deltaTime)
 		TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->Render(mCurrentShader, deltaTime);
 	}
 
-	if (mSceneGui->IsViewportActiveWindow && !mIsControlPressed)
+	if (mSceneGui->IsViewportActiveWindow && !mIsControlPressed && !mSceneGui->m_ShowNewSceneWindow)
 	{
 		if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 		{
@@ -76,7 +76,7 @@ void EditorLayer::OnUpdate(float deltaTime)
 			//Render after all gameObjects rendered to show as an overlay.
 			OnOverlayRender();
 
-			if (!ImGuizmo::IsOver())
+			if (!ImGuizmo::IsOver() && !mSceneGui->m_ShowNewSceneWindow)
 			{
 				PickGameObject();
 			}
@@ -216,13 +216,9 @@ void EditorLayer::ShowMainMenuBar()
 			if (ImGui::MenuItem("NewScene", "CTRL+N"))
 			{
 				if (!mSceneGui->m_ShowNewSceneWindow)
-					mSceneGui->m_ShowNewSceneWindow = true;
-				//TS_ENGINE::SceneManager::GetInstance()->CreateNewScene();
+					mSceneGui->m_ShowNewSceneWindow = true;				
 			}
-			/*if (ImGui::MenuItem("Open", "CTRL+O"))
-			{
 
-			}*/
 			if (ImGui::MenuItem("Save", "CTRL+S"))
 			{
 				if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
@@ -235,6 +231,11 @@ void EditorLayer::ShowMainMenuBar()
 				{
 					TS_CORE_ERROR("Current scene is not set!");
 				}
+			}
+
+			if (ImGui::MenuItem("Close"))
+			{
+				TS_ENGINE::SceneManager::GetInstance()->FlushCurrentScene();
 			}
 			ImGui::EndMenu();
 		}
@@ -275,7 +276,7 @@ void EditorLayer::ShowMainMenuBar()
 		{
 			if (ImGui::BeginMenu("Create"))
 			{
-				if (ImGui::BeginMenu("Primitive"))
+				if (ImGui::BeginMenu("GameObject"))
 				{
 					if (ImGui::MenuItem("Quad"))
 					{
@@ -300,6 +301,11 @@ void EditorLayer::ShowMainMenuBar()
 					if (ImGui::MenuItem("Cone"))
 					{
 						TS_ENGINE::Factory::GetInstance()->InstantiateCone("New Cone", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
+					}
+
+					if (ImGui::MenuItem("Empty"))
+					{
+						TS_ENGINE::Factory::GetInstance()->InstantitateEmptyNode("Empty GameObject", TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());
 					}
 
 					/*if (ImGui::MenuItem("Model"))
@@ -405,9 +411,11 @@ void EditorLayer::ShowPanels()
 	mSceneGui->ShowInspectorWindow();
 	mSceneGui->ShowHierarchyWindow();
 	mSceneGui->ShowContentBrowser();
-	
+
 	if (mSceneGui->m_ShowNewSceneWindow)
+	{
 		mSceneGui->ShowNewSceneWindow();
+	}
 }
 
 #pragma endregion
@@ -461,8 +469,7 @@ bool EditorLayer::OnKeyPressed(TS_ENGINE::KeyPressedEvent& e)
 		if (mIsControlPressed)
 		{
 			if(!mSceneGui->m_ShowNewSceneWindow)
-				mSceneGui->m_ShowNewSceneWindow = true;
-			//TS_ENGINE::SceneManager::GetInstance()->CreateNewScene();
+				mSceneGui->m_ShowNewSceneWindow = true;			
 		}
 		break;
 	case TS_ENGINE::Key::O:
