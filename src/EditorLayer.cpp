@@ -25,7 +25,7 @@ void EditorLayer::OnAttach()
 	mSceneGui = CreateRef<TS_ENGINE::SceneGui>();
 
 #pragma region Shader
-	std::string shaderDir = TS_ENGINE::Application::s_AssetsDir.string() + "\\Shaders\\";
+	std::string shaderDir = TS_ENGINE::Application::s_ResourcesDir.string() + "\\Shaders\\";
 	//mDefaultShader = TS_ENGINE::Shader::Create("Lit", "Lit.vert", "Lit.frag");
 	mDefaultShader = TS_ENGINE::Shader::Create("HDRLighting", shaderDir + "HDRLighting.vert", shaderDir + "HDRLighting.frag");
 	//mBatchLitShader = TS_ENGINE::Shader::Create("BatchLit", "BatchLit.vert", "BatchLit.frag");
