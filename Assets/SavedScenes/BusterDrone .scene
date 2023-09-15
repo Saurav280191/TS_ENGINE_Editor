@@ -1,0 +1,460 @@
+{
+    "Scene": {
+        "EditorCamera": {
+            "Projection": {
+                "aspectRatio": 1.7699999809265137,
+                "fov": 60.0,
+                "zFar": 1000.0,
+                "zNear": 0.10000000149011612
+            },
+            "ProjectionType": 0,
+            "Transform": {
+                "LocalEulerAngles": [
+                    -16.380809783935547,
+                    -38.111480712890625,
+                    0.0
+                ],
+                "LocalPosition": [
+                    -1.6793855428695679,
+                    1.4519888162612915,
+                    2.0339691638946533
+                ],
+                "LocalScale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ]
+            }
+        },
+        "Name": "BusterDrone ",
+        "RootNode": {
+            "Children": [
+                {
+                    "Enabled": true,
+                    "EntityType": 2,
+                    "Name": "SceneCamera",
+                    "Transform": {
+                        "LocalEulerAngles": [
+                            -13.235002517700195,
+                            38.06400680541992,
+                            0.0
+                        ],
+                        "LocalPosition": [
+                            1.8655567169189453,
+                            1.426953911781311,
+                            2.0141096115112305
+                        ],
+                        "LocalScale": [
+                            1.0,
+                            1.0,
+                            0.9999999403953552
+                        ]
+                    }
+                },
+                {
+                    "Enabled": true,
+                    "EntityType": 0,
+                    "Meshes": [
+                        {
+                            "Material": {
+                                "Ambient": {
+                                    "Color": [
+                                        0.37745100259780884,
+                                        0.37745100259780884,
+                                        0.37745100259780884,
+                                        1.0
+                                    ]
+                                },
+                                "Diffuse": {
+                                    "Color": [
+                                        1.0,
+                                        1.0,
+                                        1.0,
+                                        1.0
+                                    ],
+                                    "TextureOffset": [
+                                        0.0,
+                                        0.0
+                                    ],
+                                    "TextureTiling": [
+                                        1.0,
+                                        1.0
+                                    ]
+                                },
+                                "Name": "DefaultMaterial",
+                                "Normal": {
+                                    "BumpValue": 1.0,
+                                    "TextureOffset": [
+                                        0.0,
+                                        0.0
+                                    ],
+                                    "TextureTiling": [
+                                        1.0,
+                                        1.0
+                                    ]
+                                },
+                                "Specular": {
+                                    "Color": [
+                                        1.0,
+                                        1.0,
+                                        1.0,
+                                        1.0
+                                    ],
+                                    "Shininess": 16.0,
+                                    "TextureOffset": [
+                                        0.0,
+                                        0.0
+                                    ],
+                                    "TextureTiling": [
+                                        1.0,
+                                        1.0
+                                    ]
+                                }
+                            },
+                            "Name": "Ground"
+                        }
+                    ],
+                    "Name": "Ground",
+                    "PrimitiveType": 1,
+                    "Transform": {
+                        "LocalEulerAngles": [
+                            -90.00003051757813,
+                            -0.0,
+                            0.0
+                        ],
+                        "LocalPosition": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "LocalScale": [
+                            9.999999046325684,
+                            10.0,
+                            10.0
+                        ]
+                    }
+                },
+                {
+                    "Children": [
+                        {
+                            "Enabled": true,
+                            "EntityType": 1,
+                            "Meshes": [
+                                {
+                                    "Material": {
+                                        "Ambient": {
+                                            "Color": [
+                                                1.0,
+                                                1.0,
+                                                1.0,
+                                                1.0
+                                            ]
+                                        },
+                                        "Diffuse": {
+                                            "Color": [
+                                                1.0,
+                                                1.0,
+                                                1.0,
+                                                1.0
+                                            ],
+                                            "TextureOffset": [
+                                                0.0,
+                                                0.0
+                                            ],
+                                            "TextureTiling": [
+                                                1.0,
+                                                1.0
+                                            ]
+                                        },
+                                        "Name": "Boden",
+                                        "Normal": {
+                                            "BumpValue": 1.0,
+                                            "TextureOffset": [
+                                                0.0,
+                                                0.0
+                                            ],
+                                            "TextureTiling": [
+                                                1.0,
+                                                1.0
+                                            ]
+                                        },
+                                        "Specular": {
+                                            "Color": [
+                                                0.0,
+                                                0.0,
+                                                0.0,
+                                                1.0
+                                            ],
+                                            "Shininess": 0.0,
+                                            "TextureOffset": [
+                                                0.0,
+                                                0.0
+                                            ],
+                                            "TextureTiling": [
+                                                1.0,
+                                                1.0
+                                            ]
+                                        }
+                                    },
+                                    "Name": "Scheibe_Boden_0"
+                                }
+                            ],
+                            "Name": "Scheibe_Boden_0",
+                            "Transform": {
+                                "LocalEulerAngles": [
+                                    0.0,
+                                    -0.0,
+                                    0.0
+                                ],
+                                "LocalPosition": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "LocalScale": [
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ]
+                            }
+                        },
+                        {
+                            "Enabled": true,
+                            "EntityType": 1,
+                            "Meshes": [
+                                {
+                                    "Material": {
+                                        "Ambient": {
+                                            "Color": [
+                                                1.0,
+                                                1.0,
+                                                1.0,
+                                                1.0
+                                            ]
+                                        },
+                                        "Diffuse": {
+                                            "Color": [
+                                                1.0,
+                                                1.0,
+                                                1.0,
+                                                1.0
+                                            ],
+                                            "TextureOffset": [
+                                                0.0,
+                                                0.0
+                                            ],
+                                            "TextureTiling": [
+                                                1.0,
+                                                1.0
+                                            ]
+                                        },
+                                        "Name": "body",
+                                        "Normal": {
+                                            "BumpValue": 1.0,
+                                            "TextureOffset": [
+                                                0.0,
+                                                0.0
+                                            ],
+                                            "TextureTiling": [
+                                                1.0,
+                                                1.0
+                                            ]
+                                        },
+                                        "Specular": {
+                                            "Color": [
+                                                0.0,
+                                                0.0,
+                                                0.0,
+                                                1.0
+                                            ],
+                                            "Shininess": 0.0,
+                                            "TextureOffset": [
+                                                0.0,
+                                                0.0
+                                            ],
+                                            "TextureTiling": [
+                                                1.0,
+                                                1.0
+                                            ]
+                                        }
+                                    },
+                                    "Name": "Drone_Turb_Blade_R_body_0"
+                                }
+                            ],
+                            "Name": "Drone_Turb_Blade_R_body_0",
+                            "Transform": {
+                                "LocalEulerAngles": [
+                                    0.0,
+                                    -0.0,
+                                    0.0
+                                ],
+                                "LocalPosition": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "LocalScale": [
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ]
+                            }
+                        },
+                        {
+                            "Enabled": true,
+                            "EntityType": 1,
+                            "Meshes": [
+                                {
+                                    "Material": {
+                                        "Ambient": {
+                                            "Color": [
+                                                1.0,
+                                                1.0,
+                                                1.0,
+                                                1.0
+                                            ]
+                                        },
+                                        "Diffuse": {
+                                            "Color": [
+                                                1.0,
+                                                1.0,
+                                                1.0,
+                                                1.0
+                                            ],
+                                            "TextureOffset": [
+                                                0.0,
+                                                0.0
+                                            ],
+                                            "TextureTiling": [
+                                                1.0,
+                                                1.0
+                                            ]
+                                        },
+                                        "Name": "material",
+                                        "Normal": {
+                                            "BumpValue": 1.0,
+                                            "TextureOffset": [
+                                                0.0,
+                                                0.0
+                                            ],
+                                            "TextureTiling": [
+                                                1.0,
+                                                1.0
+                                            ]
+                                        },
+                                        "Specular": {
+                                            "Color": [
+                                                0.0,
+                                                0.0,
+                                                0.0,
+                                                1.0
+                                            ],
+                                            "Shininess": 0.0,
+                                            "TextureOffset": [
+                                                0.0,
+                                                0.0
+                                            ],
+                                            "TextureTiling": [
+                                                1.0,
+                                                1.0
+                                            ]
+                                        }
+                                    },
+                                    "Name": "L_P7_leg_0"
+                                }
+                            ],
+                            "Name": "L_P7_leg_0",
+                            "Transform": {
+                                "LocalEulerAngles": [
+                                    0.0,
+                                    -0.0,
+                                    0.0
+                                ],
+                                "LocalPosition": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "LocalScale": [
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ]
+                            }
+                        }
+                    ],
+                    "Enabled": true,
+                    "EntityType": 1,
+                    "ModelPath": "D:\\Documents\\ThinkSideways\\WorkInProgress\\TS_ENGINE Related\\TS_ENGINE_Editor\\build\\x64\\Debug\\bin\\Assets\\Models\\Sci-Fi\\buster_drone.glb",
+                    "Name": "Sketchfab_model",
+                    "Transform": {
+                        "LocalEulerAngles": [
+                            0.0,
+                            -0.0,
+                            0.0
+                        ],
+                        "LocalPosition": [
+                            0.0,
+                            1.2999999523162842,
+                            0.0
+                        ],
+                        "LocalScale": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ]
+                    }
+                }
+            ],
+            "Enabled": true,
+            "EntityType": 4,
+            "Name": "BusterDrone ",
+            "Transform": {
+                "LocalEulerAngles": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "LocalPosition": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "LocalScale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ]
+            }
+        },
+        "SceneCameras": [
+            {
+                "Name": "SceneCamera",
+                "Projection": {
+                    "aspectRatio": 1.7699999809265137,
+                    "fov": 60.0,
+                    "zFar": 50.0,
+                    "zNear": 0.5
+                },
+                "ProjectionType": 0,
+                "Transform": {
+                    "LocalEulerAngles": [
+                        -13.235002517700195,
+                        38.06400680541992,
+                        0.0
+                    ],
+                    "LocalPosition": [
+                        1.8655567169189453,
+                        1.426953911781311,
+                        2.0141096115112305
+                    ],
+                    "LocalScale": [
+                        1.0,
+                        1.0,
+                        0.9999999403953552
+                    ]
+                }
+            }
+        ]
+    }
+}
