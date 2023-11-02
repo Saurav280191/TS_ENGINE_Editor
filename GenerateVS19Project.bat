@@ -26,7 +26,5 @@ cmake --build build/x64/Debug --config Debug
 REM Post build commands
 copy "..\TS_ENGINE\Dependencies\include\assimp\build\x64\bin\Debug\assimp-vc142-mtd.dll" "build\x64\Debug\bin"
 
-xcopy "Assets" "build\x64\debug\Assets" /E /I /Y
-xcopy "Assets" "build\x64\debug\bin\Assets" /E /I /Y
-
-PAUSE
+REM Copy Assets And Resources
+call CopyDataToBin.bat

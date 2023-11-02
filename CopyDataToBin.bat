@@ -16,4 +16,7 @@ REM Copying Resources folder to build
 #xcopy "Resources" "build\x64\debug\Resources" /E /I /Y
 xcopy "Resources" "build\x64\debug\bin\Resources" /E /I /Y
 
+REM Copying Assimp dll
+xcopy "..\TS_ENGINE\Dependencies\include\assimp\build\x64\bin\Debug\assimp-vc143-mtd.dll" "build\x64\Debug\bin" /E /I /Y
+
 PAUSE
