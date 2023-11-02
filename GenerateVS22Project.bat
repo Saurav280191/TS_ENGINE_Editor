@@ -13,3 +13,9 @@ cmake --build build/x64/Debug --config Debug
 copy "Dependencies\include\assimp\build\x64\bin\Debug\assimp-vc143-mtd.dll" "build\x64\Debug\bin"
 echo TS_ENGINE build completed
 PAUSE
+
+REM Post build commands
+copy "..\TS_ENGINE\Dependencies\include\assimp\build\x64\bin\Debug\assimp-vc143-mtd.dll" "build\x64\Debug\bin"
+
+REM Copy Assets And Resources
+call CopyDataToBin.bat
