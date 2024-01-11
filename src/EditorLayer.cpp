@@ -26,17 +26,19 @@ void EditorLayer::OnAttach()
 
 #pragma region Shader
 	std::string shaderDir = TS_ENGINE::Application::s_ResourcesDir.string() + "\\Shaders\\";
-	//mDefaultShader = TS_ENGINE::Shader::Create("Lit", "Lit.vert", "Lit.frag");
-	mDefaultShader = TS_ENGINE::Shader::Create("HDRLighting", shaderDir + "HDRLighting.vert", shaderDir + "HDRLighting.frag");
-	//mBatchLitShader = TS_ENGINE::Shader::Create("BatchLit", "BatchLit.vert", "BatchLit.frag");
-	//mHdrLightingShader = TS_ENGINE::Shader::Create("HDRLighting", "HDRLighting.vert", "HDRLighting.frag");
+	mUnlitShader = TS_ENGINE::Shader::Create("UnlitShader", shaderDir + "Unlit.vert", shaderDir + "Unlit.frag");
+	mLitShader = TS_ENGINE::Shader::Create("LitShader", shaderDir + "Lit.vert", shaderDir + "Lit.frag");
+	//mHdrLitShader = TS_ENGINE::Shader::Create("HDRLighting", shaderDir + "HDRLighting.vert", shaderDir + "HDRLighting.frag");
+	//mBatchLitShader = TS_ENGINE::Shader::Create("BatchLit", shaderDir + "BatchLit.vert", shaderDir + "BatchLit.frag");
 
 	//Material
-	mDefaultMat = CreateRef<TS_ENGINE::Material>("DefaultMaterial", mDefaultShader);//Create default material
-	//mHdrMat = CreateRef<TS_ENGINE::Material>("HdrLighting", mHdrLightingShader);//Create HDR material
+	mUnlitMat = CreateRef<TS_ENGINE::Material>("UnlitMaterial", mUnlitShader);// Create default material
+	mLitMat = CreateRef<TS_ENGINE::Material>("LitMaterial", mLitShader);
+	//mHdrLitMat = CreateRef<TS_ENGINE::Material>("UnlitMaterial", mUnlitShader);
+	//mBatchLitMat = CreateRef<TS_ENGINE::Material>("BatchMaterial", mBatchLitShader);
 
 	//Activate Shader
-	mCurrentShader = mDefaultShader;
+	mCurrentShader = mUnlitShader;
 	mCurrentShader->Bind();
 #pragma endregion
 }

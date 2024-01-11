@@ -83,17 +83,18 @@ private:
 
 	bool mIsCurrentMaterialLit = false;
 
-	Ref<TS_ENGINE::Shader> mDefaultShader;
+	Ref<TS_ENGINE::Shader> mUnlitShader;
+	Ref<TS_ENGINE::Shader> mLitShader;
 	Ref<TS_ENGINE::Shader> mBatchLitShader;
-	Ref<TS_ENGINE::Shader> mHdrLightingShader;
+	Ref<TS_ENGINE::Shader> mHdrLitShader;
 	Ref<TS_ENGINE::Shader> mCurrentShader;
 
 	float mDeltaTime;
 
-	Ref<TS_ENGINE::Material> mDefaultMat;
-	Ref<TS_ENGINE::Material> mHdrMat;
-
-	Ref<TS_ENGINE::Light> mDirectionalLight;
+	Ref<TS_ENGINE::Material> mUnlitMat;
+	Ref<TS_ENGINE::Material> mLitMat;
+	Ref<TS_ENGINE::Material> mHdrLitMat;
+	Ref<TS_ENGINE::Material> mBatchLitMat;
 
 	bool mOrthographicProjectionActive;	
 	

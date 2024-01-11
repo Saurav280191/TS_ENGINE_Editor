@@ -1,11 +1,11 @@
 #version 450 core
 
 out vec4 v_FragColor;
-out uint entityID;
+out uint entityID;// Only for editor
 
-in vec3 v_FragPos;//World space
-in vec3 v_Normal;
+in vec3 v_FragPos;// World space
 in vec2 v_TexCoord;
+in vec3 v_Normal;
 
 uniform vec4 u_AmbientColor;
 
@@ -32,7 +32,7 @@ uniform bool u_Gamma;
 uniform float u_GammaValue;
 uniform bool u_Hdr;
 uniform float u_HdrExposure;
-uniform int u_EntityID;
+uniform int u_EntityID;// Only for editor
 
 struct DirLight {
     vec3 direction;
@@ -44,7 +44,7 @@ struct DirLight {
 
 uniform DirLight dirLight;
 
-float shininess = 16.0f;
+//float shininess = 16.0f;
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 color, vec3 viewDir)
 {
@@ -54,22 +54,23 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 color, vec3 viewDir)
     float diff = max(dot(normal, lightDir), 0.0);
     
     // specular shading
-    vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+    //vec3 reflectDir = reflect(-lightDir, normal);
+    //float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
     
     // combine results
     vec3 ambient  = light.ambient * color;
     vec3 diffuse  = light.diffuse * diff * color;
-    vec3 specular = light.specular * spec * color;
+    //vec3 specular = light.specular * spec * color;
 
     float max_distance = 1.5;
     float distance = length(u_LightPos - v_FragPos);
+    float attenuation = 1.0 / distance;
     //float attenuation = 1.0 / (u_Gamma ? distance * distance : distance);
-    
-    //diffuse *= attenuation;
+	
+    diffuse *= attenuation;
     //specular *= attenuation;
 
-    return (ambient + diffuse + specular);
+    return (ambient + diffuse);// + specular);
 } 
 
 void main()
@@ -78,7 +79,7 @@ void main()
     vec4 result = u_AmbientColor;    
     result *= u_DiffuseColor;
 	
-	//Diffuse
+	// Diffuse
     if(u_HasDiffuseTexture == 1)
     {
 		vec2 tiledAndOffsetTexCoords = (v_TexCoord * u_DiffuseMapTiling) + (u_DiffuseMapOffset * 0.01f);
@@ -86,12 +87,12 @@ void main()
     }
 
     //vec3 viewDir = normalize(u_ViewPos - v_FragPos);
-    //result = CalcDirLight(dirLight, v_Normal, result, viewDir);
-
+    //result = vec4(CalcDirLight(dirLight, v_Normal, vec3(result.x, result.y, result.z), viewDir), 1);
+	
     //if(u_Hdr)
     //{
-    //    //Tone mapping
-    //    result *= vec3(1.0) - exp(-result * u_HdrExposure);//Exposure           
+    //    // Tone mapping
+    //    result *= vec3(1.0) - exp(-result * u_HdrExposure);// Exposure           
     //    
     //    if(u_Gamma)
     //        result = pow(result, vec3(1.0 / u_GammaValue));        
