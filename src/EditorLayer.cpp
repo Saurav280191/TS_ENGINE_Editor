@@ -12,6 +12,8 @@
 #include <Utils/Utility.h>
 #include <Platform/OpenGL/OpenGLVertexArray.h>
 
+#include "Renderer/MaterialManager.h"
+
 EditorLayer::EditorLayer() :
 	Layer("SandboxLayer"),
 	//mBatchedGameObject(NULL)
@@ -24,23 +26,11 @@ void EditorLayer::OnAttach()
 {
 	mSceneGui = CreateRef<TS_ENGINE::SceneGui>();
 
-#pragma region Shader
-	std::string shaderDir = TS_ENGINE::Application::s_ResourcesDir.string() + "\\Shaders\\";
-	mUnlitShader = TS_ENGINE::Shader::Create("UnlitShader", shaderDir + "Unlit.vert", shaderDir + "Unlit.frag");
-	mLitShader = TS_ENGINE::Shader::Create("LitShader", shaderDir + "Lit.vert", shaderDir + "Lit.frag");
-	//mHdrLitShader = TS_ENGINE::Shader::Create("HDRLighting", shaderDir + "HDRLighting.vert", shaderDir + "HDRLighting.frag");
-	//mBatchLitShader = TS_ENGINE::Shader::Create("BatchLit", shaderDir + "BatchLit.vert", shaderDir + "BatchLit.frag");
+	// TODO: Modify code to pass materials instead of shaders and handle the binding in MaterialManager itself
 
-	//Material
-	mUnlitMat = CreateRef<TS_ENGINE::Material>("UnlitMaterial", mUnlitShader);// Create default material
-	mLitMat = CreateRef<TS_ENGINE::Material>("LitMaterial", mLitShader);
-	//mHdrLitMat = CreateRef<TS_ENGINE::Material>("UnlitMaterial", mUnlitShader);
-	//mBatchLitMat = CreateRef<TS_ENGINE::Material>("BatchMaterial", mBatchLitShader);
-
-	//Activate Shader
-	mCurrentShader = mUnlitShader;
+	// Activate Shader
+	mCurrentShader = TS_ENGINE::MaterialManager::GetInstance()->GetUnlitMaterial()->GetShader();
 	mCurrentShader->Bind();
-#pragma endregion
 }
 
 void EditorLayer::OnDetach()

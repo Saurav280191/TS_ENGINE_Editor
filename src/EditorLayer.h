@@ -81,20 +81,11 @@ private:
 	bool mMouseClicked = false;
 	Ref<TS_ENGINE::Node> mMatchingNode = nullptr;
 
+	Ref<TS_ENGINE::Shader> mCurrentShader;
+	Ref<TS_ENGINE::Shader> mDefaultMaterial;
 	bool mIsCurrentMaterialLit = false;
 
-	Ref<TS_ENGINE::Shader> mUnlitShader;
-	Ref<TS_ENGINE::Shader> mLitShader;
-	Ref<TS_ENGINE::Shader> mBatchLitShader;
-	Ref<TS_ENGINE::Shader> mHdrLitShader;
-	Ref<TS_ENGINE::Shader> mCurrentShader;
-
 	float mDeltaTime;
-
-	Ref<TS_ENGINE::Material> mUnlitMat;
-	Ref<TS_ENGINE::Material> mLitMat;
-	Ref<TS_ENGINE::Material> mHdrLitMat;
-	Ref<TS_ENGINE::Material> mBatchLitMat;
 
 	bool mOrthographicProjectionActive;	
 	

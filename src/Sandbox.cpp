@@ -1,12 +1,14 @@
 #include <TS_ENGINE.h>
 #include <Core/EntryPoint.h>
 #include "EditorLayer.h"
+#include "Renderer/MaterialManager.h"
 
 class Sandbox : public TS_ENGINE::Application
 {
 public:
 	Sandbox()
 	{
+		TS_ENGINE::MaterialManager::GetInstance()->LoadAllShadersAndCreateMaterials();
 		PushLayer(new EditorLayer());
 	}
 };
