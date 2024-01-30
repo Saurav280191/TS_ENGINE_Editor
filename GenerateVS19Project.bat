@@ -7,7 +7,7 @@ git clone https://github.com/Saurav280191/TS_ENGINE.git
 timeout /t 5 >nul
 echo TS_ENGINE cloned complete.
 cd TS_ENGINE
-git pull origin main
+git pull origin Editor
 
 REM Build Assimp
 echo Building assimp
