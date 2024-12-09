@@ -26,7 +26,7 @@
                 ]
             }
         },
-        "Name": "BusterDrone ",
+        "Name": "BusterDrone",
         "RootNode": {
             "Children": [
                 {
@@ -385,7 +385,7 @@
                     ],
                     "Enabled": true,
                     "EntityType": 1,
-                    "ModelPath": "D:\\Documents\\ThinkSideways\\WorkInProgress\\TS_ENGINE Related\\TS_ENGINE_Editor\\build\\x64\\Debug\\bin\\Assets\\Models\\Sci-Fi\\buster_drone.glb",
+                    "ModelPath": "C:\\ThinkSideways\\WorkInProgress\\TS_ENGINE-Editor\\TS_ENGINE_Editor\\build\\x64\Debug\\bin\\Assets\\Models\\Sci-Fi\\buster_drone.glb",
                     "Name": "Sketchfab_model",
                     "Transform": {
                         "LocalEulerAngles": [
@@ -408,7 +408,7 @@
             ],
             "Enabled": true,
             "EntityType": 4,
-            "Name": "BusterDrone ",
+            "Name": "BusterDrone",
             "Transform": {
                 "LocalEulerAngles": [
                     0.0,
