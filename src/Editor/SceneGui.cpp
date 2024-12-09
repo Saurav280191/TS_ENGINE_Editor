@@ -90,7 +90,7 @@ namespace TS_ENGINE {
 					mSelectedNodeLocalEulerAngles = eulerAngles * Vector3(57.2958f);//To Degree
 				}
 
-				mSelectedNode->GetTransform()->SetLocalTransforms(mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles, mSelectedNodeLocalScale);
+				mSelectedNode->GetTransform()->SetLocalTransform(mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles, mSelectedNodeLocalScale);
 
 				mSelectedNode->UpdateTransformationMatrices(Matrix4(1));
 
