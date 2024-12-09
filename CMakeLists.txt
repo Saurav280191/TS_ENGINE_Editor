@@ -27,6 +27,12 @@ ${TS_ENGINE_DIR}/Dependencies/src/glad/glad.c
 src/Sandbox.cpp
 )
 
+set_source_files_properties(
+    glad.c
+    imgui.cpp
+    PROPERTIES COMPILE_FLAGS "-w"  # For GCC/Clang; suppress all warnings
+)
+
 #ImGui Filter
 file(GLOB ImGuiSrc
 ${TS_ENGINE_DIR}/Dependencies/include/imgui/imconfig.h
