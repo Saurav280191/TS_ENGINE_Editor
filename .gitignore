@@ -1,5 +1,6 @@
 # BUILD folder
 /build
+Dependencies/include/assimp/build/
 
 # Avoid pushing TS_ENGINE files on this repo
 /TS_ENGINE
