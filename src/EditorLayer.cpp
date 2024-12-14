@@ -17,9 +17,11 @@
 EditorLayer::EditorLayer() :
 	Layer("SandboxLayer"),
 	//mBatchedGameObject(NULL)
-	mIsControlPressed(false)
+	mIsControlPressed(false),
+	mDeltaTime(0.0f),
+	mOrthographicProjectionActive(false)
 {
-
+	defaultWindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
 }
 
 void EditorLayer::OnAttach()
