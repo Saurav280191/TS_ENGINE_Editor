@@ -184,8 +184,10 @@ namespace TS_ENGINE {
 			//Scene camera frambuffer image
 			if (SceneManager::GetInstance()->GetCurrentScene())
 			{
-				if (Ref<SceneCamera> currentSceneCamera = SceneManager::GetInstance()->GetCurrentScene()->GetCurrentSceneCamera())
+				if (SceneManager::GetInstance()->GetCurrentScene()->GetNumSceneCameras() > 0)
 				{
+					Ref<SceneCamera> currentSceneCamera = SceneManager::GetInstance()->GetCurrentScene()->GetCurrentSceneCamera();
+					
 					ImVec2 sceneCameraFramebufferViewportWindowSize = ImVec2(200.0f * TS_ENGINE::Application::Get().GetWindow().GetAspectRatio(), 200.0f);
 					ImVec2 sceneCameraFramebufferViewportWindowPos = ImGui::GetWindowSize() - sceneCameraFramebufferViewportWindowSize - ImVec2(10, 15);
 
