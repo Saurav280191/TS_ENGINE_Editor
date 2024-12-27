@@ -21,7 +21,7 @@ set(TS_ENGINE_DIR ${CMAKE_SOURCE_DIR}/../TS_ENGINE)
 set(TS_ENGINE_BINARY_DIR ${CMAKE_BINARY_DIR}/TS_ENGINE)
 add_subdirectory(${TS_ENGINE_DIR} ${TS_ENGINE_BINARY_DIR})
 
-#SOURCE_FILES
+# SOURCE_FILES
 set (SOURCE_FILES
 ${TS_ENGINE_DIR}/Dependencies/src/glad/glad.c
 src/Sandbox.cpp
@@ -33,7 +33,7 @@ set_source_files_properties(
     PROPERTIES COMPILE_FLAGS "-w"  # For GCC/Clang; suppress all warnings
 )
 
-#ImGui Filter
+# ImGui Filter
 file(GLOB ImGuiSrc
 ${TS_ENGINE_DIR}/Dependencies/include/imgui/imconfig.h
 ${TS_ENGINE_DIR}/Dependencies/include/imgui/imgui.h
@@ -51,7 +51,7 @@ ${TS_ENGINE_DIR}/Dependencies/include/ImGuizmo/ImGuizmo.cpp
 )
 source_group("ImGui" FILES ${ImGuiSrc})
 
-#Layers Filter
+# Layers Filter
 file(GLOB LayersSrc
 src/EditorLayer.h
 src/EditorLayer.cpp
@@ -66,7 +66,7 @@ src/Editor/SceneGui.cpp
 
 source_group("Layers/Editor" FILES ${LayersEditorSrc})
 
-#Shaders Filter
+# Shaders Filter
 file(GLOB ShadersSrc
 ${CMAKE_SOURCE_DIR}/Assets/Shaders/BatchLit.vert
 ${CMAKE_SOURCE_DIR}/Assets/Shaders/BatchLit.frag
@@ -85,11 +85,11 @@ ${TS_ENGINE_DIR}/Dependencies/include/assimp/build/${CMAKE_ARCHITECTURE}/lib/${C
 )
 
 add_executable (${PROJECT_NAME} 
-${SOURCE_FILES} # SOURCE_FILES Default Filter
-${LayersSrc} #Layers Filter
-${LayersEditorSrc} #Layers/Editor Filter
-${ShadersSrc} #Shaders Filter
-${ImGuiSrc} #ImGui Filter
+${SOURCE_FILES} 	# SOURCE_FILES Default Filter
+${LayersSrc} 		# Layers Filter
+${LayersEditorSrc} 	# Layers/Editor Filter
+${ShadersSrc} 		# Shaders Filter
+${ImGuiSrc} 		# ImGui Filter
 )
 
 #add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
@@ -98,7 +98,7 @@ ${ImGuiSrc} #ImGui Filter
 #COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/bin/Assets
 #COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/Assets ${CMAKE_CURRENT_BINARY_DIR}/bin/Assets)
 
-#Add definations
+# Add definations
 add_compile_definitions(
     _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
     WIN32
@@ -112,17 +112,18 @@ add_compile_definitions(
     TS_PLATFORM_WINDOWS
 	TS_ENGINE_EDITOR
 	IMGUI_DEFINE_MATH_OPERATORS
+	_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING
     )
 
-#Include directories
+# Include directories
 target_include_directories (${PROJECT_NAME} PUBLIC 
 ${CMAKE_SOURCE_DIR}/src
 )
 
-#Add libraries
-target_link_libraries(${PROJECT_NAME} LINK_PUBLIC TS_ENGINE
-opengl32.lib
-glfw3.lib
+# Link TS_ENGINE with dependencies
+target_link_libraries(${PROJECT_NAME} 
+PUBLIC TS_ENGINE
+PRIVATE opengl32.lib glfw3.lib
 )
 
 if(MSVC_VERSION EQUAL 1929)
