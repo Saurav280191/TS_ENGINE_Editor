@@ -78,10 +78,24 @@ ${CMAKE_SOURCE_DIR}/Assets/Shaders/PickingLit.frag
 )
 source_group("Shaders" FILES ${ShadersSrc})
 
-# Add an additional library directory
-link_directories(
-${TS_ENGINE_DIR}/Dependencies/${CMAKE_ARCHITECTURE}-windows/debug/lib
-${TS_ENGINE_DIR}/Dependencies/include/assimp/build/${CMAKE_ARCHITECTURE}/lib/${CMAKE_BUILD_TYPE}
+# Detect MSVC Version and Architecture and set VS_LIB_DIR accordingly
+set(VS_LIB_DIR "")
+if(MSVC)
+    if(MSVC_VERSION GREATER_EQUAL 1920 AND MSVC_VERSION LESS_EQUAL 1929) # Visual Studio 2019
+        set(VS_LIB_DIR "lib-vc2019")
+    elseif(MSVC_VERSION GREATER_EQUAL 1930 AND MSVC_VERSION LESS_EQUAL 2031) # Visual Studio 2022
+        set(VS_LIB_DIR "lib-vc2022")
+    else()
+        message(WARNING "Unsupported MSVC version. Please update the script for newer versions.")
+    endif()
+endif()
+
+# Define library directory based on architecture and configuration
+set(GLFW_LIB_DIR "${TS_ENGINE_DIR}/Dependencies/${CMAKE_ARCHITECTURE}-windows/${CMAKE_BUILD_TYPE}/lib/${VS_LIB_DIR}")
+
+# Add library directories
+link_directories(${GLFW_LIB_DIR}# GLFW library directory
+${TS_ENGINE_DIR}/Dependencies/include/assimp/build/${CMAKE_ARCHITECTURE}/lib/${CMAKE_BUILD_TYPE}# Assimp Library Directory
 )
 
 add_executable (${PROJECT_NAME} 
@@ -97,6 +111,9 @@ ${ImGuiSrc} 		# ImGui Filter
 #COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/Assets ${CMAKE_CURRENT_BINARY_DIR}/Assets
 #COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/bin/Assets
 #COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/Assets ${CMAKE_CURRENT_BINARY_DIR}/bin/Assets)
+
+# This will add TS_ENGINE_EDITOR preprocessor for TS_ENGINE core project as well
+target_compile_definitions(TS_ENGINE PUBLIC TS_ENGINE_EDITOR)
 
 # Add definations
 add_compile_definitions(
@@ -121,10 +138,9 @@ ${CMAKE_SOURCE_DIR}/src
 )
 
 # Link TS_ENGINE with dependencies
-target_link_libraries(${PROJECT_NAME} 
-PUBLIC TS_ENGINE
-PRIVATE opengl32.lib glfw3.lib
-)
+target_link_libraries(${PROJECT_NAME} PUBLIC TS_ENGINE PRIVATE 
+opengl32.lib 
+glfw3_mt.lib)#glfw3_mt is thread safe
 
 if(MSVC_VERSION EQUAL 1929)
     message("Visual Studio 2019 detected")
