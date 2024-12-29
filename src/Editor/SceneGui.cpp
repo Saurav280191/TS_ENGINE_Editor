@@ -266,14 +266,16 @@ namespace TS_ENGINE {
 	void SceneGui::CaptureSnapshot(Ref<Rect> rect, std::string path)
 	{
 		// Create a buffer to store the pixel data
-		std::vector<GLubyte> pixels(4 * rect->w * rect->h); // Assuming RGBA format
+		std::vector<GLubyte> pixels((const uint64_t)(4.0f * rect->w * rect->h)); // Assuming RGBA format
 
-		glReadPixels(rect->x, rect->y, rect->w, rect->h, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+		glReadPixels((GLsizei)rect->x, (GLsizei)rect->y, 
+			(GLsizei)rect->w, (GLsizei)rect->h, 
+			GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
 
 		Ref<Image> image = CreateRef<Image>();
 		image->pixels = pixels;
-		image->width = rect->w;
-		image->height = rect->h;
+		image->width = (int)rect->w;
+		image->height = (int)rect->h;
 
 		image->WritePixelsToFile(path);
 
@@ -281,8 +283,8 @@ namespace TS_ENGINE {
 		const char* sceneName = SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName().c_str();
 		auto it = mSavedSceneThumbnails.find(sceneName);
 		
-		Ref<Texture2D> latestSceneSnap = Texture2D::Create(rect->w, rect->h);
-		latestSceneSnap->SetData(pixels.data(), 4 * rect->w * rect->h);
+		Ref<Texture2D> latestSceneSnap = Texture2D::Create((uint32_t)rect->w, (uint32_t)rect->h);
+		latestSceneSnap->SetData(pixels.data(), (uint32_t)(4.0f * rect->w * rect->h));
 
 		if (it != mSavedSceneThumbnails.end())
 		{		
