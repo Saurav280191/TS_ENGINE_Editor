@@ -172,7 +172,7 @@ namespace TS_ENGINE {
 					}
 				}
 
-				float* identityMatrix = (float*)glm::value_ptr(Matrix4(1));
+				// float* identityMatrix = (float*)glm::value_ptr(Matrix4(1));
 
 				//if (mShowGrid)
 				//	ImGuizmo::DrawGrid(view, projection, identityMatrix, 50.0f);
@@ -188,7 +188,7 @@ namespace TS_ENGINE {
 				{
 					Ref<SceneCamera> currentSceneCamera = SceneManager::GetInstance()->GetCurrentScene()->GetCurrentSceneCamera();
 					
-					ImVec2 sceneCameraFramebufferViewportWindowSize = ImVec2(200.0f * TS_ENGINE::Application::Get().GetWindow().GetAspectRatio(), 200.0f);
+					ImVec2 sceneCameraFramebufferViewportWindowSize = ImVec2(200.0f * TS_ENGINE::Application::GetInstance().GetWindow().GetAspectRatio(), 200.0f);
 					ImVec2 sceneCameraFramebufferViewportWindowPos = ImGui::GetWindowSize() - sceneCameraFramebufferViewportWindowSize - ImVec2(10, 15);
 
 					ImGui::SetCursorPos(sceneCameraFramebufferViewportWindowPos);
@@ -215,7 +215,7 @@ namespace TS_ENGINE {
 		ImGuiStyle& style = ImGui::GetStyle();
 		style.Colors[ImGuiCol_Border] = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
 
-		ImGui::SetNextWindowPos(ImVec2(Application::Get().GetWindow().GetWidth() / 2 - 200.0f, Application::Get().GetWindow().GetHeight() / 2 - 150.0f));
+		ImGui::SetNextWindowPos(ImVec2(Application::GetInstance().GetWindow().GetWidth() / 2 - 200.0f, Application::GetInstance().GetWindow().GetHeight() / 2 - 150.0f));
 		ImGui::SetNextWindowSize(ImVec2(200, 100));
 
 		ImGui::Begin("New Scene", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
@@ -332,11 +332,11 @@ namespace TS_ENGINE {
 					mScene1->OnBatched();
 			}*/
 
-			ImGui::Text("FPS: %.1f, %.3f ms/frame", 1000.0f / TS_ENGINE::Application::Get().GetDeltaTime(), TS_ENGINE::Application::Get().GetDeltaTime());
+			ImGui::Text("FPS: %.1f, %.3f ms/frame", 1000.0f / TS_ENGINE::Application::GetInstance().GetDeltaTime(), TS_ENGINE::Application::GetInstance().GetDeltaTime());
 
-			ImGui::Text("Draw Calls: %d", TS_ENGINE::Application::Get().GetDrawCalls());
-			ImGui::Text("Vertices: %d", TS_ENGINE::Application::Get().GetTotalVertices());
-			ImGui::Text("Indices: %d", TS_ENGINE::Application::Get().GetTotalIndices());
+			ImGui::Text("Draw Calls: %d", TS_ENGINE::Application::GetInstance().GetDrawCalls());
+			ImGui::Text("Vertices: %d", TS_ENGINE::Application::GetInstance().GetTotalVertices());
+			ImGui::Text("Indices: %d", TS_ENGINE::Application::GetInstance().GetTotalIndices());
 		}
 		ImGui::End();
 	}

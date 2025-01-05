@@ -45,37 +45,38 @@ void EditorLayer::OnDetach()
 
 void EditorLayer::OnUpdate(float deltaTime)
 {
-	mDeltaTime = deltaTime;
-	TS_ENGINE::Application::Get().ResetStats();
+	mDeltaTime = deltaTime;																								// DeltaTime
+
+	TS_ENGINE::Application::GetInstance().ResetStats();																	// Reset Stats
 
 	if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 	{
-		TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->Render(mCurrentShader, deltaTime);
+		TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->Render(mCurrentShader, deltaTime);					// Render Current Scene
 	}
 
 	if (mSceneGui->IsViewportActiveWindow && !mIsControlPressed && !mSceneGui->m_ShowNewSceneWindow)
 	{
 		if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 		{
-			TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetEditorCamera()->Controls(deltaTime);
+			TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetEditorCamera()->Controls(deltaTime);			// Editor Camera Controls
 		}
 	}
 
-	//Editor camera pass
+	// Editor camera pass
 	{
 		if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 		{
 			TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->UpdateCameraRT(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetEditorCamera(), mCurrentShader, deltaTime, true);
 
-			//Render after all gameObjects rendered to show as an overlay.
-			OnOverlayRender();
+			// Render after all gameObjects rendered to show as an overlay.
+			OnOverlayRender();																							// GUI Render
 
 			if (!ImGuizmo::IsOver() && !mSceneGui->m_ShowNewSceneWindow)
 			{
-				PickGameObject();
+				PickGameObject();																						// Picking
 			}
 
-			TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetEditorCamera()->GetFramebuffer()->Unbind();
+			TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetEditorCamera()->GetFramebuffer()->Unbind();	// Unbind Framebuffer
 		}
 	}
 }
@@ -112,7 +113,7 @@ void EditorLayer::PickGameObject()
 {
 	if (TS_ENGINE::Input::IsMouseButtonPressed(TS_ENGINE::Mouse::Button0) && !mMouseClicked)
 	{
-		//Picking code
+		// Picking code
 		auto [mx, my] = ImGui::GetMousePos();
 		
 		mx -= mSceneGui->GetViewportImageRect()->x;
@@ -120,14 +121,15 @@ void EditorLayer::PickGameObject()
 
 		my = mSceneGui->GetViewportImageRect()->h - my;
 
-		int mouseX = (int)mx - 8;//TODO: Offset (-8, 38) is needed for proper picking. Need to find the root cause of this issue.
-		int mouseY = (int)my + 38;//This is probably because the viewport has borders
+		int mouseX = (int)mx - 8;	// TODO: Offset (-8, 38) is needed for proper picking. Need to find the root cause of this issue.
+		int mouseY = (int)my + 38;	// This is probably because the viewport has borders
 
 		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)mSceneGui->GetViewportImageRect()->w && mouseY < (int)mSceneGui->GetViewportImageRect()->h)
 		{
 			//Vector4 pixelColor = mEditorCamera->GetFramebuffer()->ReadPixelColor(0, mouseX, mouseY);
 			//mPickedColor = ImVec4(pixelColor.x / 255.0f, pixelColor.y / 255.0f, pixelColor.z / 255.0f, pixelColor.z / 255.0f);
 			//TS_CORE_TRACE("Pixel color = {0}", glm::to_string(pixelColor));
+
 			int entityID = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetEditorCamera()->GetFramebuffer()->ReadPixel(1, mouseX, mouseY);
 			TS_CORE_TRACE("Picking entity with ID : {0}", entityID);
 
@@ -160,7 +162,7 @@ void EditorLayer::PickGameObject()
 						mSceneGui->SetSelectedNode(hoveredOnNode);
 					}
 				}
-				else
+				else// If skybox was selected
 				{
 					mSceneGui->SetSelectedNode(nullptr);//Deselect
 				}
@@ -341,7 +343,7 @@ void EditorLayer::ShowSubMenu()
 {
 	//No need to set MainMenuBar size and position, DefaultSize: CurrentWindowWidth, 18.0f, DefaultPos: 0, 0
 	ImVec2 subMenuPos = ImVec2(0.0f, 19.8f);
-	ImVec2 subMenuSize = ImVec2((float)TS_ENGINE::Application::Get().GetWindow().GetWidth() - 250.0f, 34.5f);
+	ImVec2 subMenuSize = ImVec2((float)TS_ENGINE::Application::GetInstance().GetWindow().GetWidth() - 250.0f, 34.5f);
 
 #pragma region Sub-Menu 
 	//ImGui::SetNextWindowPos(subMenuPos);
@@ -396,7 +398,7 @@ void EditorLayer::ShowSubMenu()
 void EditorLayer::ShowPanels()
 {
 #pragma region Panel Size And Positions 
-	ImVec2 statsPanelPos = ImVec2(TS_ENGINE::Application::Get().GetWindow().GetWidth() - 450.0f, 19.0f);
+	ImVec2 statsPanelPos = ImVec2(TS_ENGINE::Application::GetInstance().GetWindow().GetWidth() - 450.0f, 19.0f);
 	ImVec2 statsPanelSize = ImVec2(200.0f, 150.0f);
 #pragma endregion
 
@@ -439,10 +441,10 @@ bool EditorLayer::OnKeyPressed(TS_ENGINE::KeyPressedEvent& e)
 	switch (e.GetKeyCode())
 	{
 	case TS_ENGINE::Key::Escape:
-		TS_ENGINE::Application::Get().Close();
+		TS_ENGINE::Application::GetInstance().Close();
 		break;
 	case TS_ENGINE::Key::Tab:
-		TS_ENGINE::Application::Get().ToggleWireframeMode();
+		TS_ENGINE::Application::GetInstance().ToggleWireframeMode();
 		break;
 	case TS_ENGINE::Key::G:
 		//SpawnNewObject();
