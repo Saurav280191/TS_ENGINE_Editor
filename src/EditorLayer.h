@@ -49,6 +49,7 @@ public:
 	virtual void OnAttach() override;
 	virtual void OnDetach() override;
 	virtual void OnUpdate(float deltaTime) override;
+	virtual void OnEvent(TS_ENGINE::Event& e) override;	
 
 #pragma region ImGUI functions
 	virtual void OnImGuiRender() override;
@@ -57,7 +58,6 @@ public:
 	void ShowPanels();
 #pragma endregion
 
-	virtual void OnEvent(TS_ENGINE::Event& e) override;	
 private:
 	bool OnKey(TS_ENGINE::KeyPressedEvent& e);
 	bool OnKeyPressed(TS_ENGINE::KeyPressedEvent& e);
