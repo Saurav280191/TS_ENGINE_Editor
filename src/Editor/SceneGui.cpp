@@ -68,16 +68,16 @@ namespace TS_ENGINE {
 	{
 		if (mSelectedNode)
 		{
-			Matrix4 globalTransformationMatrix = mSelectedNode->GetTransform()->GetGlobalTransformationMatrix();
+			Matrix4 globalTransformationMatrix = mSelectedNode->GetTransform()->GetWorldTransformationMatrix();
 			ImGuizmo::Manipulate(view, projection, mTransformOperation, mTransformMode, glm::value_ptr(globalTransformationMatrix));
 
 			if (ImGuizmo::IsUsing() || mJustSelected)
 			{
-				mSelectedNode->GetTransform()->SetGlobalTransformationMatrix(globalTransformationMatrix);
+				mSelectedNode->GetTransform()->SetWorldTransformationMatrix(globalTransformationMatrix);
 				Matrix4 localTransformationMatrix = Matrix4(1);
 
 				if (mSelectedNode->GetParentNode())
-					localTransformationMatrix = glm::inverse(mSelectedNode->GetParentNode()->GetTransform()->GetGlobalTransformationMatrix()) * globalTransformationMatrix;
+					localTransformationMatrix = glm::inverse(mSelectedNode->GetParentNode()->GetTransform()->GetWorldTransformationMatrix()) * globalTransformationMatrix;
 				else
 					localTransformationMatrix = globalTransformationMatrix;
 
@@ -90,9 +90,8 @@ namespace TS_ENGINE {
 					mSelectedNodeLocalEulerAngles = eulerAngles * Vector3(57.2958f);//To Degree
 				}
 
-				mSelectedNode->GetTransform()->SetLocalTransform(mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles, mSelectedNodeLocalScale);
-
-				mSelectedNode->UpdateTransformationMatrices(Matrix4(1));
+				mSelectedNode->GetTransform()->SetTransform(mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles, mSelectedNodeLocalScale, mSelectedNode->GetParentNode());
+				mSelectedNode->ComputeTransformMatrices();
 
 				mJustSelected = false;
 			}
@@ -403,38 +402,15 @@ namespace TS_ENGINE {
 
 					mTransformOperation = ImGuizmo::OPERATION::SCALE;
 				}
+		
+				bool draggedPositionValue = ImGui::DragFloat3("Position", glm::value_ptr(mSelectedNodeLocalPosition), 0.1f);	// Postion
+				bool draggedRotationValue = ImGui::DragFloat3("Rotation", glm::value_ptr(mSelectedNodeLocalEulerAngles), 0.1f);	// EulerAngles
+				bool draggedScaleValue = ImGui::DragFloat3("Scale", glm::value_ptr(mSelectedNodeLocalScale), 0.1f);				// Scale
 
-				//float* pos = (float*)glm::value_ptr(mSelectedNodeLocalPosition);
-				//mSelectedNodeEulerAngles = TS_ENGINE::MyMath::ClampEulerAngles(mSelectedNodeEulerAngles);//Will clamp the euler angles between 0 - 360
-				//float* eulerAngles = (float*)glm::value_ptr(mSelectedNodeLocalEulerAngles);
-				//float* scale = (float*)glm::value_ptr(mSelectedNodeLocalScale);
-
-				//Postion		
-				if (ImGui::DragFloat3("Position", glm::value_ptr(mSelectedNodeLocalPosition), 0.1f))
+				if (draggedPositionValue || draggedRotationValue || draggedScaleValue)
 				{
-					//mSelectedNode->GetTransform()->m_EulerAngles = Vector3(eulerAngles[0], eulerAngles[1], eulerAngles[2]);
-					//mSelectedNode->GetTransform()->m_Scale = Vector3(scale[0], scale[1], scale[2]);
-					//mSelectedNode->SetPosition(pos);
-					mSelectedNode->GetTransform()->SetLocalPosition(mSelectedNodeLocalPosition);
-					mSelectedNode->InitializeTransformMatrices();
-				}
-				//EulerAngles
-				if (ImGui::DragFloat3("Rotation", glm::value_ptr(mSelectedNodeLocalEulerAngles), 0.1f))
-				{
-					//mSelectedNode->GetTransform()->m_Pos = Vector3(pos[0], pos[1], pos[2]);
-					//mSelectedNode->GetTransform()->m_Scale = Vector3(scale[0], scale[1], scale[2]);
-					//mSelectedNode->SetEulerAngles(eulerAngles);
-					mSelectedNode->GetTransform()->SetLocalEulerAngles(mSelectedNodeLocalEulerAngles);
-					mSelectedNode->InitializeTransformMatrices();
-				}
-				//Scale
-				if (ImGui::DragFloat3("Scale", glm::value_ptr(mSelectedNodeLocalScale), 0.1f))
-				{
-					//mSelectedNode->GetTransform()->m_Pos = Vector3(pos[0], pos[1], pos[2]);
-					//mSelectedNode->GetTransform()->m_EulerAngles = Vector3(eulerAngles[0], eulerAngles[1], eulerAngles[2]);
-					//mSelectedNode->SetScale(scale);
-					mSelectedNode->GetTransform()->SetLocalScale(mSelectedNodeLocalScale);
-					mSelectedNode->InitializeTransformMatrices();
+					mSelectedNode->GetTransform()->SetTransform(mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles, mSelectedNodeLocalScale, mSelectedNode->GetParentNode());
+					mSelectedNode->ComputeTransformMatrices();
 				}
 
 				ImGui::EndChild();
@@ -1027,24 +1003,23 @@ namespace TS_ENGINE {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_TREENODE"))
 			{
 				Node* draggingNode = reinterpret_cast<Node*>(payload->Data);
+
 				TS_CORE_INFO("Dropped {0} on {1}", draggingNode->GetEntity()->GetName().c_str(), targetParentNode->GetEntity()->GetName().c_str());
-
 				{
-					Matrix4 transformMatrix = draggingNode->GetTransform()->GetGlobalTransformationMatrix();
-					Matrix4 newTransformMatrix = glm::inverse(targetParentNode->GetTransform()->GetGlobalTransformationMatrix()) * transformMatrix;
-					//Matrix4 newTransformMatrix = glm::inverse(draggingNode->GetTransform()->m_TransformationMatrix) * targetParentNode->GetTransform()->m_TransformationMatrix;// Ideal way
+					// Compute the current world transformation (still using the current parent)
+					glm::mat4 currentWorldTransform = draggingNode->GetParentNode()->GetTransform()->GetWorldTransformationMatrix() * draggingNode->GetTransform()->GetLocalTransformationMatrix();
+					//draggingNode->PrintTransform();
 
-					auto dd = Utility::Decompose(newTransformMatrix);
+					// Change the parent (updates the node's parent hierarchy)
+					draggingNode->ChangeParent(targetParentNode);
 
-					draggingNode->GetTransform()->m_Pos = dd->translation;
-					draggingNode->GetTransform()->m_EulerAngles = dd->eulerAngles;
-					draggingNode->GetTransform()->m_Scale = dd->scale;
+					// Compute the new local transformation relative to the new parent
+					glm::mat4 newLocalTransform = glm::inverse(targetParentNode->GetTransform()->GetWorldTransformationMatrix()) * currentWorldTransform;
 
-					Matrix4 modelMatrix = draggingNode->GetTransform()->GetGlobalTransformationMatrix();
-					draggingNode->UpdateTransformationMatrices(modelMatrix);
+					// Set the new local transformation matrix
+					draggingNode->GetTransform()->SetLocalTransformationMatrix(newLocalTransform);
+					//draggingNode->PrintTransform();
 				}
-
-				draggingNode->ChangeParent(targetParentNode);
 			}
 			else if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_MODEL"))
 			{
