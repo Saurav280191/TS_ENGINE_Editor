@@ -90,7 +90,7 @@ namespace TS_ENGINE {
 					mSelectedNodeLocalEulerAngles = eulerAngles * Vector3(57.2958f);//To Degree
 				}
 
-				mSelectedNode->GetTransform()->SetTransform(mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles, mSelectedNodeLocalScale, mSelectedNode->GetParentNode());
+				mSelectedNode->GetTransform()->SetLocalTransform(mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles, mSelectedNodeLocalScale, mSelectedNode->GetParentNode());
 				mSelectedNode->ComputeTransformMatrices();
 
 				mJustSelected = false;
@@ -409,7 +409,7 @@ namespace TS_ENGINE {
 
 				if (draggedPositionValue || draggedRotationValue || draggedScaleValue)
 				{
-					mSelectedNode->GetTransform()->SetTransform(mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles, mSelectedNodeLocalScale, mSelectedNode->GetParentNode());
+					mSelectedNode->GetTransform()->SetLocalTransform(mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles, mSelectedNodeLocalScale, mSelectedNode->GetParentNode());
 					mSelectedNode->ComputeTransformMatrices();
 				}
 
@@ -912,7 +912,7 @@ namespace TS_ENGINE {
 			{
 				if (ImGui::TreeNodeEx((void*)(intptr_t)nodeChild->GetEntity()->GetEntityID(), node_flags, nodeChild->GetEntity()->GetName().c_str()))
 				{
-					//Node context menu pop up
+					// Node context menu pop up
 					{
 						if (!mNodePopedUp && ImGui::IsItemHovered())
 						{
@@ -922,9 +922,11 @@ namespace TS_ENGINE {
 						ImGui::OpenPopupOnItemClick("NodePopUp", ImGuiPopupFlags_MouseButtonRight);
 					}
 
+					// Drag&Drop nodeChild
 					DragHierarchySceneNode(nodeChild);
 					DropHierarchySceneNode(nodeChild);
 
+					// Select nodeChild
 					if (ImGui::IsItemClicked())
 					{
 						SetSelectedNode(nodeChild);
@@ -934,12 +936,13 @@ namespace TS_ENGINE {
 					ImGui::TreePop();
 				}
 
-				if (ImGui::IsItemClicked())
+				// Select nodeChild
+				/*if (ImGui::IsItemClicked())
 				{
 					SetSelectedNode(nodeChild);
-				}
+				}*/
 			}
-			else//Tree Leaves
+			else// Tree Leaves
 			{
 				node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 
@@ -947,7 +950,7 @@ namespace TS_ENGINE {
 				{
 					if (ImGui::TreeNodeEx((void*)(intptr_t)nodeChild->GetEntity()->GetEntityID(), node_flags, nodeChild->GetEntity()->GetName().c_str()))
 					{
-						//Node context menu pop up
+						// Node context menu pop up
 						{
 							if (!mNodePopedUp && ImGui::IsItemHovered())
 							{
@@ -956,9 +959,11 @@ namespace TS_ENGINE {
 							ImGui::OpenPopupOnItemClick("NodePopUp", ImGuiPopupFlags_MouseButtonRight);
 						}
 
+						// Drag&Drop nodeChild
 						DragHierarchySceneNode(nodeChild);
 						DropHierarchySceneNode(nodeChild);
-
+						
+						// Select nodeChild
 						if (ImGui::IsItemClicked())
 						{
 							SetSelectedNode(nodeChild);
