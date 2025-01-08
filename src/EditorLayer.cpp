@@ -83,7 +83,7 @@ void EditorLayer::OnUpdate(float deltaTime)
 
 void EditorLayer::PickNode(Ref<TS_ENGINE::Node> node, int entityID)
 {
-	if (node->GetMeshes().size() > 0)
+	//if (node->GetMeshes().size() > 0)
 	{
 		//TS_CORE_TRACE("Checking: {0}", node->GetName());
 
@@ -104,7 +104,24 @@ Ref<TS_ENGINE::Node> EditorLayer::PickNodeByEntityID(int entityID)
 {
 	if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 	{
+		// Check all node in the scene hierarchy
 		PickNode(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode(), entityID);
+
+		// Check all bone nodes from factory class's instantiated models
+		for (auto& nameNodeModelPair : TS_ENGINE::Factory::GetInstance()->mLoadedModelNodeMap)
+		{
+			std::pair<Ref<TS_ENGINE::Node>, Ref<TS_ENGINE::Model>> nodeModelPair = nameNodeModelPair.second;	// Node & Model Pair
+			Ref<TS_ENGINE::Model> model = nodeModelPair.second;													// Model
+			
+			for (auto& [name, bone] : model->mBones)
+			{
+				if (bone->PickNode(entityID))
+				{
+					Ref<TS_ENGINE::Node> node = bone->GetNode();												// Node for Bone Gui
+					mMatchingNode = node;
+				}
+			}
+		}
 	}
 	return mMatchingNode;
 }
@@ -131,6 +148,8 @@ void EditorLayer::PickGameObject()
 			//TS_CORE_TRACE("Pixel color = {0}", glm::to_string(pixelColor));
 
 			int entityID = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetEditorCamera()->GetFramebuffer()->ReadPixel(1, mouseX, mouseY);
+
+			// Print entity ID
 			TS_CORE_TRACE("Picking entity with ID : {0}", entityID);
 
 			if (entityID != -1)
