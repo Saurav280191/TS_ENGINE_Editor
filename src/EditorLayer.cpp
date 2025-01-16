@@ -113,12 +113,14 @@ Ref<TS_ENGINE::Node> EditorLayer::PickNodeByEntityID(int entityID)
 			std::pair<Ref<TS_ENGINE::Node>, Ref<TS_ENGINE::Model>> nodeModelPair = nameNodeModelPair.second;	// Node & Model Pair
 			Ref<TS_ENGINE::Model> model = nodeModelPair.second;													// Model
 			
-			for (auto& [name, bone] : model->mBones)
+			for (auto& [name, bone] : model->GetBoneInfoMap())
 			{
 				if (bone->PickNode(entityID))
 				{
 					Ref<TS_ENGINE::Node> node = bone->GetNode();												// Node for Bone Gui
 					mMatchingNode = node;
+					
+					TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->mSelectedBoneId = model->FindBoneByName(mMatchingNode->mName)->GetId();
 				}
 			}
 		}
