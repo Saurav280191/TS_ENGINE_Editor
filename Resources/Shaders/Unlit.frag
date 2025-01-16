@@ -1,9 +1,8 @@
 #version 450 core
 
 out vec4 v_FragColor;
-out uint entityID;// Only for editor
+out uint entityID;		// *** Required for picking ***
 
-in vec3 v_FragPos;// World space
 in vec3 v_Normal;
 in vec2 v_TexCoord;
 
@@ -15,7 +14,9 @@ uniform vec2 u_DiffuseMapOffset;
 uniform vec2 u_DiffuseMapTiling;
 uniform sampler2D u_DiffuseSampler;
 
-uniform int u_EntityID;// Only for editor
+uniform int u_EntityID;	// *** Required for picking ***
+
+in vec4 o_InfluenceColor;
 
 void main()
 { 
@@ -29,6 +30,6 @@ void main()
         result *= texture2D(u_DiffuseSampler, tiledAndOffsetTexCoords);
     }
 
-    v_FragColor = result;
+    v_FragColor = result * o_InfluenceColor;
     entityID = u_EntityID;
 }    
