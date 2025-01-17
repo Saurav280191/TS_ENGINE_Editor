@@ -1175,6 +1175,8 @@ namespace TS_ENGINE {
 						}
 					}
 				}
+				
+				SceneManager::GetInstance()->GetCurrentScene()->mSelectedBoneId = Factory::GetInstance()->GetBoneIdByName(mSelectedNode->mName);
 			}
 		}
 	}
