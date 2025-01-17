@@ -71,7 +71,7 @@ namespace TS_ENGINE {
 		void DropHierarchySceneNode(Ref<Node> targetParentNode);		
 		void DropItemInViewport();
 		
-		void CaptureSnapshot(Ref<Rect> rect, std::string path);
+		void CaptureSnapshot(const Ref<Framebuffer>& _framebuffer, std::string _filepath);
 	
 	private:
 		uint64_t mEditorCameraRenderTextureID = 0;

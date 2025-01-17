@@ -134,15 +134,16 @@ namespace TS_ENGINE {
 			{
 				mViewportImageRect = CreateRef<Rect>(mViewportPos.x, mViewportPos.y, mViewportSize.x, mViewportSize.y - 35);
 				ImGui::Image(reinterpret_cast<void*>(mEditorCameraRenderTextureID), ImVec2(mViewportImageRect->w, mViewportImageRect->h), ImVec2(0, 1), ImVec2(1, 0));
-				ImVec2 imageMin = ImGui::GetItemRectMin();
-				ImVec2 imageMax = ImGui::GetItemRectMax();
-				ImVec2 size = imageMax - imageMin;
+				//ImVec2 imageMin = ImGui::GetItemRectMin();
+				//ImVec2 imageMax = ImGui::GetItemRectMax();
+				//ImVec2 size = imageMax - imageMin;
 
 				if (mTakeSnap && mSnapshotPath != "")
 				{
-					Ref<Rect> snapRect = CreateRef<Rect>(imageMin.x, imageMin.y + 185, size.x - 10, size.y - 50);
-
-					CaptureSnapshot(snapRect, mSnapshotPath);
+					//Ref<Rect> snapRect = CreateRef<Rect>(imageMin.x, imageMin.y + 185, size.x - 10, size.y - 50);
+					const Ref<Framebuffer>& editorCameraFrameBuffer = currentScene->GetEditorCamera()->GetFramebuffer();
+					
+					CaptureSnapshot(editorCameraFrameBuffer, mSnapshotPath);
 					mTakeSnap = false;
 					mSnapshotPath = "";
 				}
@@ -264,28 +265,16 @@ namespace TS_ENGINE {
 		mTakeSnap = true;
 	}
 
-	void SceneGui::CaptureSnapshot(Ref<Rect> rect, std::string path)
+	void SceneGui::CaptureSnapshot(const Ref<Framebuffer>& _framebuffer, std::string _filepath)
 	{
-		// Create a buffer to store the pixel data
-		std::vector<GLubyte> pixels((const uint64_t)(4.0f * rect->w * rect->h)); // Assuming RGBA format
-
-		glReadPixels((GLsizei)rect->x, (GLsizei)rect->y, 
-			(GLsizei)rect->w, (GLsizei)rect->h, 
-			GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
-
-		Ref<Image> image = CreateRef<Image>();
-		image->pixels = pixels;
-		image->width = (int)rect->w;
-		image->height = (int)rect->h;
-
-		image->WritePixelsToFile(path);
+		std::vector<GLubyte> pixels = _framebuffer->SaveFramebufferToFile(_filepath);
 
 		// Set current pixels to corresponding texture in mSavedSceneThumbnails map
 		const char* sceneName = SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName().c_str();
 		auto it = mSavedSceneThumbnails.find(sceneName);
 		
-		Ref<Texture2D> latestSceneSnap = Texture2D::Create((uint32_t)rect->w, (uint32_t)rect->h);
-		latestSceneSnap->SetData(pixels.data(), (uint32_t)(4.0f * rect->w * rect->h));
+		Ref<Texture2D> latestSceneSnap = Texture2D::Create(_framebuffer->GetSpecification().Width, _framebuffer->GetSpecification().Height);
+		latestSceneSnap->SetData(pixels.data(), (uint32_t)(4.0f * _framebuffer->GetSpecification().Width * _framebuffer->GetSpecification().Height));
 
 		if (it != mSavedSceneThumbnails.end())
 		{		
