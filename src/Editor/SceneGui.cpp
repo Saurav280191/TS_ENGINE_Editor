@@ -110,8 +110,10 @@ namespace TS_ENGINE {
 
 			mViewportPos = ImGui::GetWindowPos();
 			mViewportSize = ImGui::GetWindowSize();
+			
+			Ref<Scene> currentScene = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene();
 
-			if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
+			if (currentScene)
 			{
 				if (Ref<EditorCamera> editorCamera = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetEditorCamera())
 				{
