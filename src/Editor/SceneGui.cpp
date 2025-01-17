@@ -265,7 +265,7 @@ namespace TS_ENGINE {
 		mTakeSnap = true;
 	}
 
-	void SceneGui::CaptureSnapshot(const Ref<Framebuffer>& _framebuffer, std::string _filepath)
+	void SceneGui::CaptureSnapshot(const Ref<Framebuffer>& _framebuffer, const std::string& _filepath)
 	{
 		std::vector<GLubyte> pixels = _framebuffer->SaveFramebufferToFile(_filepath);
 
@@ -1164,8 +1164,11 @@ namespace TS_ENGINE {
 						}
 					}
 				}
-				
-				SceneManager::GetInstance()->GetCurrentScene()->mSelectedBoneId = Factory::GetInstance()->GetBoneIdByName(mSelectedNode->mName);
+
+				if (mSelectedNode->GetEntity()->GetEntityType() == EntityType::BONE)
+				{
+					SceneManager::GetInstance()->GetCurrentScene()->mSelectedBoneId = Factory::GetInstance()->GetBoneIdByName(mSelectedNode->mName);
+				}
 			}
 		}
 	}
