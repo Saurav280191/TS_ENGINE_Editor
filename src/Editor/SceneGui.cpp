@@ -1,6 +1,7 @@
 #include "tspch.h"
 #include "SceneGui.h"
 #include <Core/Factory.h>
+#include "Core/Application.h"
 
 namespace TS_ENGINE {
 
@@ -29,6 +30,7 @@ namespace TS_ENGINE {
 		mContentBrowserShaderFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserShaderFileIcon.png");
 		mContentBrowserMiscFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserMiscFileIcon.png");
 		mSceneFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\SceneIcon.png");
+		//mWireframeIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\Wireframe.png");
 
 		//mLockedIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\Locked.png");
 		//mMeshFilterIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\MeshFilterIcon.png");
@@ -129,8 +131,22 @@ namespace TS_ENGINE {
 					}
 				}
 			}
+			
+			// Wireframe model checkbox
+			//ImGui::SetCursorScreenPos(ImGui::GetCursorScreenPos() + ImVec2(0, 0));
+			//ImGui::ImageButton((void*)(intptr_t)mWireframeIcon->GetRendererID(), ImVec2(32, 32), { 0, 1 }, { 1, 0 });
 
-			//Camera framebuffer output image
+			//ImGui::SameLine();
+			ImGui::SetCursorPosX(mViewportPos.x + mViewportSize.x - 400.0f);
+			ImGui::Checkbox("Wireframe", &Application::GetInstance().mWireframeMode);
+			ImGui::SameLine();
+			ImGui::Checkbox("Texture", &Application::GetInstance().mTextureModeEnabled);
+			ImGui::SameLine();			
+			ImGui::Checkbox("Bone View", &Application::GetInstance().mBoneView);
+			ImGui::SameLine();
+			ImGui::Checkbox("Bone Influence", &Application::GetInstance().mBoneInfluence);
+
+			// Camera framebuffer output image
 			{
 				mViewportImageRect = CreateRef<Rect>(mViewportPos.x, mViewportPos.y, mViewportSize.x, mViewportSize.y - 35);
 				ImGui::Image(reinterpret_cast<void*>(mEditorCameraRenderTextureID), ImVec2(mViewportImageRect->w, mViewportImageRect->h), ImVec2(0, 1), ImVec2(1, 0));
@@ -140,9 +156,7 @@ namespace TS_ENGINE {
 
 				if (mTakeSnap && mSnapshotPath != "")
 				{
-					//Ref<Rect> snapRect = CreateRef<Rect>(imageMin.x, imageMin.y + 185, size.x - 10, size.y - 50);
-					const Ref<Framebuffer>& editorCameraFrameBuffer = currentScene->GetEditorCamera()->GetFramebuffer();
-					
+					const Ref<Framebuffer>& editorCameraFrameBuffer = currentScene->GetEditorCamera()->GetFramebuffer();	
 					CaptureSnapshot(editorCameraFrameBuffer, mSnapshotPath);
 					mTakeSnap = false;
 					mSnapshotPath = "";
@@ -151,7 +165,7 @@ namespace TS_ENGINE {
 				DropItemInViewport();
 			}
 
-			//ImGuizmo
+			// ImGuizmo
 			{
 				//ImGuizmo set perspective and drawlist
 				ImGuizmo::SetOrthographic(false);
