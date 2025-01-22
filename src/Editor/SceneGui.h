@@ -86,7 +86,11 @@ namespace TS_ENGINE {
 		Ref<Texture2D> mContentBrowserShaderFileIcon;
 		Ref<Texture2D> mContentBrowserMiscFileIcon;
 		Ref<Texture2D> mSceneFileIcon;
-		//Ref<Texture2D> mWireframeIcon;
+		Ref<Texture2D> mWireframeIcon;
+		Ref<Texture2D> mShadedIcon;
+		Ref<Texture2D> mTextureIcon;
+		Ref<Texture2D> mBoneViewIcon;
+		Ref<Texture2D> mBoneInfluenceIcon;
 		std::unordered_map<std::string, Ref<Texture2D>> mSavedSceneThumbnails;
 	
 		Ref<Node> mSelectedNode = nullptr;

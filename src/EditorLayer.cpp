@@ -14,6 +14,8 @@
 
 #include "Renderer/MaterialManager.h"
 
+ImGuiWindowFlags EditorLayer::mDefaultWindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
+
 EditorLayer::EditorLayer() :
 	Layer("SandboxLayer"),
 	//mBatchedGameObject(NULL)
@@ -21,7 +23,7 @@ EditorLayer::EditorLayer() :
 	mDeltaTime(0.0f),
 	mOrthographicProjectionActive(false)
 {
-	defaultWindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
+
 }
 
 void EditorLayer::OnAttach()
@@ -131,18 +133,19 @@ Ref<TS_ENGINE::Node> EditorLayer::PickNodeByEntityID(int entityID)
 
 void EditorLayer::PickGameObject()
 {
+	// If left mouse button is pressed
 	if (TS_ENGINE::Input::IsMouseButtonPressed(TS_ENGINE::Mouse::Button0) && !mMouseClicked)
 	{
 		// Picking code
-		auto [mx, my] = ImGui::GetMousePos();
+		auto& [mx, my] = ImGui::GetMousePos();
 		
 		mx -= mSceneGui->GetViewportImageRect()->x;
 		my -= mSceneGui->GetViewportImageRect()->y;
 
 		my = mSceneGui->GetViewportImageRect()->h - my;
 
-		int mouseX = (int)mx - 8;	// TODO: Offset (-8, 38) is needed for proper picking. Need to find the root cause of this issue.
-		int mouseY = (int)my + 38;	// This is probably because the viewport has borders
+		int mouseX = (int)mx;	// TODO: Offset (-8, 38) is needed for proper picking. Need to find the root cause of this issue.
+		int mouseY = (int)my;	// This is probably because the viewport has borders
 
 		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)mSceneGui->GetViewportImageRect()->w && mouseY < (int)mSceneGui->GetViewportImageRect()->h)
 		{
@@ -214,7 +217,7 @@ void EditorLayer::OnImGuiRender()
 	style.WindowMinSize.x = minWinSizeX;
 	style.WindowBorderSize = 1.0f;
 
-	defaultWindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
+	mDefaultWindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
 
 	ShowMainMenuBar();
 

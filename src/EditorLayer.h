@@ -58,6 +58,7 @@ public:
 	void ShowPanels();
 #pragma endregion
 
+	static ImGuiWindowFlags mDefaultWindowFlags;
 private:
 	bool OnKey(TS_ENGINE::KeyPressedEvent& e);
 	bool OnKeyPressed(TS_ENGINE::KeyPressedEvent& e);
@@ -67,9 +68,9 @@ private:
 	void PickGameObject();
 	Ref<TS_ENGINE::Node> PickNodeByEntityID(int entityID);
 	void PickNode(Ref<TS_ENGINE::Node> node, int entityID);
+
 private:
 	bool mIsControlPressed = false;
-	ImGuiWindowFlags defaultWindowFlags;
 
 	Ref<TS_ENGINE::SceneGui> mSceneGui;
 	//float mAspectRatio;

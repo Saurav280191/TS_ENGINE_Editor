@@ -2,6 +2,7 @@
 #include "SceneGui.h"
 #include <Core/Factory.h>
 #include "Core/Application.h"
+#include <EditorLayer.h>
 
 namespace TS_ENGINE {
 
@@ -30,7 +31,11 @@ namespace TS_ENGINE {
 		mContentBrowserShaderFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserShaderFileIcon.png");
 		mContentBrowserMiscFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserMiscFileIcon.png");
 		mSceneFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\SceneIcon.png");
-		//mWireframeIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\Wireframe.png");
+		mWireframeIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\WireframeIcon.png");
+		mShadedIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ShadedIcon.png");
+		mTextureIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\TextureIcon.png");
+		mBoneViewIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\BoneViewIcon.png");
+		mBoneInfluenceIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\BoneInfluenceIcon.png");
 
 		//mLockedIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\Locked.png");
 		//mMeshFilterIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\MeshFilterIcon.png");
@@ -113,7 +118,7 @@ namespace TS_ENGINE {
 			mViewportPos = ImGui::GetWindowPos();
 			mViewportSize = ImGui::GetWindowSize();
 			
-			Ref<Scene> currentScene = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene();
+			const Ref<Scene>& currentScene = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene();
 
 			if (currentScene)
 			{
@@ -137,18 +142,18 @@ namespace TS_ENGINE {
 			//ImGui::ImageButton((void*)(intptr_t)mWireframeIcon->GetRendererID(), ImVec2(32, 32), { 0, 1 }, { 1, 0 });
 
 			//ImGui::SameLine();
-			ImGui::SetCursorPosX(mViewportPos.x + mViewportSize.x - 400.0f);
-			ImGui::Checkbox("Wireframe", &Application::GetInstance().mWireframeMode);
-			ImGui::SameLine();
-			ImGui::Checkbox("Texture", &Application::GetInstance().mTextureModeEnabled);
-			ImGui::SameLine();			
-			ImGui::Checkbox("Bone View", &Application::GetInstance().mBoneView);
-			ImGui::SameLine();
-			ImGui::Checkbox("Bone Influence", &Application::GetInstance().mBoneInfluence);
+			//ImGui::SetCursorPosX(mViewportPos.x + mViewportSize.x - 400.0f);
+			//ImGui::Checkbox("Wireframe", &Application::GetInstance().mWireframeMode);
+			//ImGui::SameLine();
+			//ImGui::Checkbox("Texture", &Application::GetInstance().mTextureModeEnabled);
+			//ImGui::SameLine();			
+			//ImGui::Checkbox("Bone View", &Application::GetInstance().mBoneView);
+			//ImGui::SameLine();
+			//ImGui::Checkbox("Bone Influence", &Application::GetInstance().mBoneInfluence);
 
 			// Camera framebuffer output image
 			{
-				mViewportImageRect = CreateRef<Rect>(mViewportPos.x, mViewportPos.y, mViewportSize.x, mViewportSize.y - 35);
+				mViewportImageRect = CreateRef<Rect>(mViewportPos.x, mViewportPos.y, mViewportSize.x, mViewportSize.y);
 				ImGui::Image(reinterpret_cast<void*>(mEditorCameraRenderTextureID), ImVec2(mViewportImageRect->w, mViewportImageRect->h), ImVec2(0, 1), ImVec2(1, 0));
 				//ImVec2 imageMin = ImGui::GetItemRectMin();
 				//ImVec2 imageMax = ImGui::GetItemRectMax();
@@ -192,7 +197,7 @@ namespace TS_ENGINE {
 
 				//if (mShowGrid)
 				//	ImGuizmo::DrawGrid(view, projection, identityMatrix, 50.0f);
-				//if (mShowTranformGizmo)
+				//if (mShowTransformGizmo)
 
 				ShowTransformGizmos(view, projection);
 			}
@@ -224,6 +229,60 @@ namespace TS_ENGINE {
 		}
 		ImGui::End();
 
+
+		static bool wireframeEnabled = false;
+		static bool textureEnabled = true;
+		static bool boneViewEnabled = false;
+		static bool boneInfluenceEnabled = false;
+
+		// Set window position and size
+		ImVec2 windowSize = ImVec2(200.0f, 50.0f);   // Adjust as needed
+		ImVec2 windowPosition = ImVec2(mViewportPos + ImVec2(mViewportSize.x - windowSize.x, 10.0f)); // Adjust as needed
+		ImGui::SetNextWindowPos(windowPosition, ImGuiCond_Always);
+		ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
+
+		ImGui::Begin("##Modes", nullptr, EditorLayer::mDefaultWindowFlags | ImGuiWindowFlags_NoScrollbar);
+
+		// Wireframe Button
+		ImGui::PushStyleColor(ImGuiCol_Button, wireframeEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+		if (ImGui::ImageButton((void*)(intptr_t)(wireframeEnabled ? mWireframeIcon->GetRendererID() : mShadedIcon->GetRendererID()), ImVec2(32, 32), {0, 1}, {1, 0}))
+		{
+			wireframeEnabled = !wireframeEnabled;
+			Application::GetInstance().mWireframeMode = wireframeEnabled;
+		}
+		ImGui::PopStyleColor();
+		ImGui::SameLine();
+
+		// Texture Button
+		ImGui::PushStyleColor(ImGuiCol_Button, textureEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+		if (ImGui::ImageButton((void*)(intptr_t)mTextureIcon->GetRendererID(), ImVec2(32, 32), { 0, 1 }, { 1, 0 }))
+		{
+			textureEnabled = !textureEnabled;
+			Application::GetInstance().mTextureModeEnabled = textureEnabled;
+		}
+		ImGui::PopStyleColor();
+		ImGui::SameLine();
+
+		// BoneView Button
+		ImGui::PushStyleColor(ImGuiCol_Button, boneViewEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+		if (ImGui::ImageButton((void*)(intptr_t)mBoneViewIcon->GetRendererID(), ImVec2(32, 32), { 0, 1 }, { 1, 0 }))
+		{
+			boneViewEnabled = !boneViewEnabled;
+			Application::GetInstance().mBoneView = boneViewEnabled;
+		}
+		ImGui::PopStyleColor();
+		ImGui::SameLine();
+
+		// BoneInfluence Button
+		ImGui::PushStyleColor(ImGuiCol_Button, boneInfluenceEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+		if (ImGui::ImageButton((void*)(intptr_t)mBoneInfluenceIcon->GetRendererID(), ImVec2(32, 32), { 0, 1 }, { 1, 0 }))
+		{
+			boneInfluenceEnabled = !boneInfluenceEnabled;
+			Application::GetInstance().mBoneInfluence = boneInfluenceEnabled;
+		}
+		ImGui::PopStyleColor();
+
+		ImGui::End();
 	}
 
 	void SceneGui::ShowNewSceneWindow()
@@ -1074,6 +1133,13 @@ namespace TS_ENGINE {
 	{
 		if (node != mSelectedNode)
 		{
+			if (node != nullptr)
+			{
+				// Avoid selection of mesh. If mesh is selected and tranformed, it will lose the relative offset with bones
+				if(node->GetEntity()->GetEntityType() == EntityType::MESH)				
+					return;								
+			}
+
 			mSelectedNode = node;
 
 			if (mSelectedNode != nullptr)
