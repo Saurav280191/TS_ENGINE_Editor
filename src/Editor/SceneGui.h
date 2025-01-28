@@ -7,8 +7,26 @@
 #include <Utils/MyMath.h>
 //#include <Factory.h>
 #include <filesystem>
+#include <json/include/nlohmann/json.hpp>
 
 namespace TS_ENGINE {
+
+
+	// Struct to store sprite rect data from json for GUI
+	struct SpriteRect 
+	{
+		int x;
+		int y;
+		int width;
+		int height;
+	};
+
+	struct NormalizedRect
+	{
+		ImVec2 topLeft;
+		ImVec2 bottomRight;
+		ImVec2 size;
+	};
 
 	class SceneGui
 	{
@@ -22,7 +40,7 @@ namespace TS_ENGINE {
 		};		
 
 		SceneGui();
-		 ~SceneGui();
+		~SceneGui();
 
 		void ShowTransformGizmos(const float* view, const float* projection);
 
@@ -76,21 +94,10 @@ namespace TS_ENGINE {
 		char mSelectedNodeNameBuffer[256] = "";
 		char mNewSceneText[256] = "NewScene";
 
-		Ref<Texture2D> mUnlockedIcon;
-		Ref<TS_ENGINE::Texture2D> mMeshEditorIcon;
-		Ref<TS_ENGINE::Texture2D> mMaterialEditorIcon;
-		Ref<TS_ENGINE::Texture2D> mCameraIcon;
-		Ref<Texture2D> mContentBrowserDirectoryIcon;
-		Ref<Texture2D> mContentBrowserModelFileIcon;
-		Ref<Texture2D> mContentBrowserImageFileIcon;
-		Ref<Texture2D> mContentBrowserShaderFileIcon;
-		Ref<Texture2D> mContentBrowserMiscFileIcon;
-		Ref<Texture2D> mSceneFileIcon;
-		Ref<Texture2D> mWireframeIcon;
-		Ref<Texture2D> mShadedIcon;
-		Ref<Texture2D> mTextureIcon;
-		Ref<Texture2D> mBoneViewIcon;
-		Ref<Texture2D> mBoneInfluenceIcon;
+		Ref<Texture2D> mIconSpriteSheetTexture;
+		std::unordered_map<std::string, NormalizedRect> mIconRectMap;
+		NormalizedRect playButtonRect;
+
 		std::unordered_map<std::string, Ref<Texture2D>> mSavedSceneThumbnails;
 	
 		Ref<Node> mSelectedNode = nullptr;

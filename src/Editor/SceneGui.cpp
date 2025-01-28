@@ -20,28 +20,53 @@ namespace TS_ENGINE {
 		mTakeSnap = false;
 		mSnapshotPath = "";
 
-		mUnlockedIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\Unlocked.png");// This is a texture which is not being used in the editor but is important to fix the smart pointer deletion issue. Check the core reason behind it.
-		mMeshEditorIcon = TS_ENGINE::Texture2D::Create(TS_ENGINE::Application::s_ResourcesDir.string() + "\\Gui\\MeshEditor.png");
-		mMaterialEditorIcon = TS_ENGINE::Texture2D::Create(TS_ENGINE::Application::s_ResourcesDir.string() + "\\Gui\\LitMaterialIcon.png");
-		mCameraIcon = TS_ENGINE::Texture2D::Create(TS_ENGINE::Application::s_ResourcesDir.string() + "\\Gui\\Camera.png");
+		// Load SpriteSheet and Json
+		{
+			// Load icon texture from IconSpriteSheet.png
+			mIconSpriteSheetTexture = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\IconSpriteSheet.png");
 
-		mContentBrowserDirectoryIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserDirectoryIcon.png");
-		mContentBrowserModelFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserModelFileIcon.png");
-		mContentBrowserImageFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserImageFileIcon.png");
-		mContentBrowserShaderFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserShaderFileIcon.png");
-		mContentBrowserMiscFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ContentBrowserMiscFileIcon.png");
-		mSceneFileIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\SceneIcon.png");
-		mWireframeIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\WireframeIcon.png");
-		mShadedIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\ShadedIcon.png");
-		mTextureIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\TextureIcon.png");
-		mBoneViewIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\BoneViewIcon.png");
-		mBoneInfluenceIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\BoneInfluenceIcon.png");
+			// Parse data from IconSpriteSheet.json
+			{
+				std::ifstream file(Application::s_ResourcesDir.string() + "\\Gui\\IconSpriteSheet.json");
+				if (!file.is_open())
+				{
+					TS_CORE_ERROR("Failed to open TS_ENGINE_GUI.json");
+				}
+				nlohmann::json jsonData;
+				file >> jsonData;
+				for (auto& [key, value] : jsonData.items())
+				{
+					// Fetch sprite rect from jsonData
+					SpriteRect spriteRect;
+					spriteRect.x = value["frame"]["x"];
+					spriteRect.y = value["frame"]["y"];
+					spriteRect.width = value["frame"]["width"];
+					spriteRect.height = value["frame"]["height"];
 
-		//mLockedIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\Locked.png");
-		//mMeshFilterIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\MeshFilterIcon.png");
-		//mMeshRendererIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\MeshRendererIcon.png");
-		//mMaterialIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\MaterialIcon.png");
-		//mLitMaterialIcon = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() +  "\\Gui\\LitMaterialIcon.png");
+					// Normalize the rects. SpriteTexture will be utilized for that.
+					NormalizedRect normalizedRect;
+
+					normalizedRect.topLeft = ImVec2(
+						spriteRect.x / (float)mIconSpriteSheetTexture->GetWidth(),
+						((float)mIconSpriteSheetTexture->GetHeight() - spriteRect.y) / (float)mIconSpriteSheetTexture->GetHeight()
+					);
+
+					normalizedRect.bottomRight = normalizedRect.topLeft + ImVec2(
+						spriteRect.width / (float)mIconSpriteSheetTexture->GetWidth(),
+						-spriteRect.height / (float)mIconSpriteSheetTexture->GetHeight()
+					);
+
+					normalizedRect.size = ImVec2(spriteRect.width, spriteRect.height);
+
+					// Insert name and spritesheet to map
+					mIconRectMap.insert({ key, normalizedRect });
+				}
+			}
+		}
+
+		// Set default rect for play button
+		TS_CORE_ASSERT(mIconRectMap["PlayIcon"]);
+		playButtonRect = mIconRectMap["PlayIcon"];
 
 		mCurrentDirectory = Application::s_AssetsDir;
 
@@ -117,7 +142,7 @@ namespace TS_ENGINE {
 
 			mViewportPos = ImGui::GetWindowPos();
 			mViewportSize = ImGui::GetWindowSize();
-			
+
 			const Ref<Scene>& currentScene = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene();
 
 			if (currentScene)
@@ -136,7 +161,7 @@ namespace TS_ENGINE {
 					}
 				}
 			}
-			
+
 			// Wireframe model checkbox
 			//ImGui::SetCursorScreenPos(ImGui::GetCursorScreenPos() + ImVec2(0, 0));
 			//ImGui::ImageButton((void*)(intptr_t)mWireframeIcon->GetRendererID(), ImVec2(32, 32), { 0, 1 }, { 1, 0 });
@@ -161,7 +186,7 @@ namespace TS_ENGINE {
 
 				if (mTakeSnap && mSnapshotPath != "")
 				{
-					const Ref<Framebuffer>& editorCameraFrameBuffer = currentScene->GetEditorCamera()->GetFramebuffer();	
+					const Ref<Framebuffer>& editorCameraFrameBuffer = currentScene->GetEditorCamera()->GetFramebuffer();
 					CaptureSnapshot(editorCameraFrameBuffer, mSnapshotPath);
 					mTakeSnap = false;
 					mSnapshotPath = "";
@@ -208,7 +233,7 @@ namespace TS_ENGINE {
 				if (SceneManager::GetInstance()->GetCurrentScene()->GetNumSceneCameras() > 0)
 				{
 					Ref<SceneCamera> currentSceneCamera = SceneManager::GetInstance()->GetCurrentScene()->GetCurrentSceneCamera();
-					
+
 					ImVec2 sceneCameraFramebufferViewportWindowSize = ImVec2(200.0f * TS_ENGINE::Application::GetInstance().GetWindow().GetAspectRatio(), 200.0f);
 					ImVec2 sceneCameraFramebufferViewportWindowPos = ImGui::GetWindowSize() - sceneCameraFramebufferViewportWindowSize - ImVec2(10, 15);
 
@@ -245,37 +270,46 @@ namespace TS_ENGINE {
 
 		// Wireframe Button
 		ImGui::PushStyleColor(ImGuiCol_Button, wireframeEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
-		if (ImGui::ImageButton((void*)(intptr_t)(wireframeEnabled ? mWireframeIcon->GetRendererID() : mShadedIcon->GetRendererID()), ImVec2(32, 32), {0, 1}, {1, 0}))
+		TS_ASSERT(mIconRectMap["WireframeIcon"]);
+		TS_ASSERT(mIconRectMap["ShadedIcon"]);
+		NormalizedRect normalizedRect = wireframeEnabled ? mIconRectMap["WireframeIcon"] : mIconRectMap["ShadedIcon"];
+		if (ImGui::ImageButton("WireframeButton", (void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), normalizedRect.topLeft, normalizedRect.bottomRight))
 		{
 			wireframeEnabled = !wireframeEnabled;
 			Application::GetInstance().mWireframeMode = wireframeEnabled;
 		}
 		ImGui::PopStyleColor();
+
 		ImGui::SameLine();
 
 		// Texture Button
 		ImGui::PushStyleColor(ImGuiCol_Button, textureEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
-		if (ImGui::ImageButton((void*)(intptr_t)mTextureIcon->GetRendererID(), ImVec2(32, 32), { 0, 1 }, { 1, 0 }))
+		TS_ASSERT(mIconRectMap["TextureToggleIcon"]);
+		if (ImGui::ImageButton("TextureToggleButton", (void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["TextureToggleIcon"].topLeft, mIconRectMap["TextureToggleIcon"].bottomRight))
 		{
 			textureEnabled = !textureEnabled;
 			Application::GetInstance().mTextureModeEnabled = textureEnabled;
 		}
 		ImGui::PopStyleColor();
+
 		ImGui::SameLine();
 
 		// BoneView Button
 		ImGui::PushStyleColor(ImGuiCol_Button, boneViewEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
-		if (ImGui::ImageButton((void*)(intptr_t)mBoneViewIcon->GetRendererID(), ImVec2(32, 32), { 0, 1 }, { 1, 0 }))
+		TS_ASSERT(mIconRectMap["BoneViewIcon"]);
+		if (ImGui::ImageButton("BoneViewButton", (void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["BoneViewIcon"].topLeft, mIconRectMap["BoneViewIcon"].bottomRight))
 		{
 			boneViewEnabled = !boneViewEnabled;
 			Application::GetInstance().mBoneView = boneViewEnabled;
 		}
 		ImGui::PopStyleColor();
+
 		ImGui::SameLine();
 
 		// BoneInfluence Button
 		ImGui::PushStyleColor(ImGuiCol_Button, boneInfluenceEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
-		if (ImGui::ImageButton((void*)(intptr_t)mBoneInfluenceIcon->GetRendererID(), ImVec2(32, 32), { 0, 1 }, { 1, 0 }))
+		TS_ASSERT(mIconRectMap["BoneInfluenceIcon"]);
+		if (ImGui::ImageButton("BoneInfluenceButton", (void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["BoneInfluenceIcon"].topLeft, mIconRectMap["BoneInfluenceIcon"].bottomRight))
 		{
 			boneInfluenceEnabled = !boneInfluenceEnabled;
 			Application::GetInstance().mBoneInfluence = boneInfluenceEnabled;
@@ -318,7 +352,7 @@ namespace TS_ENGINE {
 				SceneManager::GetInstance()->CreateNewScene(mNewSceneText);
 
 				// Reset new scene pop up text
-				malloc((sizeof(mNewSceneText) + 1) * sizeof(char)); 
+				malloc((sizeof(mNewSceneText) + 1) * sizeof(char));
 				memset(mNewSceneText, 0, (sizeof(mNewSceneText) + 1) * sizeof(char));
 				strcpy_s(mNewSceneText, 256, "New Scene");
 
@@ -345,12 +379,12 @@ namespace TS_ENGINE {
 		// Set current pixels to corresponding texture in mSavedSceneThumbnails map
 		const char* sceneName = SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName().c_str();
 		auto it = mSavedSceneThumbnails.find(sceneName);
-		
+
 		Ref<Texture2D> latestSceneSnap = Texture2D::Create(_framebuffer->GetSpecification().Width, _framebuffer->GetSpecification().Height);
 		latestSceneSnap->SetData(pixels.data(), (uint32_t)(4.0f * _framebuffer->GetSpecification().Width * _framebuffer->GetSpecification().Height));
 
 		if (it != mSavedSceneThumbnails.end())
-		{		
+		{
 			mSavedSceneThumbnails[sceneName] = latestSceneSnap;
 			//mSavedSceneThumbnails[sceneName]->SetData(pixels.data(), 4 * rect->w * rect->h);// Should not change the data of the existing texture. 
 																							  // If the viewport size changes the width and height of the texture will change.
@@ -404,7 +438,7 @@ namespace TS_ENGINE {
 		ImGui::End();
 	}
 
-	void SceneGui::ShowInspectorWindow() 
+	void SceneGui::ShowInspectorWindow()
 	{
 		ImGui::Begin("Inspector");
 		{
@@ -415,70 +449,71 @@ namespace TS_ENGINE {
 				ImGui::Checkbox(" ", &GetSelectedNode()->m_Enabled);
 				ImGui::SameLine();
 
-				if(ImGui::InputText("##NodeNameText", mSelectedNodeNameBuffer, IM_ARRAYSIZE(mSelectedNodeNameBuffer)))
+				if (ImGui::InputText("##NodeNameText", mSelectedNodeNameBuffer, IM_ARRAYSIZE(mSelectedNodeNameBuffer)))
 				{
 					mSelectedNode->GetEntity()->SetName(mSelectedNodeNameBuffer);
 				}
 #pragma region Transform Component
 				ImGui::BeginChild("Transform", ImVec2(ImGui::GetWindowSize().x - 30.0f, 128.0f), true);
-
-				float transformTextPosY = ImGui::GetCursorPosY();
-				ImGui::Text("Transform");
-				ImGui::SameLine();
-
-				ImGui::SetCursorPosY(transformTextPosY - 2.5f);
-				if (ImGui::Combo("##TransformMode", &mTransformCurrentItem, mTransformComboItems, IM_ARRAYSIZE(mTransformComboItems)))
 				{
-					switch (mTransformCurrentItem)
+					float transformTextPosY = ImGui::GetCursorPosY();
+					ImGui::Text("Transform");
+					ImGui::SameLine();
+
+					ImGui::SetCursorPosY(transformTextPosY - 2.5f);
+					if (ImGui::Combo("##TransformMode", &mTransformCurrentItem, mTransformComboItems, IM_ARRAYSIZE(mTransformComboItems)))
 					{
-					case 0:
-						mTransformMode = ImGuizmo::MODE::LOCAL;
-						break;
-					case 1:
-						mTransformMode = ImGuizmo::MODE::WORLD;
-						break;
+						switch (mTransformCurrentItem)
+						{
+						case 0:
+							mTransformMode = ImGuizmo::MODE::LOCAL;
+							break;
+						case 1:
+							mTransformMode = ImGuizmo::MODE::WORLD;
+							break;
+						}
+					}
+
+					if (ImGui::RadioButton("Tr", mTranslateActive))
+					{
+						mTranslateActive = true;
+						mRotateActive = false;
+						mScaleActive = false;
+
+						mTransformOperation = ImGuizmo::OPERATION::TRANSLATE;
+					}
+					ImGui::SameLine();
+					if (ImGui::RadioButton("Rt", mRotateActive))
+					{
+						mRotateActive = true;
+						mTranslateActive = false;
+						mScaleActive = false;
+
+						mTransformOperation = ImGuizmo::OPERATION::ROTATE;
+					}
+					ImGui::SameLine();
+					if (ImGui::RadioButton("Sc", mScaleActive))
+					{
+						mScaleActive = true;
+						mTranslateActive = false;
+						mRotateActive = false;
+
+						mTransformOperation = ImGuizmo::OPERATION::SCALE;
+					}
+
+					bool draggedPositionValue = ImGui::DragFloat3("Position", glm::value_ptr(mSelectedNodeLocalPosition), 0.1f);	// Postion
+					bool draggedRotationValue = ImGui::DragFloat3("Rotation", glm::value_ptr(mSelectedNodeLocalEulerAngles), 0.1f);	// EulerAngles
+					bool draggedScaleValue = ImGui::DragFloat3("Scale", glm::value_ptr(mSelectedNodeLocalScale), 0.1f);				// Scale
+
+					if (draggedPositionValue || draggedRotationValue || draggedScaleValue)
+					{
+						mSelectedNode->GetTransform()->SetLocalTransform(mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles, mSelectedNodeLocalScale, mSelectedNode->GetParentNode());
+						mSelectedNode->ComputeTransformMatrices();
 					}
 				}
-
-				if (ImGui::RadioButton("Tr", mTranslateActive))
-				{
-					mTranslateActive = true;
-					mRotateActive = false;
-					mScaleActive = false;
-
-					mTransformOperation = ImGuizmo::OPERATION::TRANSLATE;
-				}
-				ImGui::SameLine();
-				if (ImGui::RadioButton("Rt", mRotateActive))
-				{
-					mRotateActive = true;
-					mTranslateActive = false;
-					mScaleActive = false;
-
-					mTransformOperation = ImGuizmo::OPERATION::ROTATE;
-				}
-				ImGui::SameLine();
-				if (ImGui::RadioButton("Sc", mScaleActive))
-				{
-					mScaleActive = true;
-					mTranslateActive = false;
-					mRotateActive = false;
-
-					mTransformOperation = ImGuizmo::OPERATION::SCALE;
-				}
-		
-				bool draggedPositionValue = ImGui::DragFloat3("Position", glm::value_ptr(mSelectedNodeLocalPosition), 0.1f);	// Postion
-				bool draggedRotationValue = ImGui::DragFloat3("Rotation", glm::value_ptr(mSelectedNodeLocalEulerAngles), 0.1f);	// EulerAngles
-				bool draggedScaleValue = ImGui::DragFloat3("Scale", glm::value_ptr(mSelectedNodeLocalScale), 0.1f);				// Scale
-
-				if (draggedPositionValue || draggedRotationValue || draggedScaleValue)
-				{
-					mSelectedNode->GetTransform()->SetLocalTransform(mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles, mSelectedNodeLocalScale, mSelectedNode->GetParentNode());
-					mSelectedNode->ComputeTransformMatrices();
-				}
-
 				ImGui::EndChild();
-#pragma endregion 
+
+#pragma endregion
 
 				if (mSelectedNode != NULL)
 				{
@@ -488,7 +523,8 @@ namespace TS_ENGINE {
 						ImGui::BeginChild("Camera", ImVec2(ImGui::GetWindowSize().x - 30.0f, 180.0f), true);
 
 						float meshEditorIconPosY = ImGui::GetCursorPosY();
-						ImGui::Image((void*)(intptr_t)mCameraIcon->GetRendererID(), ImVec2(30, 30), ImVec2(0, 1), ImVec2(1, 0));
+						TS_ASSERT(mIconRectMap["CameraIcon"]);
+						ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(30, 30), mIconRectMap["CameraIcon"].topLeft, mIconRectMap["CameraIcon"].bottomRight);
 						ImGui::SameLine();
 
 						ImGui::SameLine();
@@ -621,7 +657,8 @@ namespace TS_ENGINE {
 						ImGui::BeginChild("Mesh Container", ImVec2(ImGui::GetWindowSize().x - 30.0f, 75.0f), true);
 
 						float meshEditorIconPosY = ImGui::GetCursorPosY();
-						ImGui::Image((void*)(intptr_t)mMeshEditorIcon->GetRendererID(), ImVec2(20, 20));
+						TS_ASSERT(mIconRectMap["MeshEditorIcon"]);
+						ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(20, 20), mIconRectMap["MeshEditorIcon"].topLeft, mIconRectMap["MeshEditorIcon"].bottomRight);
 						ImGui::SameLine();
 
 						ImGui::SameLine();
@@ -671,7 +708,8 @@ namespace TS_ENGINE {
 						ImGui::BeginChild("Material Editor", ImVec2(ImGui::GetWindowSize().x - 30.0f, 0), true);
 						{
 							float materialIconPosY = ImGui::GetCursorPosY();
-							ImGui::Image((void*)(intptr_t)mMaterialEditorIcon->GetRendererID(), ImVec2(20, 20));
+							TS_ASSERT(mIconRectMap["MaterialEditorIcon"]);
+							ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(20, 20), mIconRectMap["MaterialEditorIcon"].topLeft, mIconRectMap["MaterialEditorIcon"].bottomRight);
 							ImGui::SameLine();
 							ImGui::SetCursorPosY(materialIconPosY + 3.5f);
 
@@ -706,134 +744,152 @@ namespace TS_ENGINE {
 		{
 			if (mCurrentDirectory != std::filesystem::path(Application::s_AssetsDir))
 			{
-				if (ImGui::Button("<-"))				
+				if (ImGui::Button("<-"))
 				{
 					mCurrentDirectory = mCurrentDirectory.parent_path();
 				}
-			}			
-			
+			}
+
 			ImGui::BeginChild("ContentBrowserItems", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 			{
 				for (auto& directoryEntry : std::filesystem::directory_iterator(mCurrentDirectory))
-			{
-				const auto& path = directoryEntry.path();
-				auto relativePath = std::filesystem::relative(path, Application::s_AssetsDir);
-				std::string filenameStr = relativePath.filename().string();
-
-				float buttonSize = 128.0f;
-				float spacing = 50.0f;
-				float iconSize = buttonSize * 0.75f;
-
-				if (directoryEntry.is_directory())
 				{
-					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+					const auto& path = directoryEntry.path();
+					auto relativePath = std::filesystem::relative(path, Application::s_AssetsDir);
+					std::string filenameStr = relativePath.filename().string();
 
-					if (ImGui::Button(("##" + filenameStr).c_str(), ImVec2(buttonSize, buttonSize)))
+					float buttonSize = 128.0f;
+					float spacing = 50.0f;
+					float iconSize = buttonSize * 0.75f;
+
+					if (directoryEntry.is_directory())
 					{
-						mCurrentDirectory /= path.filename();
-					}
+						ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 
-					ImGui::SameLine();
-					ImVec2 imagePos = cursorPos + ImVec2((buttonSize - iconSize) * 0.5f, (buttonSize - iconSize) * 0.5f);
-					ImGui::SetCursorScreenPos(imagePos);
-					ImGui::Image((void*)(intptr_t)mContentBrowserDirectoryIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
-
-					ImGui::SameLine();
-
-					if (std::strlen(filenameStr.c_str()) > 15)//Truncate string to 15 characters
-					{
-						filenameStr = Utility::GetTruncatedString(filenameStr, 15);
-					}
-
-					ImVec2 textPos = cursorPos + ImVec2((buttonSize - ImGui::CalcTextSize(filenameStr.c_str()).x) * 0.5f, buttonSize);
-					ImGui::SetCursorScreenPos(textPos);
-					ImGui::Text(filenameStr.c_str());
-
-					ImGui::SameLine();
-					ImGui::SetCursorScreenPos(cursorPos + ImVec2(buttonSize + spacing, 0));
-				}
-				else
-				{
-					std::string fileName;
-					std::string fileExtension;
-					Utility::GetFilenameAndExtension(filenameStr, fileName, fileExtension);
-
-					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-
-					if (ImGui::Button(("##" + filenameStr).c_str(), ImVec2(buttonSize, buttonSize)))
-					{
-
-					}
-
-					ImGui::SameLine();
-					ImGui::SetCursorScreenPos(cursorPos);
-
-					ImVec2 imagePos = cursorPos + ImVec2((buttonSize - iconSize) * 0.5f, (buttonSize - iconSize) * 0.5f);
-					ImGui::SetCursorScreenPos(imagePos);
-
-					if (fileExtension == "png" || fileExtension == "jpg" || fileExtension == "jpeg" || fileExtension == "tga" || fileExtension == "hdr")
-					{
-						DragContentBrowserItem(path.string().c_str(), ItemType::TEXTURE);
-
-						ImGui::Image((void*)(intptr_t)mContentBrowserImageFileIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
+						if (ImGui::Button(("##" + filenameStr).c_str(), ImVec2(buttonSize, buttonSize)))
+						{
+							mCurrentDirectory /= path.filename();
+						}
 
 						ImGui::SameLine();
-						ImVec2 textPos = cursorPos + ImVec2((buttonSize - ImGui::CalcTextSize(fileExtension.c_str()).x) * 0.5f - 5.0f, buttonSize - ImGui::CalcTextSize(fileName.c_str()).y - 30.0f);
+						ImVec2 imagePos = cursorPos + ImVec2((buttonSize - iconSize) * 0.5f, (buttonSize - iconSize) * 0.5f);
+						ImGui::SetCursorScreenPos(imagePos);
+						TS_ASSERT(mIconRectMap["ContentBrowserDirectoryIcon"]);
+						ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(iconSize, iconSize), mIconRectMap["ContentBrowserDirectoryIcon"].topLeft, mIconRectMap["ContentBrowserDirectoryIcon"].bottomRight);
+
+						ImGui::SameLine();
+
+						if (std::strlen(filenameStr.c_str()) > 15)//Truncate string to 15 characters
+						{
+							filenameStr = Utility::GetTruncatedString(filenameStr, 15);
+						}
+
+						ImVec2 textPos = cursorPos + ImVec2((buttonSize - ImGui::CalcTextSize(filenameStr.c_str()).x) * 0.5f, buttonSize);
 						ImGui::SetCursorScreenPos(textPos);
-						ImGui::Text(("." + fileExtension).c_str());
-					}
-					else if (fileExtension == "vert" || fileExtension == "frag")
-					{
-						ImGui::Image((void*)(intptr_t)mContentBrowserShaderFileIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
-					}
-					else if (fileExtension == "obj" || 
-						fileExtension == "stl" || fileExtension == "fbx" ||
-						fileExtension == "FBX" || fileExtension == "glb" ||
-						fileExtension == "gltf" || fileExtension == "blend" || 
-						fileExtension == "3ds")
-					{
-						DragContentBrowserItem(path.string().c_str(), ItemType::MODEL);
-						ImGui::Image((void*)(intptr_t)mContentBrowserModelFileIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
-					}
-					else if (fileExtension == "scene")
-					{
-						DragContentBrowserItem(path.string().c_str(), ItemType::SCENE);
+						ImGui::Text(filenameStr.c_str());
 
-						auto it = mSavedSceneThumbnails.find(fileName);
-
-						if (it != mSavedSceneThumbnails.end())
-						{
-							float thumbnailSizeX = buttonSize;
-							float thumbnailSizeY = buttonSize * 0.5625f;
-							ImVec2 thumbnailPos = cursorPos + ImVec2((buttonSize - thumbnailSizeX) * 0.5f, (buttonSize - thumbnailSizeY) * 0.5f);
-							ImGui::SetCursorScreenPos(thumbnailPos);
-							ImGui::Image((void*)(intptr_t)it->second->GetRendererID(), ImVec2(thumbnailSizeX, thumbnailSizeY), { 0, 1 }, { 1, 0 });
-						}
-						else
-						{
-							ImGui::Image((void*)(intptr_t)mSceneFileIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
-						}
+						ImGui::SameLine();
+						ImGui::SetCursorScreenPos(cursorPos + ImVec2(buttonSize + spacing, 0));
 					}
 					else
 					{
-						ImGui::Image((void*)(intptr_t)mContentBrowserMiscFileIcon->GetRendererID(), ImVec2(iconSize, iconSize), { 0, 1 }, { 1, 0 });
+						std::string fileName;
+						std::string fileExtension;
+						Utility::GetFilenameAndExtension(filenameStr, fileName, fileExtension);
+
+						ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+
+						if (ImGui::Button(("##" + filenameStr).c_str(), ImVec2(buttonSize, buttonSize)))
+						{
+
+						}
+
+						ImGui::SameLine();
+						ImGui::SetCursorScreenPos(cursorPos);
+
+						ImVec2 imagePos = cursorPos + ImVec2((buttonSize - iconSize) * 0.5f, (buttonSize - iconSize) * 0.5f);
+						ImGui::SetCursorScreenPos(imagePos);
+
+						if (fileExtension == "png" || fileExtension == "jpg" || fileExtension == "jpeg" || fileExtension == "tga" || fileExtension == "hdr")
+						{
+							DragContentBrowserItem(path.string().c_str(), ItemType::TEXTURE);
+
+							TS_ASSERT(mIconRectMap["ContentBrowserImageFileIcon"]);
+							ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(iconSize, iconSize), mIconRectMap["ContentBrowserImageFileIcon"].topLeft, mIconRectMap["ContentBrowserImageFileIcon"].bottomRight);
+
+							ImGui::SameLine();
+							ImVec2 textPos = cursorPos + ImVec2((buttonSize - ImGui::CalcTextSize(fileExtension.c_str()).x) * 0.5f - 5.0f, buttonSize - ImGui::CalcTextSize(fileName.c_str()).y - 30.0f);
+							ImGui::SetCursorScreenPos(textPos);
+							ImGui::Text(("." + fileExtension).c_str());
+						}
+						else if (fileExtension == "vert" || fileExtension == "frag")
+						{
+							TS_ASSERT(mIconRectMap["ContentBrowserShaderFileIcon"]);
+							ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(),
+								ImVec2(iconSize, iconSize),
+								mIconRectMap["ContentBrowserShaderFileIcon"].topLeft,
+								mIconRectMap["ContentBrowserShaderFileIcon"].bottomRight);
+						}
+						else if (fileExtension == "obj" ||
+							fileExtension == "stl" || fileExtension == "fbx" ||
+							fileExtension == "FBX" || fileExtension == "glb" ||
+							fileExtension == "gltf" || fileExtension == "blend" ||
+							fileExtension == "3ds")
+						{
+							DragContentBrowserItem(path.string().c_str(), ItemType::MODEL);
+							TS_ASSERT(mIconRectMap["ContentBrowserModelFileIcon"]);
+							ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(),
+								ImVec2(iconSize, iconSize),
+								mIconRectMap["ContentBrowserModelFileIcon"].topLeft,
+								mIconRectMap["ContentBrowserModelFileIcon"].bottomRight);
+						}
+						else if (fileExtension == "scene")
+						{
+							DragContentBrowserItem(path.string().c_str(), ItemType::SCENE);
+
+							auto it = mSavedSceneThumbnails.find(fileName);
+
+							if (it != mSavedSceneThumbnails.end())
+							{
+								float thumbnailSizeX = buttonSize;
+								float thumbnailSizeY = buttonSize * 0.5625f;
+								ImVec2 thumbnailPos = cursorPos + ImVec2((buttonSize - thumbnailSizeX) * 0.5f, (buttonSize - thumbnailSizeY) * 0.5f);
+								ImGui::SetCursorScreenPos(thumbnailPos);
+								ImGui::Image((void*)(intptr_t)it->second->GetRendererID(), ImVec2(thumbnailSizeX, thumbnailSizeY), { 0, 1 }, { 1, 0 });
+							}
+							else
+							{
+								TS_ASSERT(mIconRectMap["SceneFileIcon"]);
+								ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(),
+									ImVec2(iconSize, iconSize),
+									mIconRectMap["SceneFileIcon"].topLeft,
+									mIconRectMap["SceneFileIcon"].bottomRight);
+							}
+						}
+						else
+						{
+							TS_ASSERT(mIconRectMap["ContentBrowserMiscFileIcon"]);
+							ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(),
+								ImVec2(iconSize, iconSize),
+								mIconRectMap["ContentBrowserMiscFileIcon"].topLeft,
+								mIconRectMap["ContentBrowserMiscFileIcon"].bottomRight);
+						}
+
+						ImGui::SameLine();
+
+						if (std::strlen(fileName.c_str()) > 15)//Truncate string to 15 characters
+						{
+							fileName = Utility::GetTruncatedString(fileName, 15);
+						}
+
+						ImVec2 textPos = cursorPos + ImVec2((buttonSize - ImGui::CalcTextSize(fileName.c_str()).x) * 0.5f, buttonSize);
+						ImGui::SetCursorScreenPos(textPos);
+						ImGui::Text(fileName.c_str());
+
+						ImGui::SameLine();
+						ImGui::SetCursorScreenPos(cursorPos + ImVec2(buttonSize + spacing, 0));
 					}
-
-					ImGui::SameLine();
-
-					if (std::strlen(fileName.c_str()) > 15)//Truncate string to 15 characters
-					{
-						fileName = Utility::GetTruncatedString(fileName, 15);
-					}
-
-					ImVec2 textPos = cursorPos + ImVec2((buttonSize - ImGui::CalcTextSize(fileName.c_str()).x) * 0.5f, buttonSize);
-					ImGui::SetCursorScreenPos(textPos);
-					ImGui::Text(fileName.c_str());
-
-					ImGui::SameLine();
-					ImGui::SetCursorScreenPos(cursorPos + ImVec2(buttonSize + spacing, 0));
 				}
-			}
 			}
 			ImGui::EndChild();
 		}
@@ -1026,7 +1082,7 @@ namespace TS_ENGINE {
 						// Drag&Drop nodeChild
 						DragHierarchySceneNode(nodeChild);
 						DropHierarchySceneNode(nodeChild);
-						
+
 						// Select nodeChild
 						if (ImGui::IsItemClicked())
 						{
@@ -1115,7 +1171,7 @@ namespace TS_ENGINE {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENTBROWSER_SCENE"))
 			{
 				const char* draggedModelPath = reinterpret_cast<const char*>(payload->Data);
-				
+
 				mSelectedNode = nullptr;
 
 				// Flush current scene
@@ -1133,14 +1189,15 @@ namespace TS_ENGINE {
 	{
 		if (node != mSelectedNode)
 		{
-			if (node != nullptr)
-			{
-				// Avoid selection of mesh. If mesh is selected and tranformed, it will lose the relative offset with bones
-				if(node->GetEntity()->GetEntityType() == EntityType::MESH)				
-					return;								
-			}
+			//if (node != nullptr)
+			//{
+			//	// Avoid selection of mesh. If mesh is selected and tranformed, it will lose the relative offset with bones
+			//	if(node->GetEntity()->GetEntityType() == EntityType::MESH)				
+			//		return;								
+			//}
 
 			mSelectedNode = node;
+
 
 			if (mSelectedNode != nullptr)
 			{

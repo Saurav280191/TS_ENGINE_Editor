@@ -1,0 +1,327 @@
+{
+	"BackButtonIcon": {
+		"frame": {
+			"x": 260,
+			"y": 79,
+			"width": 34,
+			"height": 34
+		},
+		"sourceSize": {
+			"width": 48,
+			"height": 48
+		},
+		"rotated": false
+	},
+	"BoneInfluenceIcon": {
+		"frame": {
+			"x": 106,
+			"y": 260,
+			"width": 64,
+			"height": 64
+		},
+		"sourceSize": {
+			"width": 64,
+			"height": 64
+		},
+		"rotated": false
+	},
+	"BoneViewIcon": {
+		"frame": {
+			"x": 296,
+			"y": 79,
+			"width": 32,
+			"height": 32
+		},
+		"sourceSize": {
+			"width": 32,
+			"height": 32
+		},
+		"rotated": false
+	},
+	"CameraIcon": {
+		"frame": {
+			"x": 260,
+			"y": 0,
+			"width": 104,
+			"height": 77
+		},
+		"sourceSize": {
+			"width": 128,
+			"height": 128
+		},
+		"rotated": false
+	},
+	"Camera1Icon": {
+		"frame": {
+			"x": 0,
+			"y": 260,
+			"width": 104,
+			"height": 77
+		},
+		"sourceSize": {
+			"width": 128,
+			"height": 128
+		},
+		"rotated": false
+	},
+	"ContentBrowserDirectoryIcon": {
+		"frame": {
+			"x": 130,
+			"y": 0,
+			"width": 128,
+			"height": 112
+		},
+		"sourceSize": {
+			"width": 128,
+			"height": 128
+		},
+		"rotated": false
+	},
+	"ContentBrowserImageFileIcon": {
+		"frame": {
+			"x": 0,
+			"y": 130,
+			"width": 98,
+			"height": 128
+		},
+		"sourceSize": {
+			"width": 128,
+			"height": 128
+		},
+		"rotated": false
+	},
+	"ContentBrowserMiscFileIcon": {
+		"frame": {
+			"x": 200,
+			"y": 130,
+			"width": 88,
+			"height": 108
+		},
+		"sourceSize": {
+			"width": 128,
+			"height": 128
+		},
+		"rotated": false
+	},
+	"ContentBrowserModelFileIcon": {
+		"frame": {
+			"x": 290,
+			"y": 328,
+			"width": 56,
+			"height": 62
+		},
+		"sourceSize": {
+			"width": 64,
+			"height": 64
+		},
+		"rotated": false
+	},
+	"ContentBrowserShaderFileIcon": {
+		"frame": {
+			"x": 100,
+			"y": 130,
+			"width": 98,
+			"height": 128
+		},
+		"sourceSize": {
+			"width": 128,
+			"height": 128
+		},
+		"rotated": false
+	},
+	"LitMaterialIcon": {
+		"frame": {
+			"x": 172,
+			"y": 260,
+			"width": 64,
+			"height": 64
+		},
+		"sourceSize": {
+			"width": 64,
+			"height": 64
+		},
+		"rotated": false
+	},
+	"MaterialEditorIcon": {
+		"frame": {
+			"x": 290,
+			"y": 130,
+			"width": 64,
+			"height": 64
+		},
+		"sourceSize": {
+			"width": 64,
+			"height": 64
+		},
+		"rotated": false
+	},
+	"MaterialIcon": {
+		"frame": {
+			"x": 290,
+			"y": 130,
+			"width": 64,
+			"height": 64
+		},
+		"sourceSize": {
+			"width": 64,
+			"height": 64
+		},
+		"rotated": false
+	},
+	"MeshEditorIcon": {
+		"frame": {
+			"x": 348,
+			"y": 328,
+			"width": 56,
+			"height": 56
+		},
+		"sourceSize": {
+			"width": 64,
+			"height": 64
+		},
+		"rotated": false
+	},
+	"MeshFilterIcon": {
+		"frame": {
+			"x": 348,
+			"y": 328,
+			"width": 56,
+			"height": 56
+		},
+		"sourceSize": {
+			"width": 64,
+			"height": 64
+		},
+		"rotated": false
+	},
+	"MeshRendererIcon": {
+		"frame": {
+			"x": 106,
+			"y": 326,
+			"width": 64,
+			"height": 64
+		},
+		"sourceSize": {
+			"width": 64,
+			"height": 64
+		},
+		"rotated": false
+	},
+	"PauseIcon": {
+		"frame": {
+			"x": 32,
+			"y": 339,
+			"width": 20,
+			"height": 28
+		},
+		"sourceSize": {
+			"width": 32,
+			"height": 32
+		},
+		"rotated": false
+	},
+	"PlayIcon": {
+		"frame": {
+			"x": 0,
+			"y": 339,
+			"width": 30,
+			"height": 32
+		},
+		"sourceSize": {
+			"width": 32,
+			"height": 32
+		},
+		"rotated": false
+	},
+	"SceneIcon": {
+		"frame": {
+			"x": 0,
+			"y": 0,
+			"width": 128,
+			"height": 128
+		},
+		"sourceSize": {
+			"width": 128,
+			"height": 128
+		},
+		"rotated": false
+	},
+	"ShadedIcon": {
+		"frame": {
+			"x": 290,
+			"y": 196,
+			"width": 64,
+			"height": 64
+		},
+		"sourceSize": {
+			"width": 64,
+			"height": 64
+		},
+		"rotated": false
+	},
+	"StopIcon": {
+		"frame": {
+			"x": 330,
+			"y": 79,
+			"width": 24,
+			"height": 24
+		},
+		"sourceSize": {
+			"width": 32,
+			"height": 32
+		},
+		"rotated": false
+	},
+	"TextureToggleIcon": {
+		"frame": {
+			"x": 172,
+			"y": 326,
+			"width": 64,
+			"height": 64
+		},
+		"sourceSize": {
+			"width": 64,
+			"height": 64
+		},
+		"rotated": false
+	},
+	"UnlockedIcon": {
+		"frame": {
+			"x": 238,
+			"y": 260,
+			"width": 46,
+			"height": 62
+		},
+		"sourceSize": {
+			"width": 64,
+			"height": 64
+		},
+		"rotated": false
+	},
+	"WireframeIcon": {
+		"frame": {
+			"x": 290,
+			"y": 262,
+			"width": 64,
+			"height": 64
+		},
+		"sourceSize": {
+			"width": 64,
+			"height": 64
+		},
+		"rotated": false
+	},
+	"LockedIcon": {
+		"frame": {
+			"x": 356,
+			"y": 130,
+			"width": 46,
+			"height": 59
+		},
+		"sourceSize": {
+			"width": 64,
+			"height": 64
+		},
+		"rotated": false
+	}
+}
