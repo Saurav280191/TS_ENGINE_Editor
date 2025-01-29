@@ -48,9 +48,10 @@ namespace TS_ENGINE {
 		void ShowStatsWindow(ImVec2 statsPanelPos, ImVec2 statsPanelSize);
 		void ShowInspectorWindow();
 		void ShowHierarchyWindow();
-		void ShowContentBrowser();
-		void ShowNewSceneWindow();
-		
+		void ShowContentBrowser();		
+		void ShowAnimationPanel();
+		void ShowNewSceneWindow();		
+
 		void TakeSnapshot(const std::string& snapshotPath);
 
 		Ref<Node> GetSelectedNode() { return mSelectedNode; }

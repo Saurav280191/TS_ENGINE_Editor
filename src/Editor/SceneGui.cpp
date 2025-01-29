@@ -45,9 +45,9 @@ namespace TS_ENGINE {
 
 					// Normalize the rects. SpriteTexture will be utilized for that.
 					NormalizedRect normalizedRect;
-
+					
 					normalizedRect.topLeft = ImVec2(
-						spriteRect.x / (float)mIconSpriteSheetTexture->GetWidth(),
+						spriteRect.x / (float)mIconSpriteSheetTexture->GetWidth(), 
 						((float)mIconSpriteSheetTexture->GetHeight() - spriteRect.y) / (float)mIconSpriteSheetTexture->GetHeight()
 					);
 
@@ -63,11 +63,11 @@ namespace TS_ENGINE {
 				}
 			}
 		}
-
+		
 		// Set default rect for play button
 		TS_CORE_ASSERT(mIconRectMap["PlayIcon"]);
 		playButtonRect = mIconRectMap["PlayIcon"];
-
+		
 		mCurrentDirectory = Application::s_AssetsDir;
 
 		for (auto& directoryEntry : std::filesystem::directory_iterator(Application::s_ThumbnailsDir))
@@ -100,6 +100,9 @@ namespace TS_ENGINE {
 	{
 		if (mSelectedNode)
 		{
+			if (mSelectedNode->HasBoneInfluence())
+				return;
+
 			Matrix4 globalTransformationMatrix = mSelectedNode->GetTransform()->GetWorldTransformationMatrix();
 			ImGuizmo::Manipulate(view, projection, mTransformOperation, mTransformMode, glm::value_ptr(globalTransformationMatrix));
 
@@ -270,7 +273,7 @@ namespace TS_ENGINE {
 
 		// Wireframe Button
 		ImGui::PushStyleColor(ImGuiCol_Button, wireframeEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
-		TS_ASSERT(mIconRectMap["WireframeIcon"]);
+		TS_ASSERT(mIconRectMap["WireframeIcon"]); 
 		TS_ASSERT(mIconRectMap["ShadedIcon"]);
 		NormalizedRect normalizedRect = wireframeEnabled ? mIconRectMap["WireframeIcon"] : mIconRectMap["ShadedIcon"];
 		if (ImGui::ImageButton("WireframeButton", (void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), normalizedRect.topLeft, normalizedRect.bottomRight))
@@ -279,7 +282,7 @@ namespace TS_ENGINE {
 			Application::GetInstance().mWireframeMode = wireframeEnabled;
 		}
 		ImGui::PopStyleColor();
-
+		
 		ImGui::SameLine();
 
 		// Texture Button
@@ -291,7 +294,7 @@ namespace TS_ENGINE {
 			Application::GetInstance().mTextureModeEnabled = textureEnabled;
 		}
 		ImGui::PopStyleColor();
-
+		
 		ImGui::SameLine();
 
 		// BoneView Button
@@ -303,7 +306,7 @@ namespace TS_ENGINE {
 			Application::GetInstance().mBoneView = boneViewEnabled;
 		}
 		ImGui::PopStyleColor();
-
+		
 		ImGui::SameLine();
 
 		// BoneInfluence Button
@@ -454,65 +457,101 @@ namespace TS_ENGINE {
 					mSelectedNode->GetEntity()->SetName(mSelectedNodeNameBuffer);
 				}
 #pragma region Transform Component
-				ImGui::BeginChild("Transform", ImVec2(ImGui::GetWindowSize().x - 30.0f, 128.0f), true);
+				if (!mSelectedNode->HasBoneInfluence())
 				{
-					float transformTextPosY = ImGui::GetCursorPosY();
-					ImGui::Text("Transform");
-					ImGui::SameLine();
-
-					ImGui::SetCursorPosY(transformTextPosY - 2.5f);
-					if (ImGui::Combo("##TransformMode", &mTransformCurrentItem, mTransformComboItems, IM_ARRAYSIZE(mTransformComboItems)))
+					ImGui::BeginChild("Transform", ImVec2(ImGui::GetWindowSize().x - 30.0f, 128.0f), true);
 					{
-						switch (mTransformCurrentItem)
+						float transformTextPosY = ImGui::GetCursorPosY();
+						ImGui::Text("Transform");
+						ImGui::SameLine();
+
+						ImGui::SetCursorPosY(transformTextPosY - 2.5f);
+						if (ImGui::Combo("##TransformMode", &mTransformCurrentItem, mTransformComboItems, IM_ARRAYSIZE(mTransformComboItems)))
 						{
-						case 0:
-							mTransformMode = ImGuizmo::MODE::LOCAL;
-							break;
-						case 1:
-							mTransformMode = ImGuizmo::MODE::WORLD;
-							break;
+							switch (mTransformCurrentItem)
+							{
+							case 0:
+								mTransformMode = ImGuizmo::MODE::LOCAL;
+								break;
+							case 1:
+								mTransformMode = ImGuizmo::MODE::WORLD;
+								break;
+							}
+						}
+
+						if (ImGui::RadioButton("Tr", mTranslateActive))
+						{
+							mTranslateActive = true;
+							mRotateActive = false;
+							mScaleActive = false;
+
+							mTransformOperation = ImGuizmo::OPERATION::TRANSLATE;
+						}
+						ImGui::SameLine();
+						if (ImGui::RadioButton("Rt", mRotateActive))
+						{
+							mRotateActive = true;
+							mTranslateActive = false;
+							mScaleActive = false;
+
+							mTransformOperation = ImGuizmo::OPERATION::ROTATE;
+						}
+						ImGui::SameLine();
+						if (ImGui::RadioButton("Sc", mScaleActive))
+						{
+							mScaleActive = true;
+							mTranslateActive = false;
+							mRotateActive = false;
+
+							mTransformOperation = ImGuizmo::OPERATION::SCALE;
+						}
+
+						bool draggedPositionValue = ImGui::DragFloat3("Position", glm::value_ptr(mSelectedNodeLocalPosition), 0.1f);	// Postion
+						bool draggedRotationValue = ImGui::DragFloat3("Rotation", glm::value_ptr(mSelectedNodeLocalEulerAngles), 0.1f);	// EulerAngles
+						bool draggedScaleValue = ImGui::DragFloat3("Scale", glm::value_ptr(mSelectedNodeLocalScale), 0.1f);				// Scale
+
+						if (draggedPositionValue || draggedRotationValue || draggedScaleValue)
+						{
+							mSelectedNode->GetTransform()->SetLocalTransform(mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles, mSelectedNodeLocalScale, mSelectedNode->GetParentNode());
+							mSelectedNode->ComputeTransformMatrices();
 						}
 					}
-
-					if (ImGui::RadioButton("Tr", mTranslateActive))
-					{
-						mTranslateActive = true;
-						mRotateActive = false;
-						mScaleActive = false;
-
-						mTransformOperation = ImGuizmo::OPERATION::TRANSLATE;
-					}
-					ImGui::SameLine();
-					if (ImGui::RadioButton("Rt", mRotateActive))
-					{
-						mRotateActive = true;
-						mTranslateActive = false;
-						mScaleActive = false;
-
-						mTransformOperation = ImGuizmo::OPERATION::ROTATE;
-					}
-					ImGui::SameLine();
-					if (ImGui::RadioButton("Sc", mScaleActive))
-					{
-						mScaleActive = true;
-						mTranslateActive = false;
-						mRotateActive = false;
-
-						mTransformOperation = ImGuizmo::OPERATION::SCALE;
-					}
-
-					bool draggedPositionValue = ImGui::DragFloat3("Position", glm::value_ptr(mSelectedNodeLocalPosition), 0.1f);	// Postion
-					bool draggedRotationValue = ImGui::DragFloat3("Rotation", glm::value_ptr(mSelectedNodeLocalEulerAngles), 0.1f);	// EulerAngles
-					bool draggedScaleValue = ImGui::DragFloat3("Scale", glm::value_ptr(mSelectedNodeLocalScale), 0.1f);				// Scale
-
-					if (draggedPositionValue || draggedRotationValue || draggedScaleValue)
-					{
-						mSelectedNode->GetTransform()->SetLocalTransform(mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles, mSelectedNodeLocalScale, mSelectedNode->GetParentNode());
-						mSelectedNode->ComputeTransformMatrices();
-					}
+					ImGui::EndChild();
 				}
-				ImGui::EndChild();
+#pragma endregion
 
+#pragma region Animation Component
+				if (mSelectedNode->GetAnimations().size() > 0)
+				{
+					ImGui::BeginChild("Animation", ImVec2(ImGui::GetWindowSize().x - 30.0f, 180.0f), true);
+					{
+						ImGui::Text("Animation");
+
+						// Variable to store the selected animation
+						static int currentAnimationIndex = 0; // Default to the first animation
+
+						// Get the list of animations
+						auto& animations = mSelectedNode->GetAnimations();
+
+						// Collect animation names for the combo box
+						std::vector<const char*> animationNames;
+						for (const auto& [name, animation] : animations)
+						{
+							animationNames.push_back(name.c_str());
+						}
+
+						// Create a combo box to select animations
+						if (ImGui::Combo("Select Animation", &currentAnimationIndex, animationNames.data(), static_cast<int>(animationNames.size())))
+						{
+							// Handle the selection change
+							const std::string& selectedAnimationName = animationNames[currentAnimationIndex];
+
+							// Set the selected animation
+							mSelectedNode->SetCurrentAnimation(selectedAnimationName);
+						}
+					}
+					ImGui::EndChild();
+				}
 #pragma endregion
 
 				if (mSelectedNode != NULL)
@@ -539,6 +578,7 @@ namespace TS_ENGINE {
 						ImGui::SameLine();
 
 						ImGui::SetCursorPosY(headerTextY - 2.5f);
+						
 						// Projection selector GUI
 						if (ImGui::BeginCombo("##Projection", mCurrentProjection))
 						{
@@ -556,6 +596,7 @@ namespace TS_ENGINE {
 										ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
 								}
 							}
+
 							ImGui::EndCombo();
 						}
 
@@ -707,7 +748,7 @@ namespace TS_ENGINE {
 #pragma region Material Editor
 						ImGui::BeginChild("Material Editor", ImVec2(ImGui::GetWindowSize().x - 30.0f, 0), true);
 						{
-							float materialIconPosY = ImGui::GetCursorPosY();
+							float materialIconPosY = ImGui::GetCursorPosY();							
 							TS_ASSERT(mIconRectMap["MaterialEditorIcon"]);
 							ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(20, 20), mIconRectMap["MaterialEditorIcon"].topLeft, mIconRectMap["MaterialEditorIcon"].bottomRight);
 							ImGui::SameLine();
@@ -823,11 +864,11 @@ namespace TS_ENGINE {
 							ImGui::Text(("." + fileExtension).c_str());
 						}
 						else if (fileExtension == "vert" || fileExtension == "frag")
-						{
+						{							
 							TS_ASSERT(mIconRectMap["ContentBrowserShaderFileIcon"]);
 							ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(),
-								ImVec2(iconSize, iconSize),
-								mIconRectMap["ContentBrowserShaderFileIcon"].topLeft,
+								ImVec2(iconSize, iconSize), 
+								mIconRectMap["ContentBrowserShaderFileIcon"].topLeft, 
 								mIconRectMap["ContentBrowserShaderFileIcon"].bottomRight);
 						}
 						else if (fileExtension == "obj" ||
@@ -836,7 +877,7 @@ namespace TS_ENGINE {
 							fileExtension == "gltf" || fileExtension == "blend" ||
 							fileExtension == "3ds")
 						{
-							DragContentBrowserItem(path.string().c_str(), ItemType::MODEL);
+							DragContentBrowserItem(path.string().c_str(), ItemType::MODEL);							
 							TS_ASSERT(mIconRectMap["ContentBrowserModelFileIcon"]);
 							ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(),
 								ImVec2(iconSize, iconSize),
@@ -869,7 +910,7 @@ namespace TS_ENGINE {
 						else
 						{
 							TS_ASSERT(mIconRectMap["ContentBrowserMiscFileIcon"]);
-							ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(),
+							ImGui::Image((void*)(intptr_t)mIconSpriteSheetTexture->GetRendererID(),
 								ImVec2(iconSize, iconSize),
 								mIconRectMap["ContentBrowserMiscFileIcon"].topLeft,
 								mIconRectMap["ContentBrowserMiscFileIcon"].bottomRight);
@@ -896,6 +937,56 @@ namespace TS_ENGINE {
 		ImGui::End();
 	}
 
+	void SceneGui::ShowAnimationPanel()
+	{
+		ImGui::Begin("Animation", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+		{
+			ImGui::SetCursorPosX(ImGui::GetWindowPos().x + ImGui::GetWindowSize().x * 0.5f - 25.0f);
+
+			// Play/Pause Button
+			ImGui::BeginChild("PlayButton", ImVec2(100.0f, 50.0f), true, ImGuiWindowFlags_NoDecoration);
+			{
+				TS_CORE_ASSERT(mIconRectMap["PlayIcon"]);
+				TS_CORE_ASSERT(mIconRectMap["PauseIcon"]);				
+				if (ImGui::ImageButton("PlayerButton", (void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), playButtonRect.topLeft, playButtonRect.bottomRight))
+				{
+					if (mSelectedNode)
+					{
+						if (auto& animation = mSelectedNode->GetCurrentAnimation())
+						{
+							animation->ToggleIsPlaying();
+							animation->IsPlaying() ? playButtonRect = mIconRectMap["PauseIcon"] : playButtonRect = mIconRectMap["PlayIcon"];
+						}
+					}
+				}
+
+				ImGui::SameLine();
+
+				TS_CORE_ASSERT(mIconRectMap["StopIcon"]);
+				if (ImGui::ImageButton("StopButton", (void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["StopIcon"].topLeft, mIconRectMap["StopIcon"].bottomRight))
+				{
+					if (mSelectedNode)
+					{
+						if (auto& animation = mSelectedNode->GetCurrentAnimation())
+						{
+							animation->Stop();
+							playButtonRect = mIconRectMap["PlayIcon"];
+						}
+					}
+				}
+			}
+			ImGui::EndChild();
+			
+			if (mSelectedNode)
+			{
+				if (auto& animation = mSelectedNode->GetCurrentAnimation())
+				{
+					animation->InitializeNodesForAnimation();
+				}
+			}
+		}
+		ImGui::End();
+	}
 	void SceneGui::SwitchToTranslateMode()
 	{
 		mTranslateActive = true;
@@ -1197,7 +1288,7 @@ namespace TS_ENGINE {
 			//}
 
 			mSelectedNode = node;
-
+			
 
 			if (mSelectedNode != nullptr)
 			{

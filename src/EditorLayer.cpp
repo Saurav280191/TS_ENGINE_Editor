@@ -53,6 +53,7 @@ void EditorLayer::OnUpdate(float deltaTime)
 
 	if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 	{
+		TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->Update(deltaTime);									// Update Current Scene
 		TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->Render(mCurrentShader, deltaTime);					// Render Current Scene
 	}
 
@@ -62,6 +63,7 @@ void EditorLayer::OnUpdate(float deltaTime)
 		{
 			TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetEditorCamera()->Controls(deltaTime);			// Editor Camera Controls
 		}
+
 	}
 
 	// Editor camera pass
@@ -432,6 +434,7 @@ void EditorLayer::ShowPanels()
 	mSceneGui->ShowInspectorWindow();
 	mSceneGui->ShowHierarchyWindow();
 	mSceneGui->ShowContentBrowser();
+	mSceneGui->ShowAnimationPanel();
 
 	if (mSceneGui->m_ShowNewSceneWindow)
 	{

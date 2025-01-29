@@ -21,7 +21,6 @@
 
 //Other object classes
 #include <ModelLoader.h>
-//#include <Factory.h>
 
 //Scene management headers
 #include <SceneManager/Node.h>
@@ -32,7 +31,6 @@
 //Camera headers
 #include <Renderer/Camera/EditorCamera.h>
 #include "Editor/SceneGui.h"
-
 
 #include <imgui.h>
 //#define IMGUI_DEFINE_MATH_OPERATORS // Already set in preprocessors
