@@ -982,6 +982,8 @@ namespace TS_ENGINE {
 				if (auto& animation = mSelectedNode->GetCurrentAnimation())
 				{
 					animation->InitializeNodesForAnimation();
+					
+					// TODO: Add IMGUI code to show a simple animation timeline interface
 				}
 			}
 		}
