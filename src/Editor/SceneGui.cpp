@@ -56,7 +56,7 @@ namespace TS_ENGINE {
 						-spriteRect.height / (float)mIconSpriteSheetTexture->GetHeight()
 					);
 
-					normalizedRect.size = ImVec2(spriteRect.width, spriteRect.height);
+					normalizedRect.size = ImVec2((float)spriteRect.width, (float)spriteRect.height);
 
 					// Insert name and spritesheet to map
 					mIconRectMap.insert({ key, normalizedRect });
@@ -276,7 +276,7 @@ namespace TS_ENGINE {
 		TS_ASSERT(mIconRectMap["WireframeIcon"]); 
 		TS_ASSERT(mIconRectMap["ShadedIcon"]);
 		NormalizedRect normalizedRect = wireframeEnabled ? mIconRectMap["WireframeIcon"] : mIconRectMap["ShadedIcon"];
-		if (ImGui::ImageButton("WireframeButton", (void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), normalizedRect.topLeft, normalizedRect.bottomRight))
+		if (ImGui::ImageButton("WireframeButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), normalizedRect.topLeft, normalizedRect.bottomRight))
 		{
 			wireframeEnabled = !wireframeEnabled;
 			Application::GetInstance().mWireframeMode = wireframeEnabled;
@@ -288,7 +288,7 @@ namespace TS_ENGINE {
 		// Texture Button
 		ImGui::PushStyleColor(ImGuiCol_Button, textureEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
 		TS_ASSERT(mIconRectMap["TextureToggleIcon"]);
-		if (ImGui::ImageButton("TextureToggleButton", (void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["TextureToggleIcon"].topLeft, mIconRectMap["TextureToggleIcon"].bottomRight))
+		if (ImGui::ImageButton("TextureToggleButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["TextureToggleIcon"].topLeft, mIconRectMap["TextureToggleIcon"].bottomRight))
 		{
 			textureEnabled = !textureEnabled;
 			Application::GetInstance().mTextureModeEnabled = textureEnabled;
@@ -300,7 +300,7 @@ namespace TS_ENGINE {
 		// BoneView Button
 		ImGui::PushStyleColor(ImGuiCol_Button, boneViewEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
 		TS_ASSERT(mIconRectMap["BoneViewIcon"]);
-		if (ImGui::ImageButton("BoneViewButton", (void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["BoneViewIcon"].topLeft, mIconRectMap["BoneViewIcon"].bottomRight))
+		if (ImGui::ImageButton("BoneViewButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["BoneViewIcon"].topLeft, mIconRectMap["BoneViewIcon"].bottomRight))
 		{
 			boneViewEnabled = !boneViewEnabled;
 			Application::GetInstance().mBoneView = boneViewEnabled;
@@ -312,7 +312,7 @@ namespace TS_ENGINE {
 		// BoneInfluence Button
 		ImGui::PushStyleColor(ImGuiCol_Button, boneInfluenceEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
 		TS_ASSERT(mIconRectMap["BoneInfluenceIcon"]);
-		if (ImGui::ImageButton("BoneInfluenceButton", (void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["BoneInfluenceIcon"].topLeft, mIconRectMap["BoneInfluenceIcon"].bottomRight))
+		if (ImGui::ImageButton("BoneInfluenceButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["BoneInfluenceIcon"].topLeft, mIconRectMap["BoneInfluenceIcon"].bottomRight))
 		{
 			boneInfluenceEnabled = !boneInfluenceEnabled;
 			Application::GetInstance().mBoneInfluence = boneInfluenceEnabled;
@@ -563,7 +563,7 @@ namespace TS_ENGINE {
 
 						float meshEditorIconPosY = ImGui::GetCursorPosY();
 						TS_ASSERT(mIconRectMap["CameraIcon"]);
-						ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(30, 30), mIconRectMap["CameraIcon"].topLeft, mIconRectMap["CameraIcon"].bottomRight);
+						ImGui::Image((ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(30, 30), mIconRectMap["CameraIcon"].topLeft, mIconRectMap["CameraIcon"].bottomRight);
 						ImGui::SameLine();
 
 						ImGui::SameLine();
@@ -593,7 +593,7 @@ namespace TS_ENGINE {
 									mSelectedNode->GetSceneCamera()->SetProjectionType((Camera::ProjectionType)n);
 									mSelectedNode->GetSceneCamera()->RefreshFrustrumGUI();
 									if (is_selected)
-										ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+										ImGui::SetItemDefaultFocus();   // Set the initial focus when opening the combo (scrolling + for keyboard navigation support)
 								}
 							}
 
@@ -699,7 +699,7 @@ namespace TS_ENGINE {
 
 						float meshEditorIconPosY = ImGui::GetCursorPosY();
 						TS_ASSERT(mIconRectMap["MeshEditorIcon"]);
-						ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(20, 20), mIconRectMap["MeshEditorIcon"].topLeft, mIconRectMap["MeshEditorIcon"].bottomRight);
+						ImGui::Image((ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(20, 20), mIconRectMap["MeshEditorIcon"].topLeft, mIconRectMap["MeshEditorIcon"].bottomRight);
 						ImGui::SameLine();
 
 						ImGui::SameLine();
@@ -750,7 +750,7 @@ namespace TS_ENGINE {
 						{
 							float materialIconPosY = ImGui::GetCursorPosY();							
 							TS_ASSERT(mIconRectMap["MaterialEditorIcon"]);
-							ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(20, 20), mIconRectMap["MaterialEditorIcon"].topLeft, mIconRectMap["MaterialEditorIcon"].bottomRight);
+							ImGui::Image((ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(20, 20), mIconRectMap["MaterialEditorIcon"].topLeft, mIconRectMap["MaterialEditorIcon"].bottomRight);
 							ImGui::SameLine();
 							ImGui::SetCursorPosY(materialIconPosY + 3.5f);
 
@@ -816,7 +816,7 @@ namespace TS_ENGINE {
 						ImVec2 imagePos = cursorPos + ImVec2((buttonSize - iconSize) * 0.5f, (buttonSize - iconSize) * 0.5f);
 						ImGui::SetCursorScreenPos(imagePos);
 						TS_ASSERT(mIconRectMap["ContentBrowserDirectoryIcon"]);
-						ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(iconSize, iconSize), mIconRectMap["ContentBrowserDirectoryIcon"].topLeft, mIconRectMap["ContentBrowserDirectoryIcon"].bottomRight);
+						ImGui::Image((ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(iconSize, iconSize), mIconRectMap["ContentBrowserDirectoryIcon"].topLeft, mIconRectMap["ContentBrowserDirectoryIcon"].bottomRight);
 
 						ImGui::SameLine();
 
@@ -856,7 +856,7 @@ namespace TS_ENGINE {
 							DragContentBrowserItem(path.string().c_str(), ItemType::TEXTURE);
 
 							TS_ASSERT(mIconRectMap["ContentBrowserImageFileIcon"]);
-							ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(iconSize, iconSize), mIconRectMap["ContentBrowserImageFileIcon"].topLeft, mIconRectMap["ContentBrowserImageFileIcon"].bottomRight);
+							ImGui::Image((ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(iconSize, iconSize), mIconRectMap["ContentBrowserImageFileIcon"].topLeft, mIconRectMap["ContentBrowserImageFileIcon"].bottomRight);
 
 							ImGui::SameLine();
 							ImVec2 textPos = cursorPos + ImVec2((buttonSize - ImGui::CalcTextSize(fileExtension.c_str()).x) * 0.5f - 5.0f, buttonSize - ImGui::CalcTextSize(fileName.c_str()).y - 30.0f);
@@ -866,7 +866,7 @@ namespace TS_ENGINE {
 						else if (fileExtension == "vert" || fileExtension == "frag")
 						{							
 							TS_ASSERT(mIconRectMap["ContentBrowserShaderFileIcon"]);
-							ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(),
+							ImGui::Image((ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(),
 								ImVec2(iconSize, iconSize), 
 								mIconRectMap["ContentBrowserShaderFileIcon"].topLeft, 
 								mIconRectMap["ContentBrowserShaderFileIcon"].bottomRight);
@@ -879,7 +879,7 @@ namespace TS_ENGINE {
 						{
 							DragContentBrowserItem(path.string().c_str(), ItemType::MODEL);							
 							TS_ASSERT(mIconRectMap["ContentBrowserModelFileIcon"]);
-							ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(),
+							ImGui::Image((ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(),
 								ImVec2(iconSize, iconSize),
 								mIconRectMap["ContentBrowserModelFileIcon"].topLeft,
 								mIconRectMap["ContentBrowserModelFileIcon"].bottomRight);
@@ -896,12 +896,12 @@ namespace TS_ENGINE {
 								float thumbnailSizeY = buttonSize * 0.5625f;
 								ImVec2 thumbnailPos = cursorPos + ImVec2((buttonSize - thumbnailSizeX) * 0.5f, (buttonSize - thumbnailSizeY) * 0.5f);
 								ImGui::SetCursorScreenPos(thumbnailPos);
-								ImGui::Image((void*)(intptr_t)it->second->GetRendererID(), ImVec2(thumbnailSizeX, thumbnailSizeY), { 0, 1 }, { 1, 0 });
+								ImGui::Image((ImTextureID)(intptr_t)it->second->GetRendererID(), ImVec2(thumbnailSizeX, thumbnailSizeY), { 0, 1 }, { 1, 0 });
 							}
 							else
 							{
 								TS_ASSERT(mIconRectMap["SceneFileIcon"]);
-								ImGui::Image((void*)mIconSpriteSheetTexture->GetRendererID(),
+								ImGui::Image((ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(),
 									ImVec2(iconSize, iconSize),
 									mIconRectMap["SceneFileIcon"].topLeft,
 									mIconRectMap["SceneFileIcon"].bottomRight);
@@ -910,7 +910,7 @@ namespace TS_ENGINE {
 						else
 						{
 							TS_ASSERT(mIconRectMap["ContentBrowserMiscFileIcon"]);
-							ImGui::Image((void*)(intptr_t)mIconSpriteSheetTexture->GetRendererID(),
+							ImGui::Image((ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(),
 								ImVec2(iconSize, iconSize),
 								mIconRectMap["ContentBrowserMiscFileIcon"].topLeft,
 								mIconRectMap["ContentBrowserMiscFileIcon"].bottomRight);
@@ -948,7 +948,7 @@ namespace TS_ENGINE {
 			{
 				TS_CORE_ASSERT(mIconRectMap["PlayIcon"]);
 				TS_CORE_ASSERT(mIconRectMap["PauseIcon"]);				
-				if (ImGui::ImageButton("PlayerButton", (void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), playButtonRect.topLeft, playButtonRect.bottomRight))
+				if (ImGui::ImageButton("PlayerButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), playButtonRect.topLeft, playButtonRect.bottomRight))
 				{
 					if (mSelectedNode)
 					{
@@ -963,7 +963,7 @@ namespace TS_ENGINE {
 				ImGui::SameLine();
 
 				TS_CORE_ASSERT(mIconRectMap["StopIcon"]);
-				if (ImGui::ImageButton("StopButton", (void*)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["StopIcon"].topLeft, mIconRectMap["StopIcon"].bottomRight))
+				if (ImGui::ImageButton("StopButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["StopIcon"].topLeft, mIconRectMap["StopIcon"].bottomRight))
 				{
 					if (mSelectedNode)
 					{
