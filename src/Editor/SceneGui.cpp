@@ -983,7 +983,20 @@ namespace TS_ENGINE {
 				{
 					animation->InitializeNodesForAnimation();
 					
-					// TODO: Add IMGUI code to show a simple animation timeline interface
+					// GUI code to show a simple animation timeline interface
+					{
+						static float currentTime = 0.0f;
+						static int currentFrame = 0;
+
+						ImGui::Text("Samples: %d", (int)animation->mTicksPerSecond);
+						ImGui::Text("Time: %f", currentTime);
+						ImGui::Text("Frame: %d", currentFrame);
+						ImGui::SetNextItemWidth(ImGui::GetWindowWidth() - 50.0f);
+						ImGui::SliderFloat("##Animation timeline slider", &animation->mCurrentTime, 0.0f, animation->mTotalTimeInSeconds);
+						
+						currentTime = animation->mCurrentTime;
+						currentFrame = animation->mCurrentFrame;
+					}
 				}
 			}
 		}
