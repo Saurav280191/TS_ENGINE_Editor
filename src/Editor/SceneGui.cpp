@@ -182,7 +182,7 @@ namespace TS_ENGINE {
 			// Camera framebuffer output image
 			{
 				mViewportImageRect = CreateRef<Rect>(mViewportPos.x, mViewportPos.y, mViewportSize.x, mViewportSize.y);
-				ImGui::Image(reinterpret_cast<void*>(mEditorCameraRenderTextureID), ImVec2(mViewportImageRect->w, mViewportImageRect->h), ImVec2(0, 1), ImVec2(1, 0));
+				ImGui::Image(reinterpret_cast<void*>(mEditorCameraRenderTextureID), ImVec2(mViewportImageRect->w, mViewportImageRect->w * 0.5625f), ImVec2(0, 1), ImVec2(1, 0));
 				//ImVec2 imageMin = ImGui::GetItemRectMin();
 				//ImVec2 imageMax = ImGui::GetItemRectMax();
 				//ImVec2 size = imageMax - imageMin;
