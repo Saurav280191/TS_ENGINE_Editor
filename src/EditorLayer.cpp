@@ -21,7 +21,8 @@ EditorLayer::EditorLayer() :
 	//mBatchedGameObject(NULL)
 	mIsControlPressed(false),
 	mDeltaTime(0.0f),
-	mOrthographicProjectionActive(false)
+	mOrthographicProjectionActive(false),
+	mSceneGui(nullptr)
 {
 
 }
