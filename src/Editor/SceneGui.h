@@ -145,6 +145,6 @@ namespace TS_ENGINE {
 
 		int mTransformCurrentItem = 0;
 		int mCurrentMeshIndex = 0;
-		std::filesystem::path mCurrentDirectory;
+		std::filesystem::path mCurrentDirectory;		
 	};
 }

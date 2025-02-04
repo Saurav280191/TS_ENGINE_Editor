@@ -23,7 +23,7 @@ namespace TS_ENGINE {
 		// Load SpriteSheet and Json
 		{
 			// Load icon texture from IconSpriteSheet.png
-			mIconSpriteSheetTexture = TS_ENGINE::Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\IconSpriteSheet.png");
+			mIconSpriteSheetTexture = Texture2D::Create(Application::s_ResourcesDir.string() + "\\Gui\\IconSpriteSheet.png");
 
 			// Parse data from IconSpriteSheet.json
 			{
@@ -45,9 +45,9 @@ namespace TS_ENGINE {
 
 					// Normalize the rects. SpriteTexture will be utilized for that.
 					NormalizedRect normalizedRect;
-					
+
 					normalizedRect.topLeft = ImVec2(
-						spriteRect.x / (float)mIconSpriteSheetTexture->GetWidth(), 
+						spriteRect.x / (float)mIconSpriteSheetTexture->GetWidth(),
 						((float)mIconSpriteSheetTexture->GetHeight() - spriteRect.y) / (float)mIconSpriteSheetTexture->GetHeight()
 					);
 
@@ -62,12 +62,13 @@ namespace TS_ENGINE {
 					mIconRectMap.insert({ key, normalizedRect });
 				}
 			}
+
 		}
-		
+
 		// Set default rect for play button
 		TS_CORE_ASSERT(mIconRectMap["PlayIcon"]);
 		playButtonRect = mIconRectMap["PlayIcon"];
-		
+
 		mCurrentDirectory = Application::s_AssetsDir;
 
 		for (auto& directoryEntry : std::filesystem::directory_iterator(Application::s_ThumbnailsDir))
@@ -339,7 +340,7 @@ namespace TS_ENGINE {
 			Application::GetInstance().mWireframeMode = wireframeEnabled;
 		}
 		ImGui::PopStyleColor();
-		
+
 		ImGui::SameLine();
 
 		// Texture Button
@@ -351,7 +352,7 @@ namespace TS_ENGINE {
 			Application::GetInstance().mTextureModeEnabled = textureEnabled;
 		}
 		ImGui::PopStyleColor();
-		
+
 		ImGui::SameLine();
 
 		// BoneView Button
@@ -363,7 +364,7 @@ namespace TS_ENGINE {
 			Application::GetInstance().mBoneView = boneViewEnabled;
 		}
 		ImGui::PopStyleColor();
-		
+
 		ImGui::SameLine();
 
 		// BoneInfluence Button
@@ -592,7 +593,7 @@ namespace TS_ENGINE {
 						ImGui::SameLine();
 
 						ImGui::SetCursorPosY(headerTextY - 2.5f);
-						
+
 						// Projection selector GUI
 						if (ImGui::BeginCombo("##Projection", mCurrentProjection))
 						{
@@ -762,7 +763,7 @@ namespace TS_ENGINE {
 #pragma region Material Editor
 						ImGui::BeginChild("Material Editor", ImVec2(ImGui::GetWindowSize().x - 30.0f, 0), true);
 						{
-							float materialIconPosY = ImGui::GetCursorPosY();							
+							float materialIconPosY = ImGui::GetCursorPosY();
 							TS_ASSERT(mIconRectMap["MaterialEditorIcon"]);
 							ImGui::Image((ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(20, 20), mIconRectMap["MaterialEditorIcon"].topLeft, mIconRectMap["MaterialEditorIcon"].bottomRight);
 							ImGui::SameLine();
@@ -878,11 +879,11 @@ namespace TS_ENGINE {
 							ImGui::Text(("." + fileExtension).c_str());
 						}
 						else if (fileExtension == "vert" || fileExtension == "frag")
-						{							
+						{
 							TS_ASSERT(mIconRectMap["ContentBrowserShaderFileIcon"]);
 							ImGui::Image((ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(),
-								ImVec2(iconSize, iconSize), 
-								mIconRectMap["ContentBrowserShaderFileIcon"].topLeft, 
+								ImVec2(iconSize, iconSize),
+								mIconRectMap["ContentBrowserShaderFileIcon"].topLeft,
 								mIconRectMap["ContentBrowserShaderFileIcon"].bottomRight);
 						}
 						else if (fileExtension == "obj" ||
@@ -891,7 +892,7 @@ namespace TS_ENGINE {
 							fileExtension == "gltf" || fileExtension == "blend" ||
 							fileExtension == "3ds")
 						{
-							DragContentBrowserItem(path.string().c_str(), ItemType::MODEL);							
+							DragContentBrowserItem(path.string().c_str(), ItemType::MODEL);
 							TS_ASSERT(mIconRectMap["ContentBrowserModelFileIcon"]);
 							ImGui::Image((ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(),
 								ImVec2(iconSize, iconSize),
@@ -961,7 +962,7 @@ namespace TS_ENGINE {
 			ImGui::BeginChild("PlayButton", ImVec2(100.0f, 50.0f), true, ImGuiWindowFlags_NoDecoration);
 			{
 				TS_CORE_ASSERT(mIconRectMap["PlayIcon"]);
-				TS_CORE_ASSERT(mIconRectMap["PauseIcon"]);				
+				TS_CORE_ASSERT(mIconRectMap["PauseIcon"]);
 				if (ImGui::ImageButton("PlayerButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), playButtonRect.topLeft, playButtonRect.bottomRight))
 				{
 					if (mSelectedNode)
@@ -990,13 +991,13 @@ namespace TS_ENGINE {
 				}
 			}
 			ImGui::EndChild();
-			
+
 			if (mSelectedNode)
 			{
 				if (auto& animation = mSelectedNode->GetCurrentAnimation())
 				{
 					animation->InitializeNodesForAnimation();
-					
+
 					// GUI code to show a simple animation timeline interface
 					{
 						static float currentTime = 0.0f;
@@ -1016,6 +1017,7 @@ namespace TS_ENGINE {
 		}
 		ImGui::End();
 	}
+
 	void SceneGui::SwitchToTranslateMode()
 	{
 		mTranslateActive = true;
@@ -1317,7 +1319,7 @@ namespace TS_ENGINE {
 			//}
 
 			mSelectedNode = node;
-			
+
 
 			if (mSelectedNode != nullptr)
 			{
