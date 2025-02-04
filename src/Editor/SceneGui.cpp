@@ -1007,9 +1007,200 @@ namespace TS_ENGINE {
 						ImGui::Text("Samples: %d", (int)animation->mTicksPerSecond);
 						ImGui::Text("Time: %f", currentTime);
 						ImGui::Text("Frame: %d", currentFrame);
-						ImGui::SetNextItemWidth(ImGui::GetWindowWidth() - 50.0f);
-						ImGui::SliderFloat("##Animation timeline slider", &animation->mCurrentTime, 0.0f, animation->mTotalTimeInSeconds);
-						
+
+						ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+						float widthBetweenTimestamps = 25.0f;
+						float cellHeight = 65.0f;
+						float firstColumnWidth = 250.0f;
+						static float scrollOffsetX = 0.0f;
+
+						ImGui::SetCursorPosX(firstColumnWidth);
+						ImGui::BeginChild("TimelineSlider", ImVec2(widthBetweenTimestamps * animation->GetDuration() - firstColumnWidth, 25));
+						{
+							ImVec2 windowPos = ImGui::GetWindowPos();
+							float startPosX = ImGui::GetCursorPosX() + 7.5f;
+							float sliderStartX = windowPos.x;
+							float sliderEndX = sliderStartX + (widthBetweenTimestamps * animation->GetDuration());
+
+							ImGui::SetNextItemWidth(sliderEndX - sliderStartX);
+							ImGui::SetCursorPosX(startPosX - scrollOffsetX);
+							ImGui::SliderFloat("##Animation timeline slider", &animation->mCurrentTime, 0.0f, animation->mTotalTimeInSeconds);
+						}
+						ImGui::EndChild();
+
+						ImGui::SetCursorPosX(firstColumnWidth);
+						ImGui::BeginChild("Timeline", ImVec2(0, 0), true, ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+						{
+							scrollOffsetX = ImGui::GetScrollX();
+
+							ImVec2 windowPos = ImGui::GetWindowPos();
+							float sliderY = windowPos.y + 40.0f;
+							ImVec2 rectStartPos = windowPos + ImVec2(15, 40);
+
+							// Dummy Box For Vertical Sliding							
+							ImGui::Dummy(ImVec2(widthBetweenTimestamps * animation->GetDuration(), cellHeight * animation->GetNodeKeyTransformMap().size()));
+
+							// Timestamps
+							{
+								ImVec2 clipMin = windowPos + ImVec2(0, -85 - ImGui::GetFontSize() * 0.5f);
+								ImVec2 clipMax = clipMin + ImGui::GetWindowSize();
+								drawList->PushClipRect(clipMin, clipMax, true); // Start clipping
+
+								if (!animation->GetNodeKeyTransformMap().empty())
+								{
+									for (int i = 0; i < animation->GetDuration(); i++)
+									{
+										std::string frameStr = "'";
+										fmod(i, 10) == 0 ? frameStr = std::to_string(i) : void();
+
+										ImVec2 rectPos = rectStartPos + ImVec2(widthBetweenTimestamps * i, -85) - ImVec2(scrollOffsetX, 0);
+										ImVec2 frameStrTextSize = ImGui::CalcTextSize(frameStr.c_str());
+										drawList->AddText(rectPos - (frameStrTextSize * 0.5f), IM_COL32(255, 255, 255, 255), frameStr.c_str());
+									}
+								}
+
+								drawList->PopClipRect();// End clipping
+							}
+
+							rectStartPos = windowPos + ImVec2(-firstColumnWidth, 40 - ImGui::GetScrollY());
+							int boneIndexInFirstColumn = 0;
+
+							// Position, Rotation, Scale Text 
+							{
+								ImVec2 clipMin = windowPos + ImVec2(-firstColumnWidth, 0);
+								ImVec2 clipMax = clipMin + ImGui::GetWindowSize();
+								drawList->PushClipRect(clipMin, clipMax, true); // Start clipping
+
+								int y = 0;// Start from 0
+
+								for (auto& [node, keyTransforms] : animation->GetNodeKeyTransformMap())
+								{
+									ImVec2 rowPos = rectStartPos + ImVec2(widthBetweenTimestamps, y);
+
+									drawList->AddText(rowPos,
+										IM_COL32(255, 255, 255, 255),
+										(std::to_string(boneIndexInFirstColumn) + ". " + node->mName).c_str());
+
+									boneIndexInFirstColumn++;
+
+									drawList->AddText(rowPos + ImVec2(50.0f, 15.0f),
+										IM_COL32(255, 0, 0, 255),
+										"Position");
+									drawList->AddText(rowPos + ImVec2(50.0f, 30.0f),
+										IM_COL32(0, 255, 0, 255),
+										"Rotation");
+
+									drawList->AddText(rowPos + ImVec2(50.0f, 45.0f),
+										IM_COL32(255, 255, 0, 255),
+										"Scale");
+
+									y += cellHeight;
+								}
+
+								drawList->PopClipRect();// End clipping
+							}
+
+							// Keyframe Circles
+							{
+								ImVec2 clipMin = windowPos + ImVec2(0, 0);
+								ImVec2 clipMax = clipMin + ImGui::GetWindowSize();
+								drawList->PushClipRect(clipMin, clipMax, true); // Start clipping
+
+								int y = 0;// Start from 0
+
+								for (auto& [node, keyTransforms] : animation->GetNodeKeyTransformMap())
+								{
+									ImVec2 circleStartPos = rectStartPos + ImVec2(firstColumnWidth + 15, y);
+
+									// Position keyframes
+									{
+										int pX = 0;
+										Vector3 lastKeyframePosition(std::numeric_limits<float>::infinity()); // Set initial position to infinity
+
+										for (auto& positionKeys : keyTransforms.mKeyPositions)
+										{
+											// Check if this keyframe's position is different from the last one
+											if (!glm::epsilonEqual(positionKeys.position.x, lastKeyframePosition.x, 0.0001f) ||
+												!glm::epsilonEqual(positionKeys.position.y, lastKeyframePosition.y, 0.0001f) ||
+												!glm::epsilonEqual(positionKeys.position.z, lastKeyframePosition.z, 0.0001f))
+											{
+												// Calculate UI position
+												ImVec2 keyframeCircleUiPos = circleStartPos + ImVec2(pX * widthBetweenTimestamps, 15.0f);
+
+												// Draw only if the position is different from the previous keyframe
+												drawList->AddCircleFilled(keyframeCircleUiPos + ImVec2(-scrollOffsetX, 0.0f), 3.0f, IM_COL32(255, 0, 0, 255));
+
+												// Update lastKeyframePosition
+												lastKeyframePosition = positionKeys.position;
+											}
+
+											pX++; // Move to next keyframe position
+										}
+									}
+
+									// Rotation keyframes
+									{
+										int rX = 0;
+										Quaternion lastKeyframeRotation = Quaternion(1.0f, 0.0f, 0.0f, 0.0f); // Identity quaternion
+
+										for (auto& rotationKeys : keyTransforms.mKeyRotations)
+										{
+											// Compute dot product to check similarity
+											float dot = glm::dot(rotationKeys.rotation, lastKeyframeRotation);
+
+											// If the dot product is close to 1, they are nearly identical (no change)
+											if (glm::abs(dot) < 0.9999f)
+											{
+												// Calculate UI position
+												ImVec2 keyframeCircleUiPos = circleStartPos + ImVec2(rX * widthBetweenTimestamps, 30.0f);
+
+												// Draw the keyframe only if the rotation has changed
+												drawList->AddCircleFilled(keyframeCircleUiPos + ImVec2(-scrollOffsetX, 0.0f), 3.0f, IM_COL32(0, 255, 0, 255));
+
+												// Update lastKeyframeRotation
+												lastKeyframeRotation = rotationKeys.rotation;
+											}
+
+											rX++;
+										}
+									}
+
+									// Scale keyframes
+									{
+										int sX = 0;
+										Vector3 lastKeyframeScale(std::numeric_limits<float>::infinity()); // Set initial position to infinity
+
+										for (auto& scaleKeys : keyTransforms.mKeyScales)
+										{
+											// Check if this keyframe's position is different from the last one
+											if (!glm::epsilonEqual(scaleKeys.scale.x, lastKeyframeScale.x, 0.0001f) ||
+												!glm::epsilonEqual(scaleKeys.scale.y, lastKeyframeScale.y, 0.0001f) ||
+												!glm::epsilonEqual(scaleKeys.scale.z, lastKeyframeScale.z, 0.0001f))
+											{
+												// Calculate UI position
+												ImVec2 keyframeCircleUiPos = circleStartPos + ImVec2(sX * widthBetweenTimestamps, 45.0f);
+
+												// Draw only if the position is different from the previous keyframe
+												drawList->AddCircleFilled(keyframeCircleUiPos + ImVec2(-scrollOffsetX, 0.0f), 3.0f, IM_COL32(255, 255, 0, 255));
+
+												// Update lastKeyframePosition
+												lastKeyframeScale = scaleKeys.scale;
+											}
+
+											sX++; // Move to next keyframe position
+										}
+									}
+
+									y += cellHeight;
+								}
+
+								drawList->PopClipRect();// End clipping
+							}
+						}
+						ImGui::EndChild();
+
+						// Update frame info
 						currentTime = animation->mCurrentTime;
 						currentFrame = animation->mCurrentFrame;
 					}
