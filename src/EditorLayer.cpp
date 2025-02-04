@@ -475,19 +475,20 @@ bool EditorLayer::OnKeyPressed(TS_ENGINE::KeyPressedEvent& e)
 	case TS_ENGINE::Key::D1:	
 		TS_ENGINE::Application::GetInstance().ToggleWireframeMode();
 		break;
-	//case TS_ENGINE::Key::D1:
-		//TS_ENGINE::Application::Get().EnableDiffuseMode();		
-		//break;
 	case TS_ENGINE::Key::D2:
 		TS_ENGINE::Application::GetInstance().ToggleTextures();
 		break;
 	case TS_ENGINE::Key::D3:
-		//TS_ENGINE::Application::Get().EnableSpecularMode();	
 		TS_ENGINE::Application::GetInstance().ToggleBoneView();
 		break;
 	case TS_ENGINE::Key::D4:
 		TS_ENGINE::Application::GetInstance().ToggleBoneInfluence();
 		break;
+		
+		// TODO: Add key bindings for Diffuse and Specular mode later
+		//TS_ENGINE::Application::Get().EnableDiffuseMode();		
+		//TS_ENGINE::Application::Get().EnableSpecularMode();	
+	
 	case TS_ENGINE::Key::G:
 		//SpawnNewObject();
 		break;
