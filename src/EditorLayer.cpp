@@ -472,17 +472,21 @@ bool EditorLayer::OnKeyPressed(TS_ENGINE::KeyPressedEvent& e)
 	case TS_ENGINE::Key::Escape:
 		TS_ENGINE::Application::GetInstance().Close();
 		break;
-	case TS_ENGINE::Key::Tab:	
+	case TS_ENGINE::Key::D1:	
 		TS_ENGINE::Application::GetInstance().ToggleWireframeMode();
 		break;
-	case TS_ENGINE::Key::D1:
+	//case TS_ENGINE::Key::D1:
 		//TS_ENGINE::Application::Get().EnableDiffuseMode();		
-		break;
+		//break;
 	case TS_ENGINE::Key::D2:
 		TS_ENGINE::Application::GetInstance().ToggleTextures();
 		break;
 	case TS_ENGINE::Key::D3:
 		//TS_ENGINE::Application::Get().EnableSpecularMode();	
+		TS_ENGINE::Application::GetInstance().ToggleBoneView();
+		break;
+	case TS_ENGINE::Key::D4:
+		TS_ENGINE::Application::GetInstance().ToggleBoneInfluence();
 		break;
 	case TS_ENGINE::Key::G:
 		//SpawnNewObject();

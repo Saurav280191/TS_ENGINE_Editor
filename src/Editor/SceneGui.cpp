@@ -319,11 +319,6 @@ namespace TS_ENGINE {
 
 	void SceneGui::ShowRenderingModesButtons(ImVec2& _renderingModesWindowPos, ImVec2& _renderingModesWindowSize)
 	{
-		static bool wireframeEnabled = false;
-		static bool textureEnabled = true;
-		static bool boneViewEnabled = false;
-		static bool boneInfluenceEnabled = false;
-
 		// Set window position and size		
 		ImGui::SetNextWindowPos(_renderingModesWindowPos, ImGuiCond_Always);
 		ImGui::SetNextWindowSize(_renderingModesWindowSize, ImGuiCond_Always);
@@ -331,50 +326,46 @@ namespace TS_ENGINE {
 		ImGui::Begin("##Modes", nullptr, EditorLayer::mDefaultWindowFlags | ImGuiWindowFlags_NoScrollbar);
 
 		// Wireframe Button
-		ImGui::PushStyleColor(ImGuiCol_Button, wireframeEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_Button, Application::GetInstance().mWireframeMode ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
 		TS_ASSERT(mIconRectMap["WireframeIcon"]);
 		TS_ASSERT(mIconRectMap["ShadedIcon"]);
-		NormalizedRect normalizedRect = wireframeEnabled ? mIconRectMap["WireframeIcon"] : mIconRectMap["ShadedIcon"];
+		NormalizedRect normalizedRect = Application::GetInstance().mWireframeMode ? mIconRectMap["WireframeIcon"] : mIconRectMap["ShadedIcon"];
 		if (ImGui::ImageButton("WireframeButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), normalizedRect.topLeft, normalizedRect.bottomRight))
 		{
-			wireframeEnabled = !wireframeEnabled;
-			Application::GetInstance().mWireframeMode = wireframeEnabled;
+			Application::GetInstance().ToggleWireframeMode();
 		}
 		ImGui::PopStyleColor();
 
 		ImGui::SameLine();
 
 		// Texture Button
-		ImGui::PushStyleColor(ImGuiCol_Button, textureEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_Button, Application::GetInstance().mTextureModeEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
 		TS_ASSERT(mIconRectMap["TextureToggleIcon"]);
 		if (ImGui::ImageButton("TextureToggleButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["TextureToggleIcon"].topLeft, mIconRectMap["TextureToggleIcon"].bottomRight))
-		{
-			textureEnabled = !textureEnabled;
-			Application::GetInstance().mTextureModeEnabled = textureEnabled;
+		{			
+			Application::GetInstance().ToggleTextures();
 		}
 		ImGui::PopStyleColor();
 
 		ImGui::SameLine();
 
 		// BoneView Button
-		ImGui::PushStyleColor(ImGuiCol_Button, boneViewEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_Button, Application::GetInstance().mBoneView ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
 		TS_ASSERT(mIconRectMap["BoneViewIcon"]);
 		if (ImGui::ImageButton("BoneViewButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["BoneViewIcon"].topLeft, mIconRectMap["BoneViewIcon"].bottomRight))
 		{
-			boneViewEnabled = !boneViewEnabled;
-			Application::GetInstance().mBoneView = boneViewEnabled;
+			Application::GetInstance().ToggleBoneView();
 		}
 		ImGui::PopStyleColor();
 
 		ImGui::SameLine();
 
 		// BoneInfluence Button
-		ImGui::PushStyleColor(ImGuiCol_Button, boneInfluenceEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_Button, Application::GetInstance().mBoneInfluence ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
 		TS_ASSERT(mIconRectMap["BoneInfluenceIcon"]);
 		if (ImGui::ImageButton("BoneInfluenceButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["BoneInfluenceIcon"].topLeft, mIconRectMap["BoneInfluenceIcon"].bottomRight))
 		{
-			boneInfluenceEnabled = !boneInfluenceEnabled;
-			Application::GetInstance().mBoneInfluence = boneInfluenceEnabled;
+			Application::GetInstance().ToggleBoneInfluence();
 		}
 		ImGui::PopStyleColor();
 
