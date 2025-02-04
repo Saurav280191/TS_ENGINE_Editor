@@ -45,7 +45,6 @@ namespace TS_ENGINE {
 		void ShowTransformGizmos(const float* view, const float* projection);
 
 		void ShowViewportWindow();
-		void ShowStatsWindow(ImVec2 statsPanelPos, ImVec2 statsPanelSize);
 		void ShowInspectorWindow();
 		void ShowHierarchyWindow();
 		void ShowContentBrowser();		
@@ -90,6 +89,11 @@ namespace TS_ENGINE {
 		void DropItemInViewport();
 		
 		void CaptureSnapshot(const Ref<Framebuffer>& _framebuffer, const std::string& _filepath);
+
+		// Shows FPS, DrawCalls, Vertices, Indices etc.
+		void ShowStatsWindow(ImVec2& _statsPanelPos, ImVec2& _statsPanelSize, bool& _statsWindowExpanded);
+		// Shows Wireframe, ToggleTexture, BoneView, & BoneInfluence buttons
+		void ShowRenderingModesButtons(ImVec2& _renderingModesWindowPos, ImVec2& _renderingModesWindowSize);
 	private:
 		uint64_t mEditorCameraRenderTextureID = 0;
 		char mSelectedNodeNameBuffer[256] = "";

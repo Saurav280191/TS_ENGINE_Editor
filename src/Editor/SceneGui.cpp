@@ -257,23 +257,80 @@ namespace TS_ENGINE {
 		}
 		ImGui::End();
 
+		bool statsWindowExpanded = false;
+		ImVec2 statsWindowSize = ImVec2(250.0f, 120.0f);
+		ImVec2 statsWindowPos = ImVec2(mViewportPos + ImVec2(mViewportSize.x - statsWindowSize.x, 20.0f));
+		ShowStatsWindow(statsWindowPos, statsWindowSize, statsWindowExpanded);
 
+		ImVec2 _renderingModesWindowSize = ImVec2(200.0f, 50.0f);
+		ImVec2 _renderingModesWindowPos = ImVec2(mViewportPos + ImVec2(mViewportSize.x - _renderingModesWindowSize.x, statsWindowExpanded ? 140.0f : 35.0f));
+		// Show RenderingModesButtons if there is a scene loaded
+		SceneManager::GetInstance()->GetCurrentScene() ? ShowRenderingModesButtons(_renderingModesWindowPos, _renderingModesWindowSize) : void();
+	}
+
+	void SceneGui::ShowStatsWindow(ImVec2& _statsPanelPos, ImVec2& _statsPanelSize, bool& _statsWindowExpanded)
+	{
+		ImGui::Begin("Stats");
+		{
+			ImGui::SetWindowSize(_statsPanelSize);
+			ImGui::SetWindowPos(_statsPanelPos);
+
+			/*if (ImGui::Checkbox("Batching enabled", &mScene1->m_BatchingEnabled))
+			{
+				if (mScene1->m_BatchingEnabled)
+				{
+					mSelectedNode = nullptr;
+					mCurrentShader = mBatchLitShader;
+				}
+				else
+				{
+					mSelectedNode = nullptr;
+					mScene1->OnUnBatched();
+
+					for (auto& node : mNodes)
+					{
+						mScene1->GetSceneNode()->AddChild(mScene1->GetSceneNode(), node);
+						node->SetParentNode(mScene1->GetSceneNode());
+					}
+
+					mCurrentShader = mDefaultShader;
+				}
+
+				mScene1->m_BatchButton.Click(mCurrentShader, mNodes);
+
+				if (mScene1->m_BatchingEnabled)
+					mScene1->OnBatched();
+			}*/
+
+			// Set statsWindowExpanded
+			_statsWindowExpanded = !ImGui::IsWindowCollapsed();
+
+			ImGui::Text("FPS: %.1f, %.3f ms/frame",													// FPS					
+				1.0f / TS_ENGINE::Application::GetInstance().GetDeltaTime(), 
+				TS_ENGINE::Application::GetInstance().GetDeltaTime());
+			ImGui::Text("Draw Calls: %d", TS_ENGINE::Application::GetInstance().GetDrawCalls());	// DrawCalls
+			ImGui::Text("Vertices: %d", TS_ENGINE::Application::GetInstance().GetTotalVertices());	// Total Vertices
+			ImGui::Text("Indices: %d", TS_ENGINE::Application::GetInstance().GetTotalIndices());	// Total Indices
+		}
+		ImGui::End();
+	}
+
+	void SceneGui::ShowRenderingModesButtons(ImVec2& _renderingModesWindowPos, ImVec2& _renderingModesWindowSize)
+	{
 		static bool wireframeEnabled = false;
 		static bool textureEnabled = true;
 		static bool boneViewEnabled = false;
 		static bool boneInfluenceEnabled = false;
 
-		// Set window position and size
-		ImVec2 windowSize = ImVec2(200.0f, 50.0f);   // Adjust as needed
-		ImVec2 windowPosition = ImVec2(mViewportPos + ImVec2(mViewportSize.x - windowSize.x, 10.0f)); // Adjust as needed
-		ImGui::SetNextWindowPos(windowPosition, ImGuiCond_Always);
-		ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
+		// Set window position and size		
+		ImGui::SetNextWindowPos(_renderingModesWindowPos, ImGuiCond_Always);
+		ImGui::SetNextWindowSize(_renderingModesWindowSize, ImGuiCond_Always);
 
 		ImGui::Begin("##Modes", nullptr, EditorLayer::mDefaultWindowFlags | ImGuiWindowFlags_NoScrollbar);
 
 		// Wireframe Button
 		ImGui::PushStyleColor(ImGuiCol_Button, wireframeEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
-		TS_ASSERT(mIconRectMap["WireframeIcon"]); 
+		TS_ASSERT(mIconRectMap["WireframeIcon"]);
 		TS_ASSERT(mIconRectMap["ShadedIcon"]);
 		NormalizedRect normalizedRect = wireframeEnabled ? mIconRectMap["WireframeIcon"] : mIconRectMap["ShadedIcon"];
 		if (ImGui::ImageButton("WireframeButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), normalizedRect.topLeft, normalizedRect.bottomRight))
@@ -396,49 +453,6 @@ namespace TS_ENGINE {
 		{
 			mSavedSceneThumbnails.insert(std::pair<std::string, Ref<Texture2D>>(sceneName, latestSceneSnap));
 		}
-	}
-
-	void SceneGui::ShowStatsWindow(ImVec2 statsPanelPos, ImVec2 statsPanelSize)
-	{
-		ImGui::Begin("Stats");
-		{
-			ImGui::SetWindowSize(statsPanelSize);
-			ImGui::SetWindowPos(statsPanelPos);
-
-			/*if (ImGui::Checkbox("Batching enabled", &mScene1->m_BatchingEnabled))
-			{
-				if (mScene1->m_BatchingEnabled)
-				{
-					mSelectedNode = nullptr;
-					mCurrentShader = mBatchLitShader;
-				}
-				else
-				{
-					mSelectedNode = nullptr;
-					mScene1->OnUnBatched();
-
-					for (auto& node : mNodes)
-					{
-						mScene1->GetSceneNode()->AddChild(mScene1->GetSceneNode(), node);
-						node->SetParentNode(mScene1->GetSceneNode());
-					}
-
-					mCurrentShader = mDefaultShader;
-				}
-
-				mScene1->m_BatchButton.Click(mCurrentShader, mNodes);
-
-				if (mScene1->m_BatchingEnabled)
-					mScene1->OnBatched();
-			}*/
-
-			ImGui::Text("FPS: %.1f, %.3f ms/frame", 1000.0f / TS_ENGINE::Application::GetInstance().GetDeltaTime(), TS_ENGINE::Application::GetInstance().GetDeltaTime());
-
-			ImGui::Text("Draw Calls: %d", TS_ENGINE::Application::GetInstance().GetDrawCalls());
-			ImGui::Text("Vertices: %d", TS_ENGINE::Application::GetInstance().GetTotalVertices());
-			ImGui::Text("Indices: %d", TS_ENGINE::Application::GetInstance().GetTotalIndices());
-		}
-		ImGui::End();
 	}
 
 	void SceneGui::ShowInspectorWindow()
