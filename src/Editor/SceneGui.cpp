@@ -9,6 +9,7 @@ namespace TS_ENGINE {
 	//static std::filesystem::path mAssetsPath = "Assets";
 	//static std::filesystem::path mResourcesPath = "Resources";
 	//static std::filesystem::path mSavedScenesPath = "Resources\\SavedSceneThumbnails";
+	Ref<Texture2D> SceneGui::mIconSpriteSheetTexture = nullptr;
 
 	SceneGui::SceneGui()
 	{

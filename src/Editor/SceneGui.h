@@ -99,7 +99,7 @@ namespace TS_ENGINE {
 		char mSelectedNodeNameBuffer[256] = "";
 		char mNewSceneText[256] = "NewScene";
 
-		Ref<Texture2D> mIconSpriteSheetTexture;
+		static Ref<Texture2D> mIconSpriteSheetTexture;
 		std::unordered_map<std::string, NormalizedRect> mIconRectMap;
 		NormalizedRect playButtonRect;
 
