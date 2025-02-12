@@ -137,16 +137,21 @@ namespace TS_ENGINE {
 
 	void SceneGui::ShowViewportWindow()
 	{
-		ImGui::Begin("Viewport", 0, ImGuiWindowFlags_NoDecoration);
+		ImVec2 viewportWindowSize;
+
+		ImGui::Begin("Viewport", 0, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoCollapse);
 		{
 			if (ImGui::IsWindowHovered())
 			{
 				IsViewportActiveWindow = true;
 			}
 			ImVec2 cameraFramebufferWindowSize = ImGui::GetWindowSize();
+			
+			viewportWindowSize = ImGui::GetWindowSize();
 
+			// Set Viewport Position & Size
 			mViewportPos = ImGui::GetWindowPos();
-			mViewportSize = ImGui::GetWindowSize();
+			mViewportSize = ImGui::GetWindowSize() - ImVec2(16.0f, (ImGui::IsWindowCollapsed() ? 16.0f : 35.0f));
 
 			const Ref<Scene>& currentScene = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene();
 
@@ -167,24 +172,18 @@ namespace TS_ENGINE {
 				}
 			}
 
-			// Wireframe model checkbox
-			//ImGui::SetCursorScreenPos(ImGui::GetCursorScreenPos() + ImVec2(0, 0));
-			//ImGui::ImageButton((void*)(intptr_t)mWireframeIcon->GetRendererID(), ImVec2(32, 32), { 0, 1 }, { 1, 0 });
-
-			//ImGui::SameLine();
-			//ImGui::SetCursorPosX(mViewportPos.x + mViewportSize.x - 400.0f);
-			//ImGui::Checkbox("Wireframe", &Application::GetInstance().mWireframeMode);
-			//ImGui::SameLine();
-			//ImGui::Checkbox("Texture", &Application::GetInstance().mTextureModeEnabled);
-			//ImGui::SameLine();			
-			//ImGui::Checkbox("Bone View", &Application::GetInstance().mBoneView);
-			//ImGui::SameLine();
-			//ImGui::Checkbox("Bone Influence", &Application::GetInstance().mBoneInfluence);
-
 			// Camera framebuffer output image
 			{
-				mViewportImageRect = CreateRef<Rect>(mViewportPos.x, mViewportPos.y, mViewportSize.x, mViewportSize.y);
-				ImGui::Image(reinterpret_cast<void*>(mEditorCameraRenderTextureID), ImVec2(mViewportImageRect->w, mViewportImageRect->w * 0.5625f), ImVec2(0, 1), ImVec2(1, 0));
+				// Create ViewportImageRect
+				mViewportImageRect = CreateRef<Rect>();
+				mViewportImageRect->SetPosition(mViewportPos.x, mViewportPos.y);		// Position(Top-Left)	 
+				mViewportImageRect->SetSize(mViewportSize.x, mViewportSize.y);			// Size
+
+				// Create Viewport Image To Show Framebuffer Output From EditorCamera
+				ImGui::Image(reinterpret_cast<void*>(mEditorCameraRenderTextureID),		// EditorCamera's RenderTexture ID
+					ImVec2(mViewportImageRect->w, mViewportImageRect->h),				// ViewportImageSize
+					ImVec2(0, 1), ImVec2(1, 0));										// UV Range
+
 				//ImVec2 imageMin = ImGui::GetItemRectMin();
 				//ImVec2 imageMax = ImGui::GetItemRectMax();
 				//ImVec2 size = imageMax - imageMin;
@@ -259,20 +258,22 @@ namespace TS_ENGINE {
 		}
 		ImGui::End();
 
+		// Stats Window
 		bool statsWindowExpanded = false;
-		ImVec2 statsWindowSize = ImVec2(250.0f, 120.0f);
-		ImVec2 statsWindowPos = ImVec2(mViewportPos + ImVec2(mViewportSize.x - statsWindowSize.x, 20.0f));
+		ImVec2 statsWindowSize = ImVec2(200.0f, 100.0f);
+		ImVec2 statsWindowPos = ImVec2(mViewportPos.x + viewportWindowSize.x - statsWindowSize.x, mViewportPos.y);
 		ShowStatsWindow(statsWindowPos, statsWindowSize, statsWindowExpanded);
 
-		ImVec2 _renderingModesWindowSize = ImVec2(200.0f, 50.0f);
-		ImVec2 _renderingModesWindowPos = ImVec2(mViewportPos + ImVec2(mViewportSize.x - _renderingModesWindowSize.x, statsWindowExpanded ? 140.0f : 35.0f));
 		// Show RenderingModesButtons if there is a scene loaded
+		ImVec2 _renderingModesWindowSize = ImVec2(200.0f, 50.0f);
+		ImVec2 _renderingModesWindowPos = ImVec2(mViewportPos.x + viewportWindowSize.x - _renderingModesWindowSize.x, 
+			mViewportPos.y + (statsWindowExpanded ? 100.0f : 15.0f));
 		SceneManager::GetInstance()->GetCurrentScene() ? ShowRenderingModesButtons(_renderingModesWindowPos, _renderingModesWindowSize) : void();
 	}
 
 	void SceneGui::ShowStatsWindow(ImVec2& _statsPanelPos, ImVec2& _statsPanelSize, bool& _statsWindowExpanded)
 	{
-		ImGui::Begin("Stats");
+		ImGui::Begin("Stats", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 		{
 			ImGui::SetWindowSize(_statsPanelSize);
 			ImGui::SetWindowPos(_statsPanelPos);
@@ -319,56 +320,56 @@ namespace TS_ENGINE {
 
 	void SceneGui::ShowRenderingModesButtons(ImVec2& _renderingModesWindowPos, ImVec2& _renderingModesWindowSize)
 	{
-		// Set window position and size		
-		ImGui::SetNextWindowPos(_renderingModesWindowPos, ImGuiCond_Always);
-		ImGui::SetNextWindowSize(_renderingModesWindowSize, ImGuiCond_Always);
-
-		ImGui::Begin("##Modes", nullptr, EditorLayer::mDefaultWindowFlags | ImGuiWindowFlags_NoScrollbar);
-
-		// Wireframe Button
-		ImGui::PushStyleColor(ImGuiCol_Button, Application::GetInstance().mWireframeMode ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
-		TS_ASSERT(mIconRectMap["WireframeIcon"]);
-		TS_ASSERT(mIconRectMap["ShadedIcon"]);
-		NormalizedRect normalizedRect = Application::GetInstance().mWireframeMode ? mIconRectMap["WireframeIcon"] : mIconRectMap["ShadedIcon"];
-		if (ImGui::ImageButton("WireframeButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), normalizedRect.topLeft, normalizedRect.bottomRight))
+		ImGui::Begin("RenderModes", nullptr, EditorLayer::mDefaultWindowFlags | ImGuiWindowFlags_NoScrollbar);
 		{
-			Application::GetInstance().ToggleWireframeMode();
+			// Set window position and size		
+			ImGui::SetWindowPos(_renderingModesWindowPos);
+			ImGui::SetWindowSize(_renderingModesWindowSize);
+
+			// Wireframe Button
+			ImGui::PushStyleColor(ImGuiCol_Button, Application::GetInstance().mWireframeMode ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+			TS_ASSERT(mIconRectMap["WireframeIcon"]);
+			TS_ASSERT(mIconRectMap["ShadedIcon"]);
+			NormalizedRect normalizedRect = Application::GetInstance().mWireframeMode ? mIconRectMap["WireframeIcon"] : mIconRectMap["ShadedIcon"];
+			if (ImGui::ImageButton("WireframeButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), normalizedRect.topLeft, normalizedRect.bottomRight))
+			{
+				Application::GetInstance().ToggleWireframeMode();
+			}
+			ImGui::PopStyleColor();
+
+			ImGui::SameLine();
+
+			// Texture Button
+			ImGui::PushStyleColor(ImGuiCol_Button, Application::GetInstance().mTextureModeEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+			TS_ASSERT(mIconRectMap["TextureToggleIcon"]);
+			if (ImGui::ImageButton("TextureToggleButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["TextureToggleIcon"].topLeft, mIconRectMap["TextureToggleIcon"].bottomRight))
+			{
+				Application::GetInstance().ToggleTextures();
+			}
+			ImGui::PopStyleColor();
+
+			ImGui::SameLine();
+
+			// BoneView Button
+			ImGui::PushStyleColor(ImGuiCol_Button, Application::GetInstance().mBoneView ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+			TS_ASSERT(mIconRectMap["BoneViewIcon"]);
+			if (ImGui::ImageButton("BoneViewButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["BoneViewIcon"].topLeft, mIconRectMap["BoneViewIcon"].bottomRight))
+			{
+				Application::GetInstance().ToggleBoneView();
+			}
+			ImGui::PopStyleColor();
+
+			ImGui::SameLine();
+
+			// BoneInfluence Button
+			ImGui::PushStyleColor(ImGuiCol_Button, Application::GetInstance().mBoneInfluence ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+			TS_ASSERT(mIconRectMap["BoneInfluenceIcon"]);
+			if (ImGui::ImageButton("BoneInfluenceButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["BoneInfluenceIcon"].topLeft, mIconRectMap["BoneInfluenceIcon"].bottomRight))
+			{
+				Application::GetInstance().ToggleBoneInfluence();
+			}
+			ImGui::PopStyleColor();
 		}
-		ImGui::PopStyleColor();
-
-		ImGui::SameLine();
-
-		// Texture Button
-		ImGui::PushStyleColor(ImGuiCol_Button, Application::GetInstance().mTextureModeEnabled ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
-		TS_ASSERT(mIconRectMap["TextureToggleIcon"]);
-		if (ImGui::ImageButton("TextureToggleButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["TextureToggleIcon"].topLeft, mIconRectMap["TextureToggleIcon"].bottomRight))
-		{			
-			Application::GetInstance().ToggleTextures();
-		}
-		ImGui::PopStyleColor();
-
-		ImGui::SameLine();
-
-		// BoneView Button
-		ImGui::PushStyleColor(ImGuiCol_Button, Application::GetInstance().mBoneView ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
-		TS_ASSERT(mIconRectMap["BoneViewIcon"]);
-		if (ImGui::ImageButton("BoneViewButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["BoneViewIcon"].topLeft, mIconRectMap["BoneViewIcon"].bottomRight))
-		{
-			Application::GetInstance().ToggleBoneView();
-		}
-		ImGui::PopStyleColor();
-
-		ImGui::SameLine();
-
-		// BoneInfluence Button
-		ImGui::PushStyleColor(ImGuiCol_Button, Application::GetInstance().mBoneInfluence ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f) : ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
-		TS_ASSERT(mIconRectMap["BoneInfluenceIcon"]);
-		if (ImGui::ImageButton("BoneInfluenceButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), mIconRectMap["BoneInfluenceIcon"].topLeft, mIconRectMap["BoneInfluenceIcon"].bottomRight))
-		{
-			Application::GetInstance().ToggleBoneInfluence();
-		}
-		ImGui::PopStyleColor();
-
 		ImGui::End();
 	}
 
@@ -399,7 +400,6 @@ namespace TS_ENGINE {
 			{
 				//Flush old scene data
 				mSelectedNode = nullptr;
-				SceneManager::GetInstance()->FlushCurrentScene();
 
 				//Create New Scene
 				SceneManager::GetInstance()->CreateNewScene(mNewSceneText);
@@ -430,7 +430,7 @@ namespace TS_ENGINE {
 		std::vector<GLubyte> pixels = _framebuffer->SaveFramebufferToFile(_filepath);
 
 		// Set current pixels to corresponding texture in mSavedSceneThumbnails map
-		const char* sceneName = SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName().c_str();
+		const char* sceneName = SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->mName.c_str();
 		auto it = mSavedSceneThumbnails.find(sceneName);
 
 		Ref<Texture2D> latestSceneSnap = Texture2D::Create(_framebuffer->GetSpecification().Width, _framebuffer->GetSpecification().Height);
@@ -456,12 +456,12 @@ namespace TS_ENGINE {
 			{
 				Ref<TS_ENGINE::Transform> transform = mSelectedNode->GetTransform();
 
-				ImGui::Checkbox(" ", &GetSelectedNode()->m_Enabled);
+				ImGui::Checkbox(" ", &GetSelectedNode()->mEnabled);
 				ImGui::SameLine();
 
 				if (ImGui::InputText("##NodeNameText", mSelectedNodeNameBuffer, IM_ARRAYSIZE(mSelectedNodeNameBuffer)))
 				{
-					mSelectedNode->GetEntity()->SetName(mSelectedNodeNameBuffer);
+					mSelectedNode->mName = mSelectedNodeNameBuffer;
 				}
 #pragma region Transform Component
 				if (!mSelectedNode->HasBoneInfluence())
@@ -563,7 +563,7 @@ namespace TS_ENGINE {
 
 				if (mSelectedNode != NULL)
 				{
-					if (mSelectedNode->GetEntity()->GetEntityType() == EntityType::CAMERA)
+					if (mSelectedNode->GetNodeType() == NodeType::CAMERA)
 					{
 #pragma region Camera Editor
 						ImGui::BeginChild("Camera", ImVec2(ImGui::GetWindowSize().x - 30.0f, 180.0f), true);
@@ -779,6 +779,12 @@ namespace TS_ENGINE {
 						}
 #pragma endregion
 					}
+					else if (mSelectedNode->GetBone())
+					{
+						ImGui::BeginChild("Bone Info", ImVec2(ImGui::GetWindowSize().x - 30.0f, 50.0f), true);
+						ImGui::Text(("Bone Id: " + std::to_string(mSelectedNode->GetBone()->GetId())).c_str());
+						ImGui::EndChild();
+					}
 				}
 
 			}
@@ -955,14 +961,21 @@ namespace TS_ENGINE {
 			{
 				TS_CORE_ASSERT(mIconRectMap["PlayIcon"]);
 				TS_CORE_ASSERT(mIconRectMap["PauseIcon"]);
+				
+				if (mSelectedNode && mSelectedNode->GetCurrentAnimation())
+				{
+					mSelectedNode->GetCurrentAnimation()->IsPlaying() ?
+						playButtonRect = mIconRectMap["PauseIcon"] :
+						playButtonRect = mIconRectMap["PlayIcon"];
+				}
+
 				if (ImGui::ImageButton("PlayerButton", (ImTextureID)(intptr_t)mIconSpriteSheetTexture->GetRendererID(), ImVec2(32, 32), playButtonRect.topLeft, playButtonRect.bottomRight))
 				{
 					if (mSelectedNode)
 					{
-						if (auto& animation = mSelectedNode->GetCurrentAnimation())
+						if (const auto& animation = mSelectedNode->GetCurrentAnimation())
 						{
-							animation->ToggleIsPlaying();
-							animation->IsPlaying() ? playButtonRect = mIconRectMap["PauseIcon"] : playButtonRect = mIconRectMap["PlayIcon"];
+							animation->ToggleIsPlaying();														
 						}
 					}
 				}
@@ -988,8 +1001,6 @@ namespace TS_ENGINE {
 			{
 				if (auto& animation = mSelectedNode->GetCurrentAnimation())
 				{
-					animation->InitializeNodesForAnimation();
-
 					// GUI code to show a simple animation timeline interface
 					{
 						static float currentTime = 0.0f;
@@ -1067,7 +1078,7 @@ namespace TS_ENGINE {
 
 								for (auto& [node, keyTransforms] : animation->GetNodeKeyTransformMap())
 								{
-									ImVec2 rowPos = rectStartPos + ImVec2(widthBetweenTimestamps, y);
+									ImVec2 rowPos = rectStartPos + ImVec2(widthBetweenTimestamps, (float)y);
 
 									drawList->AddText(rowPos,
 										IM_COL32(255, 255, 255, 255),
@@ -1086,7 +1097,7 @@ namespace TS_ENGINE {
 										IM_COL32(255, 255, 0, 255),
 										"Scale");
 
-									y += cellHeight;
+									y += (int)cellHeight;
 								}
 
 								drawList->PopClipRect();// End clipping
@@ -1102,7 +1113,7 @@ namespace TS_ENGINE {
 
 								for (auto& [node, keyTransforms] : animation->GetNodeKeyTransformMap())
 								{
-									ImVec2 circleStartPos = rectStartPos + ImVec2(firstColumnWidth + 15, y);
+									ImVec2 circleStartPos = rectStartPos + ImVec2(firstColumnWidth + 15, (float)y);
 
 									// Position keyframes
 									{
@@ -1183,7 +1194,7 @@ namespace TS_ENGINE {
 										}
 									}
 
-									y += cellHeight;
+									y += (int)cellHeight;
 								}
 
 								drawList->PopClipRect();// End clipping
@@ -1235,7 +1246,7 @@ namespace TS_ENGINE {
 
 			if (SceneManager::GetInstance()->GetCurrentScene())
 			{
-				if (ImGui::TreeNodeEx((void*)(intptr_t)SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetEntityID(), node_flags, SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName().c_str()))
+				if (ImGui::TreeNodeEx((void*)(intptr_t)SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->mId, node_flags, SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->mName.c_str()))
 				{
 					DragHierarchySceneNode(SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());// Drag
 					DropHierarchySceneNode(SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode());// Drop
@@ -1260,14 +1271,33 @@ namespace TS_ENGINE {
 				{
 					mSelectedNode = nullptr;
 
-					if (mHoveringOnNode->GetEntity()->GetEntityType() == EntityType::CAMERA)
+					if (mHoveringOnNode->GetNodeType() == NodeType::CAMERA)					// SceneCamera Node
 					{
-						Factory::GetInstance()->InstantitateDuplicateSceneCamera(mHoveringOnNode->GetSceneCamera());
+						Ref<SceneCamera> duplicateSceneCamera = mHoveringOnNode->GetSceneCamera();
+						Factory::GetInstance()->InstantitateDuplicateSceneCamera(duplicateSceneCamera);
 					}
-					else// Other nodes
+					else if (mHoveringOnNode->GetNodeType() == NodeType::MODELROOTNODE)		// Model RootNode
 					{
-						mHoveringOnNode->GetParentNode()->AddChild(mHoveringOnNode->Duplicate());
-						//TS_CORE_TRACE("Duplicating {0}", mHoveringOnNode->GetName().c_str());
+						std::pair<Ref<Node>, Ref<Model>> duplicateModelRootNodeAndModel 
+							= Factory::GetInstance()->InstantiateModel(mHoveringOnNode->GetModelPath(), 
+								mHoveringOnNode->GetParentNode());
+
+						duplicateModelRootNodeAndModel.first->SetLocalTransform(mHoveringOnNode->GetTransform());
+						duplicateModelRootNodeAndModel.first->ComputeTransformMatrices();
+					}
+					else																	// Other nodes
+					{
+						Ref<Node> duplicateNode = mHoveringOnNode->Duplicate();						
+						
+						if(duplicateNode->GetAnimations().size() > 0)
+							duplicateNode->SetCurrentAnimation(0);							// Set current animation
+
+						mHoveringOnNode->GetParentNode()->AddChild(duplicateNode);
+
+						// TODO: Needs to be fixed. The BoneGUI for duplicated node's children are not being created
+						// Recreate BoneNodeGuis
+						if(mHoveringOnNode->GetParentNode()->GetBone())
+							mHoveringOnNode->GetParentNode()->GetBone()->CreateGui();
 					}
 
 					ImGui::CloseCurrentPopup();
@@ -1276,7 +1306,7 @@ namespace TS_ENGINE {
 				if (ImGui::Button("Delete"))
 				{
 					//Switch to another scene camera if mSelectedNode is scene camera node before deleting
-					if (mHoveringOnNode->GetEntity()->GetEntityType() == EntityType::CAMERA)
+					if (mHoveringOnNode->GetNodeType() == NodeType::CAMERA)
 					{
 						TS_CORE_INFO("Total scene cameras are: {0}", SceneManager::GetInstance()->GetCurrentScene()->GetNumSceneCameras());
 
@@ -1335,7 +1365,7 @@ namespace TS_ENGINE {
 
 			if (nodeChild->GetChildCount() > 0)
 			{
-				if (ImGui::TreeNodeEx((void*)(intptr_t)nodeChild->GetEntity()->GetEntityID(), node_flags, nodeChild->GetEntity()->GetName().c_str()))
+				if (ImGui::TreeNodeEx((void*)(intptr_t)nodeChild->mId, node_flags, nodeChild->mName.c_str()))
 				{
 					// Node context menu pop up
 					{
@@ -1373,7 +1403,7 @@ namespace TS_ENGINE {
 
 				if (nodeChild->IsVisibleInEditor())
 				{
-					if (ImGui::TreeNodeEx((void*)(intptr_t)nodeChild->GetEntity()->GetEntityID(), node_flags, nodeChild->GetEntity()->GetName().c_str()))
+					if (ImGui::TreeNodeEx((void*)(intptr_t)nodeChild->mId, node_flags, nodeChild->mName.c_str()))
 					{
 						// Node context menu pop up
 						{
@@ -1405,7 +1435,7 @@ namespace TS_ENGINE {
 		if (ImGui::BeginDragDropSource())
 		{
 			ImGui::SetDragDropPayload("_TREENODE", node.get(), sizeof(Node));
-			ImGui::Text("Dragging: %s", node->GetEntity()->GetName().c_str());
+			ImGui::Text("Dragging: %s", node->mName.c_str());
 			ImGui::EndDragDropSource();
 		}
 	}
@@ -1434,7 +1464,7 @@ namespace TS_ENGINE {
 			{
 				Node* draggingNode = reinterpret_cast<Node*>(payload->Data);
 
-				TS_CORE_INFO("Dropped {0} on {1}", draggingNode->GetEntity()->GetName().c_str(), targetParentNode->GetEntity()->GetName().c_str());
+				TS_CORE_INFO("Dropped {0} on {1}", draggingNode->mName.c_str(), targetParentNode->mName.c_str());
 				{
 					// Compute the current world transformation (still using the current parent)
 					glm::mat4 currentWorldTransform = draggingNode->GetParentNode()->GetTransform()->GetWorldTransformationMatrix() * draggingNode->GetTransform()->GetLocalTransformationMatrix();
@@ -1480,7 +1510,7 @@ namespace TS_ENGINE {
 				mSelectedNode = nullptr;
 
 				// Flush current scene
-				SceneManager::GetInstance()->FlushCurrentScene();
+				SceneManager::GetInstance()->ClearCurrentScene();
 
 				// Load dragged scene
 				SceneManager::GetInstance()->LoadScene(draggedModelPath);
@@ -1490,22 +1520,27 @@ namespace TS_ENGINE {
 		}
 	}
 
-	void SceneGui::SetSelectedNode(Ref<Node> node)
+	void SceneGui::SetSelectedNode(Ref<Node> _node)
 	{
-		if (node != mSelectedNode)
+		if (_node != mSelectedNode)
 		{
 			//if (node != nullptr)
 			//{
-			//	// Avoid selection of mesh. If mesh is selected and tranformed, it will lose the relative offset with bones
-			//	if(node->GetEntity()->GetEntityType() == EntityType::MESH)				
+			//	// Avoid selection of mesh. If mesh is selected and transformed, it will lose the relative offset with bones
+			//	if(node->GetNodeType() == NodeType::MESH)				
 			//		return;								
 			//}
 
-			mSelectedNode = node;
+			if(_node)
+				TS_CORE_INFO("Selected node named: {0} ", _node->GetName().c_str());
 
+			mSelectedNode = _node;
 
 			if (mSelectedNode != nullptr)
 			{
+				// Initialize nodes for animation
+				mSelectedNode->GetCurrentAnimation() ? mSelectedNode->GetCurrentAnimation()->InitializeNodesForAnimation(mSelectedNode) : void();
+
 				// Set mSelectedNodeLocalPosition, mSelectedNodeLocalEulerAngles and mSelectedNodeLocalScale after selection
 				{
 					if (mSelectedNode)
@@ -1518,7 +1553,7 @@ namespace TS_ENGINE {
 					if (mSelectedNode)
 					{
 						// Copy the constant string into textBuffer
-						strncpy(mSelectedNodeNameBuffer, mSelectedNode->GetEntity()->GetName().c_str(), sizeof(mSelectedNodeNameBuffer));
+						strncpy(mSelectedNodeNameBuffer, mSelectedNode->mName.c_str(), sizeof(mSelectedNodeNameBuffer));
 
 						// Ensure null-termination (if the string is shorter than the buffer)
 						mSelectedNodeNameBuffer[sizeof(mSelectedNodeNameBuffer) - 1] = '\0';
@@ -1529,7 +1564,7 @@ namespace TS_ENGINE {
 
 				// Set current scene's current camera. Update Camera properties in GUI
 				{
-					if (mSelectedNode->GetEntity()->GetEntityType() == EntityType::CAMERA)
+					if (mSelectedNode->GetNodeType() == NodeType::CAMERA)
 					{
 						SceneManager::GetInstance()->GetCurrentScene()->SetCurrentSceneCamera(mSelectedNode->GetSceneCamera());
 
@@ -1582,34 +1617,36 @@ namespace TS_ENGINE {
 
 						// Mesh Renderer
 						{
-							for (int i = 0; i < mSelectedNode->GetMeshes().size(); i++)
+							for (auto& mesh : mSelectedNode->GetMeshes())
 							{
 								Material::MaterialGui materialGui;
 
-								materialGui.mAmbientColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetAmbientColor();
-								materialGui.mDiffuseColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseColor();
-								materialGui.mDiffuseMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMap();
-								materialGui.mDiffuseMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapOffset().y };
-								materialGui.mDiffuseMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetDiffuseMapTiling().y };
-								materialGui.mSpecularColor = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularColor();
-								materialGui.mSpecularMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMap();
-								materialGui.mSpecularMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapOffset().y };
-								materialGui.mSpecularMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetSpecularMapTiling().y };
-								materialGui.mShininess = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetShininess();
-								materialGui.mNormalMap = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMap();
-								materialGui.mNormalMapOffset = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapOffset().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapOffset().y };
-								materialGui.mNormalMapTiling = new float[2] { mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapTiling().x, mSelectedNode->GetMeshes()[i]->GetMaterial()->GetNormalMapTiling().y };
-								materialGui.mBumpValue = mSelectedNode->GetMeshes()[i]->GetMaterial()->GetBumpValue();
+								materialGui.mAmbientColor = mesh->GetMaterial()->GetAmbientColor();
+								materialGui.mDiffuseColor = mesh->GetMaterial()->GetDiffuseColor();
+								materialGui.mDiffuseMap = mesh->GetMaterial()->GetDiffuseMap();
+								materialGui.mDiffuseMapOffset = new float[2] { mesh->GetMaterial()->GetDiffuseMapOffset().x, mesh->GetMaterial()->GetDiffuseMapOffset().y };
+								materialGui.mDiffuseMapTiling = new float[2] { mesh->GetMaterial()->GetDiffuseMapTiling().x, mesh->GetMaterial()->GetDiffuseMapTiling().y };
+								materialGui.mSpecularColor = mesh->GetMaterial()->GetSpecularColor();
+								materialGui.mSpecularMap = mesh->GetMaterial()->GetSpecularMap();
+								materialGui.mSpecularMapOffset = new float[2] { mesh->GetMaterial()->GetSpecularMapOffset().x, mesh->GetMaterial()->GetSpecularMapOffset().y };
+								materialGui.mSpecularMapTiling = new float[2] { mesh->GetMaterial()->GetSpecularMapTiling().x, mesh->GetMaterial()->GetSpecularMapTiling().y };
+								materialGui.mShininess = mesh->GetMaterial()->GetShininess();
+								materialGui.mNormalMap = mesh->GetMaterial()->GetNormalMap();
+								materialGui.mNormalMapOffset = new float[2] { mesh->GetMaterial()->GetNormalMapOffset().x, mesh->GetMaterial()->GetNormalMapOffset().y };
+								materialGui.mNormalMapTiling = new float[2] { mesh->GetMaterial()->GetNormalMapTiling().x, mesh->GetMaterial()->GetNormalMapTiling().y };
+								materialGui.mBumpValue = mesh->GetMaterial()->GetBumpValue();
 
-								mSelectedNode->GetMeshes()[i]->GetMaterial()->SetMaterialGui(materialGui);
+								mesh->GetMaterial()->SetMaterialGui(materialGui);
 							}
 						}
 					}
 				}
 
-				if (mSelectedNode->GetEntity()->GetEntityType() == EntityType::BONE)
+				if (mSelectedNode->GetNodeType() == NodeType::BONE)
 				{
 					SceneManager::GetInstance()->GetCurrentScene()->mSelectedBoneId = Factory::GetInstance()->GetBoneIdByName(mSelectedNode->mName);
+					int selectedModelRootNodeId = mSelectedNode->GetModelRootNodeId();
+					SceneManager::GetInstance()->GetCurrentScene()->mSelectedModelRootNodeId = selectedModelRootNodeId;
 				}
 			}
 		}
@@ -1620,7 +1657,7 @@ namespace TS_ENGINE {
 		if (mSelectedNode)
 		{
 			// Switch to another scene camera if mSelectedNode is scene camera node
-			if (mSelectedNode->GetEntity()->GetEntityType() == EntityType::CAMERA)
+			if (mSelectedNode->GetNodeType() == NodeType::CAMERA)
 			{
 				TS_CORE_INFO("Total scene cameras are: {0}", SceneManager::GetInstance()->GetCurrentScene()->GetNumSceneCameras());
 
@@ -1648,7 +1685,7 @@ namespace TS_ENGINE {
 	{
 		if (mSelectedNode)
 		{
-			if (mSelectedNode->GetEntity()->GetEntityType() == EntityType::CAMERA)
+			if (mSelectedNode->GetNodeType() == NodeType::CAMERA)
 			{
 				Factory::GetInstance()->InstantitateDuplicateSceneCamera(mSelectedNode->GetSceneCamera());
 			}

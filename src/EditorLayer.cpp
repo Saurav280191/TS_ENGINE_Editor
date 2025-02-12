@@ -34,7 +34,7 @@ void EditorLayer::OnAttach()
 	// TODO: Modify code to pass materials instead of shaders and handle the binding in MaterialManager itself
 
 	// Activate Shader
-	mCurrentShader = TS_ENGINE::MaterialManager::GetInstance()->GetUnlitMaterial()->GetShader();
+	mCurrentShader = TS_ENGINE::MaterialManager::GetInstance()->GetMaterial("Unlit")->GetShader();
 	mCurrentShader->Bind();
 }
 
@@ -86,31 +86,31 @@ void EditorLayer::OnUpdate(float deltaTime)
 	}
 }
 
-void EditorLayer::PickNode(Ref<TS_ENGINE::Node> node, int entityID)
+void EditorLayer::PickNode(Ref<TS_ENGINE::Node> node, int _nodeId)
 {
 	//if (node->GetMeshes().size() > 0)
 	{
 		//TS_CORE_TRACE("Checking: {0}", node->GetName());
 
-		if (node->GetEntity()->GetEntityID() == entityID)
+		if (node->mId == _nodeId)
 		{
-			TS_CORE_TRACE("{0} has matching entityID", node->GetEntity()->GetName().c_str());
+			TS_CORE_TRACE("{0} has matching nodeId", node->mName.c_str());
 			mMatchingNode = node;
 		}
 	}
 
 	for (auto& childNode : node->GetChildren())
 	{
-		PickNode(childNode, entityID);
+		PickNode(childNode, _nodeId);
 	}
 }
 
-Ref<TS_ENGINE::Node> EditorLayer::PickNodeByEntityID(int entityID)
+Ref<TS_ENGINE::Node> EditorLayer::PickNodeByID(int _nodeId)
 {
 	if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 	{
 		// Check all node in the scene hierarchy
-		PickNode(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode(), entityID);
+		PickNode(TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode(), _nodeId);
 
 		// Check all bone nodes from factory class's instantiated models
 		for (auto& nameNodeModelPair : TS_ENGINE::Factory::GetInstance()->mLoadedModelNodeMap)
@@ -122,9 +122,9 @@ Ref<TS_ENGINE::Node> EditorLayer::PickNodeByEntityID(int entityID)
 			{
 				if (bone)
 				{				
-					if (bone->PickNode(entityID))
+					if (bone->PickNode(_nodeId))
 					{
-						Ref<TS_ENGINE::Node> node = bone->GetNode();											// Node for Bone Gui
+						Ref<TS_ENGINE::Node> node = bone->GetNode();											// Node for Bone
 						mMatchingNode = node;
 					}
 				}	
@@ -156,22 +156,22 @@ void EditorLayer::PickGameObject()
 			//mPickedColor = ImVec4(pixelColor.x / 255.0f, pixelColor.y / 255.0f, pixelColor.z / 255.0f, pixelColor.z / 255.0f);
 			//TS_CORE_TRACE("Pixel color = {0}", glm::to_string(pixelColor));
 
-			int entityID = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetEditorCamera()->GetFramebuffer()->ReadPixel(1, mouseX, mouseY);
+			int nodeId = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetEditorCamera()->GetFramebuffer()->ReadPixel(1, mouseX, mouseY);
 
-			// Print entity ID
-			TS_CORE_TRACE("Picking entity with ID : {0}", entityID);
+			// Print node Id
+			TS_CORE_TRACE("Picking node with ID : {0}", nodeId);
 
-			if (entityID != -1)
+			if (nodeId != -1)
 			{
 				Ref<TS_ENGINE::Node> hoveredOnNode = nullptr;
 
-				if (entityID != TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSkyboxEntityID())// Avoid skybox selection
+				if (nodeId != TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSkyboxNodeId())// Avoid skybox selection
 				{
 					bool clickedOnSceneCamera = false;
 					Ref<TS_ENGINE::SceneCamera> clickedSceneCamera = nullptr;
 					for (auto& sceneCamera : TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneCameras())
 					{
-						if (sceneCamera->IsSceneCameraGuiSelected(entityID))
+						if (sceneCamera->IsSceneCameraGuiSelected(nodeId))
 						{
 							clickedOnSceneCamera = true;
 							clickedSceneCamera = sceneCamera;
@@ -183,7 +183,7 @@ void EditorLayer::PickGameObject()
 					if (clickedOnSceneCamera)
 						hoveredOnNode = clickedSceneCamera->GetNode();
 					else
-						hoveredOnNode = PickNodeByEntityID(entityID);
+						hoveredOnNode = PickNodeByID(nodeId);
 
 					if (hoveredOnNode != nullptr)
 					{
@@ -248,7 +248,7 @@ void EditorLayer::ShowMainMenuBar()
 				if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 				{
 					TS_ENGINE::SceneManager::GetInstance()->SaveCurrentScene();
-					std::string sceneName = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName();
+					std::string sceneName = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetName();
 					mSceneGui->TakeSnapshot(TS_ENGINE::Application::s_ThumbnailsDir.string() + "\\" + sceneName + ".png");
 				}
 				else
@@ -259,7 +259,7 @@ void EditorLayer::ShowMainMenuBar()
 
 			if (ImGui::MenuItem("Close"))
 			{
-				TS_ENGINE::SceneManager::GetInstance()->FlushCurrentScene();
+				TS_ENGINE::SceneManager::GetInstance()->ClearCurrentScene();
 			}
 			ImGui::EndMenu();
 		}
@@ -523,7 +523,7 @@ bool EditorLayer::OnKeyPressed(TS_ENGINE::KeyPressedEvent& e)
 			if (TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene())
 			{
 				TS_ENGINE::SceneManager::GetInstance()->SaveCurrentScene();
-				std::string sceneName = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetEntity()->GetName();
+				std::string sceneName = TS_ENGINE::SceneManager::GetInstance()->GetCurrentScene()->GetSceneNode()->GetName();
 				mSceneGui->TakeSnapshot(TS_ENGINE::Application::s_ThumbnailsDir.string() + "\\" + sceneName + ".png");
 			}
 			else

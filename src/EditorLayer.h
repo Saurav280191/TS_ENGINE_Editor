@@ -64,8 +64,8 @@ private:
 	bool OnMouseButtonPressed(TS_ENGINE::MouseButtonPressedEvent& e);
 	void OnOverlayRender();	
 	void PickGameObject();
-	Ref<TS_ENGINE::Node> PickNodeByEntityID(int entityID);
-	void PickNode(Ref<TS_ENGINE::Node> node, int entityID);
+	Ref<TS_ENGINE::Node> PickNodeByID(int _nodeId);
+	void PickNode(Ref<TS_ENGINE::Node> node, int _nodeId);
 
 private:
 	bool mIsControlPressed = false;
