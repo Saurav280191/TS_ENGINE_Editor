@@ -555,6 +555,11 @@ namespace TS_ENGINE {
 
 							// Set the selected animation
 							mSelectedNode->SetCurrentAnimation(selectedAnimationName);
+
+							// Initialize nodes for animation 
+							Ref<Animation> currentAnimation = mSelectedNode->GetCurrentAnimation();
+							currentAnimation->mInitializedNodesForAnimation = false;
+							currentAnimation->InitializeNodesForAnimation(mSelectedNode);
 						}
 					}
 					ImGui::EndChild();
@@ -767,10 +772,11 @@ namespace TS_ENGINE {
 							//Show all materials
 							ImGui::BeginChild("##Material Editor");
 							{
-								for (int meshIndex = 0; meshIndex < mSelectedNode->GetMeshes().size(); meshIndex++)
+								for (int meshIndex = 0; meshIndex < mSelectedNode->GetMeshes().size(); ++meshIndex)
 								{
 									//Material tree will be collapsed when there are more than 1 meshes in the node
-									mSelectedNode->GetMeshes()[meshIndex]->GetMaterial()->ShowGUI(meshIndex, mSelectedNode->GetMeshes().size() < 2);
+									Ref<Mesh> mesh = mSelectedNode->GetMesh(meshIndex);
+									mesh->GetMaterial()->ShowGUI(meshIndex, mSelectedNode->GetMeshes().size() < 2);
 								}
 								ImGui::EndChild();
 							}
@@ -1532,7 +1538,7 @@ namespace TS_ENGINE {
 			//}
 
 			if(_node)
-				TS_CORE_INFO("Selected node named: {0} ", _node->GetName().c_str());
+				TS_CORE_INFO("Selected node named: {0} which has id: {1}", _node->GetName().c_str(), _node->mId);
 
 			mSelectedNode = _node;
 
@@ -1619,24 +1625,25 @@ namespace TS_ENGINE {
 						{
 							for (auto& mesh : mSelectedNode->GetMeshes())
 							{
+								Ref<Material> material = mesh->GetMaterial();
 								Material::MaterialGui materialGui;
+															
+								materialGui.mAmbientColor = material->GetAmbientColor();
+								materialGui.mDiffuseColor = material->GetDiffuseColor();
+								materialGui.mDiffuseMap = material->GetDiffuseMap();
+								materialGui.mDiffuseMapOffset = new float[2] { material->GetDiffuseMapOffset().x, material->GetDiffuseMapOffset().y };
+								materialGui.mDiffuseMapTiling = new float[2] { material->GetDiffuseMapTiling().x, material->GetDiffuseMapTiling().y };
+								materialGui.mSpecularColor = material->GetSpecularColor();
+								materialGui.mSpecularMap = material->GetSpecularMap();
+								materialGui.mSpecularMapOffset = new float[2] { material->GetSpecularMapOffset().x, material->GetSpecularMapOffset().y };
+								materialGui.mSpecularMapTiling = new float[2] { material->GetSpecularMapTiling().x, material->GetSpecularMapTiling().y };
+								materialGui.mShininess = material->GetShininess();
+								materialGui.mNormalMap = material->GetNormalMap();
+								materialGui.mNormalMapOffset = new float[2] { material->GetNormalMapOffset().x, material->GetNormalMapOffset().y };
+								materialGui.mNormalMapTiling = new float[2] { material->GetNormalMapTiling().x, material->GetNormalMapTiling().y };
+								materialGui.mBumpValue = material->GetBumpValue();
 
-								materialGui.mAmbientColor = mesh->GetMaterial()->GetAmbientColor();
-								materialGui.mDiffuseColor = mesh->GetMaterial()->GetDiffuseColor();
-								materialGui.mDiffuseMap = mesh->GetMaterial()->GetDiffuseMap();
-								materialGui.mDiffuseMapOffset = new float[2] { mesh->GetMaterial()->GetDiffuseMapOffset().x, mesh->GetMaterial()->GetDiffuseMapOffset().y };
-								materialGui.mDiffuseMapTiling = new float[2] { mesh->GetMaterial()->GetDiffuseMapTiling().x, mesh->GetMaterial()->GetDiffuseMapTiling().y };
-								materialGui.mSpecularColor = mesh->GetMaterial()->GetSpecularColor();
-								materialGui.mSpecularMap = mesh->GetMaterial()->GetSpecularMap();
-								materialGui.mSpecularMapOffset = new float[2] { mesh->GetMaterial()->GetSpecularMapOffset().x, mesh->GetMaterial()->GetSpecularMapOffset().y };
-								materialGui.mSpecularMapTiling = new float[2] { mesh->GetMaterial()->GetSpecularMapTiling().x, mesh->GetMaterial()->GetSpecularMapTiling().y };
-								materialGui.mShininess = mesh->GetMaterial()->GetShininess();
-								materialGui.mNormalMap = mesh->GetMaterial()->GetNormalMap();
-								materialGui.mNormalMapOffset = new float[2] { mesh->GetMaterial()->GetNormalMapOffset().x, mesh->GetMaterial()->GetNormalMapOffset().y };
-								materialGui.mNormalMapTiling = new float[2] { mesh->GetMaterial()->GetNormalMapTiling().x, mesh->GetMaterial()->GetNormalMapTiling().y };
-								materialGui.mBumpValue = mesh->GetMaterial()->GetBumpValue();
-
-								mesh->GetMaterial()->SetMaterialGui(materialGui);
+								material->SetMaterialGui(materialGui);
 							}
 						}
 					}
